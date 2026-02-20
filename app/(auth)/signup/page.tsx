@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import type { AuthResponse } from "@/lib/types";
 
 export default function SignupPage() {
   const [username, setUsername] = useState("");
@@ -31,7 +32,7 @@ export default function SignupPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json() as { error?: string; success?: boolean };
+      const data: AuthResponse = await res.json();
 
       if (!res.ok) {
         setError(data.error || "Signup failed");
@@ -39,7 +40,8 @@ export default function SignupPage() {
       }
 
       router.push("/dashboard");
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Something went wrong");
     } finally {
       setLoading(false);

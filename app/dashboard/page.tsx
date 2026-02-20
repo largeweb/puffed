@@ -4,25 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile } from "react-icons/fi";
-
-interface User {
-  id: string;
-  username: string;
-}
-
-interface Checkin {
-  id: string;
-  brand: string;
-  product?: string;
-  rating?: number;
-  review?: string;
-  flavor_notes?: string;
-  draw_rating?: number;
-  burn_rating?: number;
-  aroma_rating?: number;
-  smoke_time_mins?: number;
-  created_at: number;
-}
+import type { User, Checkin, MeResponse, CheckinsResponse } from "@/lib/types";
 
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   return (
@@ -134,7 +116,7 @@ export default function DashboardPage() {
       try {
         // Check auth
         const authRes = await fetch("/api/auth/me");
-        const authData = await authRes.json();
+        const authData: MeResponse = await authRes.json();
         
         if (!authData.user) {
           router.push("/login");
@@ -145,7 +127,7 @@ export default function DashboardPage() {
 
         // Load check-ins
         const checkinsRes = await fetch("/api/checkins");
-        const checkinsData = await checkinsRes.json();
+        const checkinsData: CheckinsResponse = await checkinsRes.json();
         setCheckins(checkinsData.checkins || []);
       } catch (error) {
         console.error("Load error:", error);
@@ -188,7 +170,7 @@ export default function DashboardPage() {
       if (res.ok) {
         // Reload check-ins
         const checkinsRes = await fetch("/api/checkins");
-        const checkinsData = await checkinsRes.json();
+        const checkinsData: CheckinsResponse = await checkinsRes.json();
         setCheckins(checkinsData.checkins || []);
 
         // Reset form
