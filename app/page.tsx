@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { FiCamera, FiAward, FiMapPin, FiUsers, FiStar, FiClock } from "react-icons/fi";
-import { useState } from "react";
+import Link from "next/link";
 
 // Smoke particle component
 function SmokeParticle({ delay, left }: { delay: number; left: string }) {
@@ -51,16 +51,6 @@ function FeatureCard({ icon: Icon, title, description, delay }: {
 }
 
 export default function Home() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Hook up to D1 database
-    console.log("Email submitted:", email);
-    setSubmitted(true);
-  };
-
   return (
     <main className="min-h-screen overflow-hidden">
       {/* Hero Section */}
@@ -125,40 +115,23 @@ export default function Home() {
           The social app for cigar and tobacco enthusiasts. Log, rate, discover, and share.
         </motion.p>
 
-        {/* CTA */}
+        {/* CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="z-10 w-full max-w-sm px-4"
+          className="z-10 w-full max-w-sm px-4 space-y-3"
         >
-          {!submitted ? (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-all text-base"
-              />
-              <button
-                type="submit"
-                className="w-full px-5 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold text-base btn-glow transition-all active:scale-95"
-              >
-                Join the Waitlist
-              </button>
-            </form>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-4 px-6 rounded-xl bg-green-500/20 border border-green-500/30"
-            >
-              <p className="text-green-400 font-medium">🎉 You&apos;re on the list!</p>
-              <p className="text-gray-400 text-sm mt-1">We&apos;ll notify you when we launch.</p>
-            </motion.div>
-          )}
+          <Link href="/signup" className="block">
+            <button className="w-full px-5 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold text-base btn-glow transition-all active:scale-95">
+              Get Started Free
+            </button>
+          </Link>
+          <Link href="/login" className="block">
+            <button className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-semibold text-base transition-all active:scale-95 hover:bg-white/10">
+              Log In
+            </button>
+          </Link>
         </motion.div>
 
         {/* Scroll indicator */}
@@ -250,9 +223,9 @@ export default function Home() {
 
           <div className="space-y-8">
             {[
-              { num: "1", title: "Check In", desc: "Scan or search for your cigar and log your smoke session" },
-              { num: "2", title: "Rate & Review", desc: "Rate flavor, draw, burn, and aroma. Add tasting notes." },
-              { num: "3", title: "Discover", desc: "Get recommendations and find new favorites based on your taste" },
+              { num: "1", title: "Sign Up", desc: "Create your free account in seconds" },
+              { num: "2", title: "Log Your Smoke", desc: "Rate flavor, draw, burn, and aroma. Add tasting notes." },
+              { num: "3", title: "Track & Discover", desc: "Build your history and get personalized recommendations" },
             ].map((step, i) => (
               <motion.div
                 key={step.num}
@@ -287,31 +260,16 @@ export default function Home() {
             Ready to Track Your Journey?
           </h2>
           <p className="text-gray-400 mb-8">
-            Join the waitlist and be the first to know when we launch.
+            Join thousands of enthusiasts logging their smokes.
           </p>
           
-          {!submitted ? (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-all text-base"
-              />
-              <button
-                type="submit"
-                className="w-full px-5 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold text-base btn-glow transition-all active:scale-95"
-              >
-                Join the Waitlist
+          <div className="space-y-3">
+            <Link href="/signup" className="block">
+              <button className="w-full px-5 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold text-base btn-glow transition-all active:scale-95">
+                Create Free Account
               </button>
-            </form>
-          ) : (
-            <div className="py-4 px-6 rounded-xl bg-green-500/20 border border-green-500/30">
-              <p className="text-green-400 font-medium">🎉 You&apos;re on the list!</p>
-            </div>
-          )}
+            </Link>
+          </div>
         </motion.div>
       </section>
 
