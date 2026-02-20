@@ -4,7 +4,8 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev --turbopack",
-		"cycle": "git add . ; git commit -m 'cycle' ; git push origin main",
+		"cycle": "git add . ; git commit -m 'cycle' ; git push origin main ; git checkout preview ; git merge main ; git push origin preview ; git checkout main",
+		"cycle2": "git checkout prod ; git merge preview ; git push origin prod ; git checkout main",
 		"build": "next build",
 		"start": "next start",
 		"lint": "next lint",

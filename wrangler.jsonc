@@ -10,6 +10,36 @@
 		"nodejs_compat"
 	],
 	"pages_build_output_dir": ".vercel/output/static",
+	"vars": { "ENVIRONMENT": "DEVELOPMENT" },
+	"d1_databases": [
+	  {
+	    "binding": "DB",
+	    "database_name": "puffed",
+	    "database_id": "fef01190-390e-4be9-af4c-aa3275960b60"
+	  }
+	],
+        "env": {
+	  "preview": {
+	    "vars": { "ENVIRONMENT": "PREVIEW" },
+	    "d1_databases": [
+	      {
+	        "binding": "DB",
+	        "database_name": "puffed",
+	        "database_id": "fef01190-390e-4be9-af4c-aa3275960b60"
+	      }
+	    ],
+	  },
+	  "production": {
+	    "vars": { "ENVIRONMENT": "PRODUCTION" },
+	    "d1_databases": [
+	      {
+	        "binding": "DB",
+	        "database_name": "puffed",
+	        "database_id": "fef01190-390e-4be9-af4c-aa3275960b60"
+	      }
+	    ],
+	  }
+        }
 	"observability": {
 		"enabled": true
 	}
