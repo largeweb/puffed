@@ -47,6 +47,61 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Delete a check-in
+export async function DELETE(request: NextRequest) {
+  try {
+    const cookieHeader = request.headers.get("cookie");
+    const sessionId = parseSessionCookie(cookieHeader);
+
+    if (!sessionId) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const { env } = getRequestContext();
+    const db = env.DB;
+
+    // Get user from session
+    const now = Math.floor(Date.now() / 1000);
+    const session = await db
+      .prepare("SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?")
+      .bind(sessionId, now)
+      .first<{ user_id: string }>();
+
+    if (!session) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const checkinId = searchParams.get("id");
+
+    if (!checkinId) {
+      return NextResponse.json({ error: "Check-in ID is required" }, { status: 400 });
+    }
+
+    // Verify ownership before deleting
+    const checkin = await db
+      .prepare("SELECT id FROM checkins WHERE id = ? AND user_id = ?")
+      .bind(checkinId, session.user_id)
+      .first();
+
+    if (!checkin) {
+      return NextResponse.json({ error: "Check-in not found or not owned by you" }, { status: 404 });
+    }
+
+    // Delete associated likes and comments first
+    await db.prepare("DELETE FROM likes WHERE checkin_id = ?").bind(checkinId).run();
+    await db.prepare("DELETE FROM comments WHERE checkin_id = ?").bind(checkinId).run();
+    
+    // Delete the check-in
+    await db.prepare("DELETE FROM checkins WHERE id = ?").bind(checkinId).run();
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete checkin error:", error);
+    return NextResponse.json({ error: "Failed to delete check-in" }, { status: 500 });
+  }
+}
+
 // Create new check-in
 export async function POST(request: NextRequest) {
   try {

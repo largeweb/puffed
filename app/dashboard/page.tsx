@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX } from "react-icons/fi";
+import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2 } from "react-icons/fi";
 import Link from "next/link";
 import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse } from "@/lib/types";
 
@@ -29,14 +29,39 @@ function StarRating({ value, onChange, label }: { value: number; onChange: (v: n
   );
 }
 
-function CheckinCard({ checkin }: { checkin: Checkin }) {
+function CheckinCard({ checkin, onDelete }: { checkin: Checkin; onDelete?: (id: string) => void }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const date = new Date(checkin.created_at * 1000);
   const timeAgo = getTimeAgo(date);
+
+  const handleDelete = async () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      // Reset after 3 seconds if not confirmed
+      setTimeout(() => setConfirmDelete(false), 3000);
+      return;
+    }
+    
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/checkins?id=${checkin.id}`, { method: "DELETE" });
+      if (res.ok && onDelete) {
+        onDelete(checkin.id);
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
       className="glass rounded-2xl p-5"
     >
       {/* Image */}
@@ -55,12 +80,28 @@ function CheckinCard({ checkin }: { checkin: Checkin }) {
           <h3 className="font-semibold text-lg">{checkin.brand}</h3>
           {checkin.product && <p className="text-gray-400 text-sm">{checkin.product}</p>}
         </div>
-        {checkin.rating && (
-          <div className="flex items-center gap-1 bg-amber-500/20 px-2 py-1 rounded-lg">
-            <FiStar className="text-amber-500" fill="currentColor" />
-            <span className="text-amber-500 font-semibold">{checkin.rating}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {checkin.rating && (
+            <div className="flex items-center gap-1 bg-amber-500/20 px-2 py-1 rounded-lg">
+              <FiStar className="text-amber-500" fill="currentColor" />
+              <span className="text-amber-500 font-semibold">{checkin.rating}</span>
+            </div>
+          )}
+          {onDelete && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className={`p-2 rounded-lg transition-all ${
+                confirmDelete 
+                  ? "bg-red-500/20 text-red-400 hover:bg-red-500/30" 
+                  : "hover:bg-white/5 text-gray-500 hover:text-gray-300"
+              }`}
+              title={confirmDelete ? "Tap again to confirm" : "Delete check-in"}
+            >
+              <FiTrash2 size={16} className={deleting ? "animate-pulse" : ""} />
+            </button>
+          )}
+        </div>
       </div>
 
       {checkin.review && (
@@ -330,9 +371,15 @@ export default function DashboardPage() {
           </motion.div>
         ) : (
           <div className="space-y-4">
-            {checkins.map((checkin) => (
-              <CheckinCard key={checkin.id} checkin={checkin} />
-            ))}
+            <AnimatePresence mode="popLayout">
+              {checkins.map((checkin) => (
+                <CheckinCard 
+                  key={checkin.id} 
+                  checkin={checkin}
+                  onDelete={(id) => setCheckins(prev => prev.filter(c => c.id !== id))}
+                />
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>
