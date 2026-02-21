@@ -127,7 +127,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as CheckinRequest;
-    const { brand, product, rating, review, flavorNotes, drawRating, burnRating, aromaRating, smokeTimeMins, imageUrl } = body;
+    const { 
+      category = 'cigar',
+      brand, product, rating, review, imageUrl,
+      // Cigar fields
+      flavorNotes, drawRating, burnRating, aromaRating, smokeTimeMins,
+      // Cannabis fields
+      strainName, strainType, effects, thcPercent
+    } = body;
 
     if (!brand) {
       return NextResponse.json({ error: "Brand is required" }, { status: 400 });
@@ -137,22 +144,31 @@ export async function POST(request: NextRequest) {
 
     await db
       .prepare(`
-        INSERT INTO checkins (id, user_id, brand, product, rating, review, flavor_notes, draw_rating, burn_rating, aroma_rating, smoke_time_mins, image_url)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO checkins (
+          id, user_id, category, brand, product, rating, review, image_url,
+          flavor_notes, draw_rating, burn_rating, aroma_rating, smoke_time_mins,
+          strain_name, strain_type, effects, thc_percent
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
         checkinId,
         session.user_id,
+        category,
         brand,
         product || null,
         rating || null,
         review || null,
+        imageUrl || null,
         flavorNotes || null,
         drawRating || null,
         burnRating || null,
         aromaRating || null,
         smokeTimeMins || null,
-        imageUrl || null
+        strainName || null,
+        strainType || null,
+        effects || null,
+        thcPercent || null
       )
       .run();
 
