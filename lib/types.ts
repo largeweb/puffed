@@ -108,6 +108,7 @@ export interface UserProfileResponse {
   isFollowing?: boolean;
   isOwnProfile?: boolean;
   checkins?: Checkin[];
+  badges?: Badge[];
   error?: string;
 }
 
@@ -204,5 +205,23 @@ export interface SuggestedUser {
 
 export interface SuggestedUsersResponse {
   users?: SuggestedUser[];
+  error?: string;
+}
+
+// Badges/Achievements
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  emoji: string;
+  earned: boolean;
+  progress?: number;
+  target?: number;
+}
+
+export interface BadgesResponse {
+  badges?: Badge[];
+  earned_count?: number;
+  total_count?: number;
   error?: string;
 }
