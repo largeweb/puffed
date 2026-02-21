@@ -1,17 +1,24 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck } from "react-icons/fi";
+import { useState, useEffect, use } from "react";
+import { FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiMessageCircle, FiSend, FiArrowLeft, FiSearch } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse } from "@/lib/types";
-import ShareMenu from "@/components/ShareMenu";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
+import type { Checkin, LikeResponse, Comment, CommentsResponse, CommentResponse } from "@/lib/types";
+import ShareMenu from "@/components/ShareMenu";
 
 interface CheckinWithLikes extends Checkin {
   like_count?: number;
   liked_by_me?: boolean;
   comment_count?: number;
+}
+
+interface FlavorResponse {
+  flavor: { id: string; label: string; emoji: string };
+  checkins: CheckinWithLikes[];
+  total: number;
+  error?: string;
 }
 
 function getTimeAgo(date: Date): string {
@@ -23,7 +30,7 @@ function getTimeAgo(date: Date): string {
   return date.toLocaleDateString();
 }
 
-function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (id: string) => void }) {
+function CheckinCard({ checkin }: { checkin: CheckinWithLikes }) {
   const date = new Date(checkin.created_at * 1000);
   const timeAgo = getTimeAgo(date);
   const [liked, setLiked] = useState(checkin.liked_by_me || false);
@@ -141,7 +148,9 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
 
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h3 className="font-semibold text-lg">{checkin.brand}</h3>
+          <Link href={`/cigar/${encodeURIComponent(checkin.brand)}`}>
+            <h3 className="font-semibold text-lg hover:text-amber-500 transition-colors">{checkin.brand}</h3>
+          </Link>
           {checkin.product && <p className="text-gray-400 text-sm">{checkin.product}</p>}
         </div>
         {checkin.rating && (
@@ -190,13 +199,14 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
                   const tag = FLAVOR_TAGS.find(t => t.id === tagId);
                   if (!tag) return null;
                   return (
-                    <span
+                    <Link
                       key={tagId}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-xs"
+                      href={`/flavor/${tagId}`}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-xs hover:bg-amber-500/20 transition-colors"
                     >
                       <span>{tag.emoji}</span>
                       <span>{tag.label}</span>
-                    </span>
+                    </Link>
                   );
                 })}
               </div>
@@ -302,95 +312,37 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
   );
 }
 
-export default function DiscoverPage() {
+export default function FlavorPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: flavorId } = use(params);
+  const [flavor, setFlavor] = useState<{ id: string; label: string; emoji: string } | null>(null);
   const [checkins, setCheckins] = useState<CheckinWithLikes[]>([]);
-  const [trending, setTrending] = useState<TrendingBrand[]>([]);
-  const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [followingUsers, setFollowingUsers] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadFeed();
-    loadTrending();
-    loadSuggestedUsers();
-  }, []);
-
-  async function loadFeed(query = "") {
-    try {
-      setSearching(true);
-      const url = query 
-        ? `/api/discover?q=${encodeURIComponent(query)}`
-        : "/api/discover";
-      const res = await fetch(url);
-      const data: DiscoverResponse = await res.json();
-      setCheckins(data.checkins || []);
-    } catch (error) {
-      console.error("Load error:", error);
-    } finally {
-      setLoading(false);
-      setSearching(false);
-    }
-  }
-
-  async function loadTrending() {
-    try {
-      const res = await fetch("/api/trending");
-      const data: TrendingResponse = await res.json();
-      setTrending(data.trending || []);
-    } catch (error) {
-      console.error("Trending error:", error);
-    }
-  }
-
-  async function loadSuggestedUsers() {
-    try {
-      const res = await fetch("/api/users/suggested");
-      const data: SuggestedUsersResponse = await res.json();
-      setSuggestedUsers(data.users || []);
-      // Track which users are already followed
-      const followedSet = new Set(
-        (data.users || []).filter(u => u.is_following).map(u => u.username)
-      );
-      setFollowingUsers(followedSet);
-    } catch (error) {
-      console.error("Suggested users error:", error);
-    }
-  }
-
-  async function handleFollow(username: string) {
-    try {
-      const res = await fetch("/api/follow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username }),
-      });
-      if (res.ok) {
-        const data: FollowResponse = await res.json();
-        setFollowingUsers(prev => {
-          const next = new Set(prev);
-          if (data.following) {
-            next.add(username);
-          } else {
-            next.delete(username);
-          }
-          return next;
-        });
+    async function loadFlavor() {
+      try {
+        const res = await fetch(`/api/flavors/${flavorId}`);
+        if (!res.ok) {
+          setError("Flavor not found");
+          setLoading(false);
+          return;
+        }
+        const data: FlavorResponse = await res.json();
+        setFlavor(data.flavor);
+        setCheckins(data.checkins || []);
+      } catch (err) {
+        console.error("Load error:", err);
+        setError("Failed to load");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Follow error:", error);
     }
-  }
+    loadFlavor();
+  }, [flavorId]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    loadFeed(searchQuery);
-  };
-
-  const handleLike = (checkinId: string) => {
-    // Handled in CheckinCard
-  };
+  // Get local flavor info while loading
+  const localFlavor = getFlavorTag(flavorId);
 
   if (loading) {
     return (
@@ -404,213 +356,96 @@ export default function DiscoverPage() {
     );
   }
 
+  if (error || !flavor) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-4xl">🤷</p>
+        <p className="text-gray-400">{error || "Flavor not found"}</p>
+        <Link href="/discover" className="text-amber-500 hover:underline">
+          Back to Discover
+        </Link>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-white/5">
         <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                <span className="text-lg">🚬</span>
+              <Link
+                href="/discover"
+                className="p-2 -ml-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+              >
+                <FiArrowLeft size={20} />
+              </Link>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/20 flex items-center justify-center text-2xl">
+                {flavor.emoji}
               </div>
               <div>
-                <h1 className="font-semibold">Discover</h1>
-                <p className="text-xs text-gray-400">See what everyone's smoking</p>
+                <h1 className="font-semibold">{flavor.label} Cigars</h1>
+                <p className="text-xs text-gray-400">
+                  {checkins.length} {checkins.length === 1 ? "smoke" : "smokes"} with this flavor
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
               <Link 
                 href="/search"
                 className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
-                title="Search"
               >
                 <FiSearch size={20} />
               </Link>
               <Link 
-                href="/leaderboard"
-                className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-500 transition-all"
-                title="Leaderboard"
-              >
-                <FiAward size={20} />
-              </Link>
-              <Link 
                 href="/dashboard"
                 className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
-                title="Dashboard"
               >
                 <FiHome size={20} />
               </Link>
             </div>
           </div>
-
-          {/* Search */}
-          <form onSubmit={handleSearch} className="relative">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search brands, products, reviews..."
-              className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-all"
-            />
-          </form>
         </div>
       </header>
 
-      {/* Content */}
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Browse by Flavor Section */}
-        {!searchQuery && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-amber-500">🍂</span>
-              <h2 className="font-semibold">Browse by Flavor</h2>
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-              {FLAVOR_TAGS.slice(0, 10).map((flavor) => (
-                <Link
-                  key={flavor.id}
-                  href={`/flavor/${flavor.id}`}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-amber-500/20 hover:border-amber-500/50 border border-white/10 transition-all"
-                >
-                  <span className="text-lg">{flavor.emoji}</span>
-                  <span className="text-sm font-medium">{flavor.label}</span>
-                </Link>
-              ))}
-              <Link
-                href="/search"
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-gray-400"
-              >
-                <span className="text-sm">More →</span>
-              </Link>
-            </div>
-          </motion.div>
-        )}
+      {/* Other Flavors */}
+      <div className="max-w-2xl mx-auto px-4 py-4">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+          {FLAVOR_TAGS.map((f) => (
+            <Link
+              key={f.id}
+              href={`/flavor/${f.id}`}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                f.id === flavorId
+                  ? "bg-amber-500 text-black font-medium"
+                  : "bg-white/5 text-gray-300 hover:bg-white/10"
+              }`}
+            >
+              <span>{f.emoji}</span>
+              <span>{f.label}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
 
-        {/* Trending Section */}
-        {trending.length > 0 && !searchQuery && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <FiTrendingUp className="text-amber-500" />
-              <h2 className="font-semibold">Trending This Week</h2>
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-              {trending.map((brand, index) => (
-                <Link
-                  key={brand.brand}
-                  href={`/cigar/${encodeURIComponent(brand.brand)}`}
-                  className="flex-shrink-0 glass px-4 py-2 rounded-xl hover:border-amber-500/50 transition-all"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🔥"}</span>
-                    <div className="text-left">
-                      <p className="font-medium text-sm">{brand.brand}</p>
-                      <p className="text-xs text-gray-400">
-                        {brand.checkin_count} {brand.checkin_count === 1 ? "smoke" : "smokes"}
-                        {brand.avg_rating && ` • ${brand.avg_rating}★`}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* People to Follow Section */}
-        {suggestedUsers.length > 0 && !searchQuery && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-6"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <FiUsers className="text-amber-500" />
-              <h2 className="font-semibold">People to Follow</h2>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-              {suggestedUsers.map((user) => {
-                const isFollowing = followingUsers.has(user.username);
-                return (
-                  <div
-                    key={user.username}
-                    className="flex-shrink-0 glass px-4 py-3 rounded-xl min-w-[160px]"
-                  >
-                    <Link 
-                      href={`/user/${user.username}`}
-                      className="block mb-2"
-                    >
-                      <p className="font-medium text-amber-500 hover:underline">@{user.username}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {user.checkin_count} {user.checkin_count === 1 ? "smoke" : "smokes"}
-                        {user.follower_count > 0 && ` • ${user.follower_count} followers`}
-                      </p>
-                      {user.bio && (
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{user.bio}</p>
-                      )}
-                    </Link>
-                    <button
-                      onClick={() => handleFollow(user.username)}
-                      className={`w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
-                        isFollowing
-                          ? "bg-amber-500/20 text-amber-500 hover:bg-red-500/20 hover:text-red-400"
-                          : "bg-amber-500 text-black hover:bg-amber-400"
-                      }`}
-                    >
-                      {isFollowing ? (
-                        <>
-                          <FiUserCheck size={14} />
-                          <span>Following</span>
-                        </>
-                      ) : (
-                        <>
-                          <FiUserPlus size={14} />
-                          <span>Follow</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Feed */}
-        {searching ? (
-          <div className="flex justify-center py-8">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full"
-            />
-          </div>
-        ) : checkins.length === 0 ? (
+      {/* Checkins */}
+      <div className="max-w-2xl mx-auto px-4 py-2">
+        {checkins.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="text-center py-12 text-gray-400"
           >
-            <p className="text-4xl mb-3">🔍</p>
-            <p>No smokes found</p>
-            {searchQuery && (
-              <button 
-                onClick={() => { setSearchQuery(""); loadFeed(); }}
-                className="mt-2 text-amber-500 hover:underline text-sm"
-              >
-                Clear search
-              </button>
-            )}
+            <p className="text-4xl mb-3">{flavor.emoji}</p>
+            <p>No smokes with {flavor.label.toLowerCase()} notes yet</p>
+            <p className="text-sm mt-2">Be the first to log one!</p>
+            <Link 
+              href="/dashboard"
+              className="mt-4 inline-block px-4 py-2 bg-amber-500 text-black rounded-lg hover:bg-amber-400 transition-colors"
+            >
+              Log a Smoke
+            </Link>
           </motion.div>
         ) : (
           <div className="space-y-4">
@@ -621,7 +456,7 @@ export default function DiscoverPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <CheckinCard checkin={checkin} onLike={handleLike} />
+                <CheckinCard checkin={checkin} />
               </motion.div>
             ))}
           </div>
