@@ -217,6 +217,10 @@ export default function DashboardPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  
+  // Success state for post-checkin celebration
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [lastCheckin, setLastCheckin] = useState<Checkin | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -322,12 +326,24 @@ export default function DashboardPage() {
       });
 
       if (res.ok) {
+        const result = await res.json() as { success: boolean; id: string };
+        
         // Reload check-ins
         const checkinsRes = await fetch("/api/checkins");
         const checkinsData: CheckinsResponse = await checkinsRes.json();
         setCheckins(checkinsData.checkins || []);
 
-        // Reset form
+        // Store the new checkin info for success screen
+        setLastCheckin({ 
+          id: result.id, 
+          user_id: user?.id || '', 
+          brand, 
+          product: product || undefined, 
+          rating: rating || undefined,
+          created_at: Math.floor(Date.now() / 1000)
+        });
+        
+        // Reset form fields
         setBrand("");
         setProduct("");
         setRating(0);
@@ -338,7 +354,10 @@ export default function DashboardPage() {
         setSmokeTime("");
         setImageFile(null);
         setImagePreview(null);
+        
+        // Show success screen instead of just closing
         setShowForm(false);
+        setShowSuccess(true);
       }
     } catch (error) {
       console.error("Submit error:", error);
@@ -722,6 +741,109 @@ export default function DashboardPage() {
                   {uploading ? "Uploading image..." : submitting ? "Logging..." : "Log Smoke 🚬"}
                 </button>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Celebration Modal */}
+      <AnimatePresence>
+        {showSuccess && lastCheckin && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setShowSuccess(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", damping: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm bg-[#1a1a1a] rounded-3xl p-6 text-center"
+            >
+              {/* Celebration emoji */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", delay: 0.1, damping: 10 }}
+                className="text-6xl mb-4"
+              >
+                🔥
+              </motion.div>
+              
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-xl font-bold mb-2"
+              >
+                Nice smoke logged!
+              </motion.h2>
+              
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-gray-400 mb-6"
+              >
+                {lastCheckin.brand}{lastCheckin.product ? ` ${lastCheckin.product}` : ''}
+                {lastCheckin.rating ? ` • ${lastCheckin.rating}★` : ''}
+              </motion.p>
+              
+              {/* Action buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="space-y-3"
+              >
+                {/* Share button */}
+                <button
+                  onClick={async () => {
+                    const shareUrl = `${window.location.origin}/checkin/${lastCheckin.id}`;
+                    const shareText = lastCheckin.rating 
+                      ? `I just smoked a ${lastCheckin.brand}${lastCheckin.product ? ` ${lastCheckin.product}` : ''} and rated it ${lastCheckin.rating}/5! 🚬 #Puffed`
+                      : `Check out my ${lastCheckin.brand}${lastCheckin.product ? ` ${lastCheckin.product}` : ''} smoke session! 🚬 #Puffed`;
+                    
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({ title: `${lastCheckin.brand} - Puffed`, text: shareText, url: shareUrl });
+                      } catch (err) {
+                        if ((err as Error).name !== "AbortError") {
+                          await navigator.clipboard.writeText(shareUrl);
+                        }
+                      }
+                    } else {
+                      await navigator.clipboard.writeText(shareUrl);
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold btn-glow transition-all active:scale-95"
+                >
+                  <FiShare2 size={18} />
+                  Share with friends
+                </button>
+                
+                {/* Discover button */}
+                <Link
+                  href="/discover"
+                  onClick={() => setShowSuccess(false)}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 font-medium transition-all active:scale-95"
+                >
+                  <FiCompass size={18} />
+                  See what others are smoking
+                </Link>
+                
+                {/* Dismiss */}
+                <button
+                  onClick={() => setShowSuccess(false)}
+                  className="w-full px-5 py-2 text-gray-500 hover:text-gray-300 text-sm transition-all"
+                >
+                  Done
+                </button>
+              </motion.div>
             </motion.div>
           </motion.div>
         )}
