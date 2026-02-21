@@ -244,3 +244,12 @@ export interface BadgesResponse {
   total_count?: number;
   error?: string;
 }
+
+// Streak
+export interface StreakResponse {
+  currentStreak: number;
+  bestStreak: number;
+  lastCheckinDate: string | null;
+  streakActive: boolean;
+  error?: string;
+}
