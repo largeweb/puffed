@@ -149,3 +149,29 @@ export interface CommentResponse {
   comment?: Comment;
   error?: string;
 }
+
+// Notifications
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: 'like' | 'follow' | 'comment';
+  from_user_id: string;
+  from_username: string;
+  checkin_id?: string;
+  checkin_brand?: string;
+  comment_id?: string;
+  comment_text?: string;
+  read: boolean;
+  created_at: number;
+}
+
+export interface NotificationsResponse {
+  notifications?: Notification[];
+  unread_count?: number;
+  error?: string;
+}
+
+export interface NotificationCountResponse {
+  unread_count: number;
+  error?: string;
+}

@@ -46,6 +46,11 @@ export async function POST(request: NextRequest) {
         .prepare("DELETE FROM likes WHERE user_id = ? AND checkin_id = ?")
         .bind(session.user_id, checkinId)
         .run();
+      // Also remove the notification
+      await db
+        .prepare("DELETE FROM notifications WHERE type = 'like' AND from_user_id = ? AND checkin_id = ?")
+        .bind(session.user_id, checkinId)
+        .run();
       return NextResponse.json({ liked: false });
     } else {
       // Like
@@ -54,6 +59,21 @@ export async function POST(request: NextRequest) {
         .prepare("INSERT INTO likes (id, user_id, checkin_id) VALUES (?, ?, ?)")
         .bind(likeId, session.user_id, checkinId)
         .run();
+
+      // Create notification for checkin owner (if not liking own checkin)
+      const checkin = await db
+        .prepare("SELECT user_id FROM checkins WHERE id = ?")
+        .bind(checkinId)
+        .first<{ user_id: string }>();
+
+      if (checkin && checkin.user_id !== session.user_id) {
+        const notifId = generateId();
+        await db
+          .prepare("INSERT INTO notifications (id, user_id, type, from_user_id, checkin_id) VALUES (?, ?, 'like', ?, ?)")
+          .bind(notifId, checkin.user_id, session.user_id, checkinId)
+          .run();
+      }
+
       return NextResponse.json({ liked: true });
     }
   } catch (error) {

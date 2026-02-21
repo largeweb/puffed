@@ -66,11 +66,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "checkinId and text required" }, { status: 400 });
     }
 
-    // Verify check-in exists
+    // Verify check-in exists and get owner
     const checkin = await db
-      .prepare("SELECT id FROM checkins WHERE id = ?")
+      .prepare("SELECT id, user_id FROM checkins WHERE id = ?")
       .bind(checkinId)
-      .first();
+      .first<{ id: string; user_id: string }>();
 
     if (!checkin) {
       return NextResponse.json({ error: "Check-in not found" }, { status: 404 });
@@ -85,6 +85,15 @@ export async function POST(request: NextRequest) {
       `)
       .bind(commentId, checkinId, session.user_id, text.trim())
       .run();
+
+    // Create notification for checkin owner (if not commenting on own checkin)
+    if (checkin.user_id !== session.user_id) {
+      const notifId = crypto.randomUUID();
+      await db
+        .prepare("INSERT INTO notifications (id, user_id, type, from_user_id, checkin_id, comment_id) VALUES (?, ?, 'comment', ?, ?, ?)")
+        .bind(notifId, checkin.user_id, session.user_id, checkinId, commentId)
+        .run();
+    }
 
     // Get the created comment with username
     const comment = await db

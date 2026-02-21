@@ -60,6 +60,11 @@ export async function POST(request: NextRequest) {
         .prepare("DELETE FROM follows WHERE follower_id = ? AND following_id = ?")
         .bind(session.user_id, targetUser.id)
         .run();
+      // Remove follow notification
+      await db
+        .prepare("DELETE FROM notifications WHERE type = 'follow' AND from_user_id = ? AND user_id = ?")
+        .bind(session.user_id, targetUser.id)
+        .run();
       return NextResponse.json({ following: false });
     } else {
       // Follow
@@ -68,6 +73,14 @@ export async function POST(request: NextRequest) {
         .prepare("INSERT INTO follows (id, follower_id, following_id) VALUES (?, ?, ?)")
         .bind(followId, session.user_id, targetUser.id)
         .run();
+
+      // Create notification for followed user
+      const notifId = generateId();
+      await db
+        .prepare("INSERT INTO notifications (id, user_id, type, from_user_id) VALUES (?, ?, 'follow', ?)")
+        .bind(notifId, targetUser.id, session.user_id)
+        .run();
+
       return NextResponse.json({ following: true });
     }
   } catch (error) {

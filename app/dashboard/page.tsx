@@ -3,9 +3,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings } from "react-icons/fi";
+import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse } from "@/lib/types";
 
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   return (
@@ -152,6 +152,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
 
   // Form state
@@ -185,6 +186,11 @@ export default function DashboardPage() {
         const checkinsRes = await fetch("/api/checkins");
         const checkinsData: CheckinsResponse = await checkinsRes.json();
         setCheckins(checkinsData.checkins || []);
+
+        // Load notification count
+        const notifRes = await fetch("/api/notifications?countOnly=true");
+        const notifData: NotificationCountResponse = await notifRes.json();
+        setUnreadCount(notifData.unread_count || 0);
       } catch (error) {
         console.error("Load error:", error);
         router.push("/login");
@@ -318,6 +324,17 @@ export default function DashboardPage() {
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
             >
               <FiCompass size={20} />
+            </Link>
+            <Link
+              href="/notifications"
+              className="relative p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+            >
+              <FiBell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-amber-500 text-black text-xs font-bold rounded-full flex items-center justify-center px-1">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </Link>
             <Link
               href="/settings"
