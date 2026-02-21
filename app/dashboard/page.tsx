@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2 } from "react-icons/fi";
+import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings } from "react-icons/fi";
 import Link from "next/link";
 import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse } from "@/lib/types";
 
@@ -318,6 +318,12 @@ export default function DashboardPage() {
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
             >
               <FiCompass size={20} />
+            </Link>
+            <Link
+              href="/settings"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+            >
+              <FiSettings size={20} />
             </Link>
             <button
               onClick={handleLogout}

@@ -93,6 +93,7 @@ function CheckinCard({ checkin }: { checkin: CheckinWithLikes }) {
 
 interface UserProfile {
   username: string;
+  bio: string | null;
   joinedAt: number;
 }
 
@@ -196,6 +197,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   }
 
   const joinDate = user ? new Date(user.joinedAt * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+  const hasBio = user?.bio && user.bio.trim().length > 0;
 
   return (
     <main className="min-h-screen pb-24">
@@ -267,6 +269,18 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
             </div>
           </div>
         </motion.div>
+
+        {/* Bio */}
+        {hasBio && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass rounded-2xl p-4 mb-6"
+          >
+            <p className="text-gray-300 text-sm">{user?.bio}</p>
+          </motion.div>
+        )}
 
         {/* Check-ins */}
         <h2 className="font-semibold mb-4">Recent Smokes</h2>

@@ -95,6 +95,7 @@ export interface TrendingResponse {
 export interface UserProfileResponse {
   user?: {
     username: string;
+    bio: string | null;
     joinedAt: number;
   };
   stats?: {

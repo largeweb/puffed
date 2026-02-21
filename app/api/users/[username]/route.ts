@@ -31,9 +31,9 @@ export async function GET(
 
     // Get user
     const user = await db
-      .prepare("SELECT id, username, created_at FROM users WHERE username = ?")
+      .prepare("SELECT id, username, bio, created_at FROM users WHERE username = ?")
       .bind(username.toLowerCase())
-      .first<{ id: string; username: string; created_at: number }>();
+      .first<{ id: string; username: string; bio: string | null; created_at: number }>();
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -92,6 +92,7 @@ export async function GET(
     return NextResponse.json({
       user: {
         username: user.username,
+        bio: user.bio,
         joinedAt: user.created_at,
       },
       stats: {
