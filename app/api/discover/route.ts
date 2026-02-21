@@ -4,11 +4,12 @@ import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
-// Get public feed of all check-ins (with search)
+// Get public feed of all check-ins (with search and category filter)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q")?.toLowerCase() || "";
+    const category = searchParams.get("category") || ""; // filter by category
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
     const offset = parseInt(searchParams.get("offset") || "0");
 
@@ -33,38 +34,37 @@ export async function GET(request: NextRequest) {
 
     let checkins;
     
-    if (query) {
-      // Search by brand or product
-      checkins = await db
-        .prepare(`
-          SELECT c.*, u.username,
-            (SELECT COUNT(*) FROM likes WHERE checkin_id = c.id) as like_count,
-            (SELECT COUNT(*) FROM comments WHERE checkin_id = c.id) as comment_count,
-            EXISTS(SELECT 1 FROM likes WHERE checkin_id = c.id AND user_id = ?) as liked_by_me
-          FROM checkins c
-          JOIN users u ON c.user_id = u.id
-          WHERE LOWER(c.brand) LIKE ? OR LOWER(c.product) LIKE ? OR LOWER(c.review) LIKE ?
-          ORDER BY c.created_at DESC 
-          LIMIT ? OFFSET ?
-        `)
-        .bind(currentUserId || "", `%${query}%`, `%${query}%`, `%${query}%`, limit, offset)
-        .all();
-    } else {
-      // Get recent public feed
-      checkins = await db
-        .prepare(`
-          SELECT c.*, u.username,
-            (SELECT COUNT(*) FROM likes WHERE checkin_id = c.id) as like_count,
-            (SELECT COUNT(*) FROM comments WHERE checkin_id = c.id) as comment_count,
-            EXISTS(SELECT 1 FROM likes WHERE checkin_id = c.id AND user_id = ?) as liked_by_me
-          FROM checkins c
-          JOIN users u ON c.user_id = u.id
-          ORDER BY c.created_at DESC 
-          LIMIT ? OFFSET ?
-        `)
-        .bind(currentUserId || "", limit, offset)
-        .all();
+    // Build WHERE clause parts
+    const whereParts: string[] = [];
+    const params: (string | number)[] = [currentUserId || ""];
+
+    if (category && category !== "all") {
+      whereParts.push("c.category = ?");
+      params.push(category);
     }
+
+    if (query) {
+      whereParts.push("(LOWER(c.brand) LIKE ? OR LOWER(c.product) LIKE ? OR LOWER(c.review) LIKE ?)");
+      params.push(`%${query}%`, `%${query}%`, `%${query}%`);
+    }
+
+    const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(" AND ")}` : "";
+    params.push(limit, offset);
+
+    checkins = await db
+      .prepare(`
+        SELECT c.*, u.username,
+          (SELECT COUNT(*) FROM likes WHERE checkin_id = c.id) as like_count,
+          (SELECT COUNT(*) FROM comments WHERE checkin_id = c.id) as comment_count,
+          EXISTS(SELECT 1 FROM likes WHERE checkin_id = c.id AND user_id = ?) as liked_by_me
+        FROM checkins c
+        JOIN users u ON c.user_id = u.id
+        ${whereClause}
+        ORDER BY c.created_at DESC 
+        LIMIT ? OFFSET ?
+      `)
+      .bind(...params)
+      .all();
 
     return NextResponse.json({ checkins: checkins.results });
   } catch (error) {
