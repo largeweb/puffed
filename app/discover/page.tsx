@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend } from "react-icons/fi";
+import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward } from "react-icons/fi";
 import Link from "next/link";
 import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse } from "@/lib/types";
 
@@ -335,12 +335,22 @@ export default function DiscoverPage() {
                 <p className="text-xs text-gray-400">See what everyone's smoking</p>
               </div>
             </div>
-            <Link 
-              href="/dashboard"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
-            >
-              <FiHome size={20} />
-            </Link>
+            <div className="flex items-center gap-1">
+              <Link 
+                href="/leaderboard"
+                className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-500 transition-all"
+                title="Leaderboard"
+              >
+                <FiAward size={20} />
+              </Link>
+              <Link 
+                href="/dashboard"
+                className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+                title="Dashboard"
+              >
+                <FiHome size={20} />
+              </Link>
+            </div>
           </div>
 
           {/* Search */}

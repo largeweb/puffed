@@ -175,3 +175,20 @@ export interface NotificationCountResponse {
   unread_count: number;
   error?: string;
 }
+
+// Leaderboard
+export interface LeaderboardEntry {
+  username: string;
+  checkin_count: number;
+  avg_rating: number;
+  unique_brands: number;
+  total_likes_received: number;
+  rank: number;
+}
+
+export interface LeaderboardResponse {
+  allTime?: LeaderboardEntry[];
+  thisWeek?: LeaderboardEntry[];
+  thisMonth?: LeaderboardEntry[];
+  error?: string;
+}
