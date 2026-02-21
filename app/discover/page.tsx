@@ -6,6 +6,7 @@ import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart,
 import Link from "next/link";
 import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
+import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 
 interface CheckinWithLikes extends Checkin {
   like_count?: number;
@@ -177,6 +178,35 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
           </span>
         )}
       </div>
+
+      {/* Flavor tags */}
+      {checkin.flavor_notes && (() => {
+        try {
+          const tags = JSON.parse(checkin.flavor_notes) as string[];
+          if (tags.length > 0) {
+            return (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {tags.map(tagId => {
+                  const tag = FLAVOR_TAGS.find(t => t.id === tagId);
+                  if (!tag) return null;
+                  return (
+                    <span
+                      key={tagId}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-xs"
+                    >
+                      <span>{tag.emoji}</span>
+                      <span>{tag.label}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            );
+          }
+        } catch {
+          return null;
+        }
+        return null;
+      })()}
 
       {/* Like & Comment buttons */}
       <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-2">
