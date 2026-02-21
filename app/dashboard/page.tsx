@@ -157,6 +157,47 @@ function CheckinCard({ checkin, onDelete }: { checkin: Checkin; onDelete?: (id: 
         <p className="text-gray-300 text-sm mb-3">{checkin.review}</p>
       )}
 
+      {/* Category badge */}
+      {checkin.category && checkin.category !== 'cigar' && (
+        <div className="mb-2">
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+            checkin.category === 'cannabis' ? 'bg-green-500/20 text-green-400' :
+            checkin.category === 'hookah' ? 'bg-blue-500/20 text-blue-400' :
+            'bg-purple-500/20 text-purple-400'
+          }`}>
+            {checkin.category === 'cannabis' ? '🌿' : checkin.category === 'hookah' ? '💨' : '🌫️'}
+            {checkin.category.charAt(0).toUpperCase() + checkin.category.slice(1)}
+          </span>
+        </div>
+      )}
+
+      {/* Cannabis info */}
+      {checkin.category === 'cannabis' && (
+        <div className="flex flex-wrap gap-3 text-xs text-gray-400 mb-2">
+          {checkin.strain_name && (
+            <span className="flex items-center gap-1 text-green-400">
+              🌿 {checkin.strain_name}
+            </span>
+          )}
+          {checkin.strain_type && (
+            <span className={`px-2 py-0.5 rounded-full ${
+              checkin.strain_type === 'indica' ? 'bg-purple-500/20 text-purple-400' :
+              checkin.strain_type === 'sativa' ? 'bg-yellow-500/20 text-yellow-400' :
+              'bg-green-500/20 text-green-400'
+            }`}>
+              {checkin.strain_type === 'indica' ? '😴' : checkin.strain_type === 'sativa' ? '⚡' : '🔄'} {checkin.strain_type}
+            </span>
+          )}
+          {checkin.thc_percent && (
+            <span>THC: {checkin.thc_percent}%</span>
+          )}
+          {checkin.effects && (
+            <span className="text-green-400/70">✨ {checkin.effects}</span>
+          )}
+        </div>
+      )}
+
+      {/* Cigar info */}
       <div className="flex flex-wrap gap-3 text-xs text-gray-400">
         {checkin.draw_rating && (
           <span className="flex items-center gap-1">
@@ -236,18 +277,26 @@ export default function DashboardPage() {
   const router = useRouter();
 
   // Form state
+  const [category, setCategory] = useState<'cigar' | 'cannabis' | 'hookah' | 'vape'>('cigar');
   const [brand, setBrand] = useState("");
   const [product, setProduct] = useState("");
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
+  // Cigar fields
   const [drawRating, setDrawRating] = useState(0);
   const [burnRating, setBurnRating] = useState(0);
   const [aromaRating, setAromaRating] = useState(0);
   const [smokeTime, setSmokeTime] = useState("");
+  const [selectedFlavors, setSelectedFlavors] = useState<string[]>([]);
+  // Cannabis fields
+  const [strainName, setStrainName] = useState("");
+  const [strainType, setStrainType] = useState<'indica' | 'sativa' | 'hybrid' | ''>('');
+  const [effects, setEffects] = useState("");
+  const [thcPercent, setThcPercent] = useState("");
+  // Image
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [selectedFlavors, setSelectedFlavors] = useState<string[]>([]);
   
   // Success state for post-checkin celebration
   const [showSuccess, setShowSuccess] = useState(false);
@@ -352,16 +401,23 @@ export default function DashboardPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          category,
           brand,
           product: product || undefined,
           rating: rating || undefined,
           review: review || undefined,
-          flavorNotes: selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : undefined,
-          drawRating: drawRating || undefined,
-          burnRating: burnRating || undefined,
-          aromaRating: aromaRating || undefined,
-          smokeTimeMins: smokeTime ? parseInt(smokeTime) : undefined,
           imageUrl,
+          // Cigar fields
+          flavorNotes: category === 'cigar' && selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : undefined,
+          drawRating: category === 'cigar' ? (drawRating || undefined) : undefined,
+          burnRating: category === 'cigar' ? (burnRating || undefined) : undefined,
+          aromaRating: category === 'cigar' ? (aromaRating || undefined) : undefined,
+          smokeTimeMins: smokeTime ? parseInt(smokeTime) : undefined,
+          // Cannabis fields
+          strainName: category === 'cannabis' ? (strainName || undefined) : undefined,
+          strainType: category === 'cannabis' ? (strainType || undefined) : undefined,
+          effects: category === 'cannabis' ? (effects || undefined) : undefined,
+          thcPercent: category === 'cannabis' && thcPercent ? parseFloat(thcPercent) : undefined,
         }),
       });
 
@@ -384,15 +440,23 @@ export default function DashboardPage() {
         });
         
         // Reset form fields
+        setCategory('cigar');
         setBrand("");
         setProduct("");
         setRating(0);
         setReview("");
+        // Cigar
         setSelectedFlavors([]);
         setDrawRating(0);
         setBurnRating(0);
         setAromaRating(0);
         setSmokeTime("");
+        // Cannabis
+        setStrainName("");
+        setStrainType('');
+        setEffects("");
+        setThcPercent("");
+        // Image
         setImageFile(null);
         setImagePreview(null);
         
@@ -693,6 +757,33 @@ export default function DashboardPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Category Selector */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">What are you smoking?</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { id: 'cigar', label: 'Cigar', emoji: '🚬' },
+                      { id: 'cannabis', label: 'Cannabis', emoji: '🌿' },
+                      { id: 'hookah', label: 'Hookah', emoji: '💨' },
+                      { id: 'vape', label: 'Vape', emoji: '🌫️' },
+                    ].map(cat => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setCategory(cat.id as typeof category)}
+                        className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${
+                          category === cat.id
+                            ? "bg-amber-500 text-black"
+                            : "bg-white/5 text-gray-400 hover:bg-white/10"
+                        }`}
+                      >
+                        <span className="text-xl">{cat.emoji}</span>
+                        <span className="text-xs font-medium">{cat.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Image Upload */}
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Photo (optional)</label>
@@ -722,65 +813,139 @@ export default function DashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Brand *</label>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    {category === 'cannabis' ? 'Dispensary / Brand *' : 'Brand *'}
+                  </label>
                   <input
                     type="text"
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
                     required
-                    placeholder="e.g., Padron, Arturo Fuente"
+                    placeholder={
+                      category === 'cannabis' ? "e.g., Cookies, Stiiizy" :
+                      category === 'hookah' ? "e.g., Al Fakher, Starbuzz" :
+                      category === 'vape' ? "e.g., Pax, Juul" :
+                      "e.g., Padron, Arturo Fuente"
+                    }
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Product / Line</label>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    {category === 'cannabis' ? 'Strain Name' : 'Product / Line'}
+                  </label>
                   <input
                     type="text"
-                    value={product}
-                    onChange={(e) => setProduct(e.target.value)}
-                    placeholder="e.g., 1926 Serie, Opus X"
+                    value={category === 'cannabis' ? strainName : product}
+                    onChange={(e) => category === 'cannabis' ? setStrainName(e.target.value) : setProduct(e.target.value)}
+                    placeholder={
+                      category === 'cannabis' ? "e.g., Blue Dream, OG Kush" :
+                      category === 'hookah' ? "e.g., Double Apple, Mint" :
+                      category === 'vape' ? "e.g., Mango, Mint" :
+                      "e.g., 1926 Serie, Opus X"
+                    }
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-all"
                   />
                 </div>
 
                 <StarRating value={rating} onChange={setRating} label="Overall Rating" />
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <StarRating value={drawRating} onChange={setDrawRating} label="Draw" />
-                  <StarRating value={burnRating} onChange={setBurnRating} label="Burn" />
-                  <StarRating value={aromaRating} onChange={setAromaRating} label="Aroma" />
-                </div>
+                {/* Cannabis-specific fields */}
+                {category === 'cannabis' && (
+                  <>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Strain Type</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: 'indica', label: 'Indica', emoji: '😴' },
+                          { id: 'sativa', label: 'Sativa', emoji: '⚡' },
+                          { id: 'hybrid', label: 'Hybrid', emoji: '🔄' },
+                        ].map(type => (
+                          <button
+                            key={type.id}
+                            type="button"
+                            onClick={() => setStrainType(type.id as typeof strainType)}
+                            className={`flex items-center justify-center gap-2 p-3 rounded-xl transition-all ${
+                              strainType === type.id
+                                ? "bg-green-500 text-black"
+                                : "bg-white/5 text-gray-400 hover:bg-white/10"
+                            }`}
+                          >
+                            <span>{type.emoji}</span>
+                            <span className="text-sm font-medium">{type.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                {/* Flavor Tags */}
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Flavor Notes</label>
-                  <div className="flex flex-wrap gap-2">
-                    {FLAVOR_TAGS.map(tag => (
-                      <button
-                        key={tag.id}
-                        type="button"
-                        onClick={() => toggleFlavor(tag.id)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
-                          selectedFlavors.includes(tag.id)
-                            ? "bg-amber-500 text-black font-medium"
-                            : "bg-white/5 text-gray-400 hover:bg-white/10"
-                        }`}
-                      >
-                        <span>{tag.emoji}</span>
-                        <span>{tag.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                  {selectedFlavors.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      {selectedFlavors.length} flavor{selectedFlavors.length !== 1 ? 's' : ''} selected
-                    </p>
-                  )}
-                </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">THC %</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={thcPercent}
+                        onChange={(e) => setThcPercent(e.target.value)}
+                        placeholder="e.g., 22.5"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Effects</label>
+                      <input
+                        type="text"
+                        value={effects}
+                        onChange={(e) => setEffects(e.target.value)}
+                        placeholder="e.g., Relaxed, Euphoric, Creative"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-all"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Cigar-specific fields */}
+                {category === 'cigar' && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <StarRating value={drawRating} onChange={setDrawRating} label="Draw" />
+                      <StarRating value={burnRating} onChange={setBurnRating} label="Burn" />
+                      <StarRating value={aromaRating} onChange={setAromaRating} label="Aroma" />
+                    </div>
+
+                    {/* Flavor Tags */}
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Flavor Notes</label>
+                      <div className="flex flex-wrap gap-2">
+                        {FLAVOR_TAGS.map(tag => (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={() => toggleFlavor(tag.id)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                              selectedFlavors.includes(tag.id)
+                                ? "bg-amber-500 text-black font-medium"
+                                : "bg-white/5 text-gray-400 hover:bg-white/10"
+                            }`}
+                          >
+                            <span>{tag.emoji}</span>
+                            <span>{tag.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {selectedFlavors.length > 0 && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          {selectedFlavors.length} flavor{selectedFlavors.length !== 1 ? 's' : ''} selected
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Smoke Time (minutes)</label>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    {category === 'cannabis' ? 'Session Time (minutes)' : 'Smoke Time (minutes)'}
+                  </label>
                   <input
                     type="number"
                     value={smokeTime}
@@ -804,9 +969,18 @@ export default function DashboardPage() {
                 <button
                   type="submit"
                   disabled={submitting || uploading || !brand.trim()}
-                  className="w-full px-5 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold btn-glow transition-all active:scale-95 disabled:opacity-50"
+                  className={`w-full px-5 py-4 rounded-xl text-white font-semibold btn-glow transition-all active:scale-95 disabled:opacity-50 ${
+                    category === 'cannabis' 
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
+                      : 'bg-gradient-to-r from-amber-500 to-orange-600'
+                  }`}
                 >
-                  {uploading ? "Uploading image..." : submitting ? "Logging..." : "Log Smoke 🚬"}
+                  {uploading ? "Uploading image..." : submitting ? "Logging..." : 
+                    category === 'cannabis' ? "Log Session 🌿" :
+                    category === 'hookah' ? "Log Session 💨" :
+                    category === 'vape' ? "Log Session 🌫️" :
+                    "Log Smoke 🚬"
+                  }
                 </button>
               </form>
             </motion.div>

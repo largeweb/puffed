@@ -10,17 +10,28 @@ export interface SignupRequest {
   password: string;
 }
 
+export type CheckinCategory = 'cigar' | 'cannabis' | 'hookah' | 'vape';
+export type StrainType = 'indica' | 'sativa' | 'hybrid';
+
 export interface CheckinRequest {
+  category?: CheckinCategory;
+  // Common fields
   brand: string;
   product?: string;
   rating?: number;
   review?: string;
+  imageUrl?: string;
+  // Cigar-specific
   flavorNotes?: string;
   drawRating?: number;
   burnRating?: number;
   aromaRating?: number;
   smokeTimeMins?: number;
-  imageUrl?: string;
+  // Cannabis-specific
+  strainName?: string;
+  strainType?: StrainType;
+  effects?: string;
+  thcPercent?: number;
 }
 
 // Response types
@@ -40,17 +51,25 @@ export interface Checkin {
   id: string;
   user_id: string;
   username?: string;
+  category?: CheckinCategory;
+  // Common
   brand: string;
   product?: string;
   rating?: number;
   review?: string;
+  image_url?: string;
+  created_at: number;
+  // Cigar-specific
   flavor_notes?: string;
   draw_rating?: number;
   burn_rating?: number;
   aroma_rating?: number;
   smoke_time_mins?: number;
-  image_url?: string;
-  created_at: number;
+  // Cannabis-specific
+  strain_name?: string;
+  strain_type?: StrainType;
+  effects?: string;
+  thc_percent?: number;
 }
 
 export interface MeResponse {
