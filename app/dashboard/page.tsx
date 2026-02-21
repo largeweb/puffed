@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch } from "react-icons/fi";
 import Link from "next/link";
 import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge } from "@/lib/types";
+import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   return (
@@ -179,6 +180,35 @@ function CheckinCard({ checkin, onDelete }: { checkin: Checkin; onDelete?: (id: 
         )}
       </div>
 
+      {/* Flavor tags */}
+      {checkin.flavor_notes && (() => {
+        try {
+          const tags = JSON.parse(checkin.flavor_notes) as string[];
+          if (tags.length > 0) {
+            return (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {tags.map(tagId => {
+                  const tag = FLAVOR_TAGS.find(t => t.id === tagId);
+                  if (!tag) return null;
+                  return (
+                    <span
+                      key={tagId}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-xs"
+                    >
+                      <span>{tag.emoji}</span>
+                      <span>{tag.label}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            );
+          }
+        } catch {
+          return null;
+        }
+        return null;
+      })()}
+
       <div className="mt-3 pt-3 border-t border-white/5 text-xs text-gray-500">
         {timeAgo}
       </div>
@@ -217,6 +247,7 @@ export default function DashboardPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [selectedFlavors, setSelectedFlavors] = useState<string[]>([]);
   
   // Success state for post-checkin celebration
   const [showSuccess, setShowSuccess] = useState(false);
@@ -282,6 +313,14 @@ export default function DashboardPage() {
     setImagePreview(null);
   };
 
+  const toggleFlavor = (flavorId: string) => {
+    setSelectedFlavors(prev => 
+      prev.includes(flavorId) 
+        ? prev.filter(f => f !== flavorId)
+        : [...prev, flavorId]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!brand.trim()) return;
@@ -317,6 +356,7 @@ export default function DashboardPage() {
           product: product || undefined,
           rating: rating || undefined,
           review: review || undefined,
+          flavorNotes: selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : undefined,
           drawRating: drawRating || undefined,
           burnRating: burnRating || undefined,
           aromaRating: aromaRating || undefined,
@@ -348,6 +388,7 @@ export default function DashboardPage() {
         setProduct("");
         setRating(0);
         setReview("");
+        setSelectedFlavors([]);
         setDrawRating(0);
         setBurnRating(0);
         setAromaRating(0);
@@ -709,6 +750,33 @@ export default function DashboardPage() {
                   <StarRating value={drawRating} onChange={setDrawRating} label="Draw" />
                   <StarRating value={burnRating} onChange={setBurnRating} label="Burn" />
                   <StarRating value={aromaRating} onChange={setAromaRating} label="Aroma" />
+                </div>
+
+                {/* Flavor Tags */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Flavor Notes</label>
+                  <div className="flex flex-wrap gap-2">
+                    {FLAVOR_TAGS.map(tag => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => toggleFlavor(tag.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                          selectedFlavors.includes(tag.id)
+                            ? "bg-amber-500 text-black font-medium"
+                            : "bg-white/5 text-gray-400 hover:bg-white/10"
+                        }`}
+                      >
+                        <span>{tag.emoji}</span>
+                        <span>{tag.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {selectedFlavors.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      {selectedFlavors.length} flavor{selectedFlavors.length !== 1 ? 's' : ''} selected
+                    </p>
+                  )}
                 </div>
 
                 <div>

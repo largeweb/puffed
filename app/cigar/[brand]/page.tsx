@@ -22,6 +22,7 @@ interface CheckinWithUser {
   product: string | null;
   rating: number | null;
   review: string | null;
+  flavor_notes: string | null;
   image_url: string | null;
   created_at: number;
   like_count: number;
@@ -95,6 +96,7 @@ async function getCigarDetail(brand: string): Promise<CigarDetailData | null> {
       c.product,
       c.rating,
       c.review,
+      c.flavor_notes,
       c.image_url,
       c.created_at,
       (SELECT COUNT(*) FROM likes WHERE checkin_id = c.id) as like_count,
@@ -112,6 +114,7 @@ async function getCigarDetail(brand: string): Promise<CigarDetailData | null> {
     product: string | null;
     rating: number | null;
     review: string | null;
+    flavor_notes: string | null;
     image_url: string | null;
     created_at: number;
     like_count: number;
