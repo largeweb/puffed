@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse } from "@/lib/types";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
@@ -274,6 +274,7 @@ export default function DashboardPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [badgeStats, setBadgeStats] = useState({ earned: 0, total: 0 });
+  const [streak, setStreak] = useState({ current: 0, best: 0, active: false });
   const router = useRouter();
 
   // Form state
@@ -331,6 +332,15 @@ export default function DashboardPage() {
         const badgesData: BadgesResponse = await badgesRes.json();
         setBadges(badgesData.badges || []);
         setBadgeStats({ earned: badgesData.earned_count || 0, total: badgesData.total_count || 0 });
+
+        // Load streak
+        const streakRes = await fetch("/api/streak");
+        const streakData: StreakResponse = await streakRes.json();
+        setStreak({ 
+          current: streakData.currentStreak || 0, 
+          best: streakData.bestStreak || 0,
+          active: streakData.streakActive || false
+        });
       } catch (error) {
         console.error("Load error:", error);
         router.push("/login");
@@ -569,7 +579,50 @@ export default function DashboardPage() {
               </p>
               <p className="text-xs text-gray-400">Avg Rating</p>
             </div>
+            {/* Streak */}
+            <div className="ml-auto text-right">
+              <div className="flex items-center justify-end gap-1.5">
+                <span className={`text-3xl font-bold ${streak.active ? 'text-orange-500' : 'text-gray-500'}`}>
+                  {streak.current}
+                </span>
+                <span className="text-2xl">{streak.active ? '🔥' : '❄️'}</span>
+              </div>
+              <p className="text-xs text-gray-400">
+                {streak.active ? 'Day Streak' : 'Streak Frozen'}
+              </p>
+              {streak.best > 0 && streak.best > streak.current && (
+                <p className="text-xs text-gray-500">Best: {streak.best} days</p>
+              )}
+            </div>
           </div>
+          {/* Streak encouragement */}
+          {streak.current > 0 && streak.active && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mt-3 pt-3 border-t border-white/5 text-sm"
+            >
+              <span className="text-gray-400">
+                {streak.current === 1 && "🌟 Great start! Log tomorrow to build your streak!"}
+                {streak.current === 2 && "⚡ Two days in a row! Keep it going!"}
+                {streak.current >= 3 && streak.current < 7 && `💪 ${streak.current} days strong! You're on fire!`}
+                {streak.current >= 7 && streak.current < 14 && `🏆 A whole week! You're a true enthusiast!`}
+                {streak.current >= 14 && streak.current < 30 && `👑 ${streak.current} days! You're legendary!`}
+                {streak.current >= 30 && `🔥 ${streak.current} days! Unstoppable!`}
+              </span>
+            </motion.div>
+          )}
+          {!streak.active && checkins.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mt-3 pt-3 border-t border-white/5 text-sm text-gray-500"
+            >
+              <span>❄️ Log a smoke today to start a new streak!</span>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Badges Section */}

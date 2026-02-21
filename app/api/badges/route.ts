@@ -13,6 +13,30 @@ const BADGE_DEFINITIONS = [
     progress: (stats: UserStats) => ({ current: stats.checkins, target: 1 }),
   },
   {
+    id: "three_day_streak",
+    name: "Hot Streak",
+    description: "Achieve a 3-day streak",
+    emoji: "🔥",
+    check: (stats: UserStats) => stats.bestStreak >= 3,
+    progress: (stats: UserStats) => ({ current: stats.bestStreak, target: 3 }),
+  },
+  {
+    id: "week_streak",
+    name: "Weekly Warrior",
+    description: "Achieve a 7-day streak",
+    emoji: "⚡",
+    check: (stats: UserStats) => stats.bestStreak >= 7,
+    progress: (stats: UserStats) => ({ current: stats.bestStreak, target: 7 }),
+  },
+  {
+    id: "month_streak",
+    name: "Monthly Master",
+    description: "Achieve a 30-day streak",
+    emoji: "🏅",
+    check: (stats: UserStats) => stats.bestStreak >= 30,
+    progress: (stats: UserStats) => ({ current: stats.bestStreak, target: 30 }),
+  },
+  {
     id: "getting_started",
     name: "Getting Started",
     description: "Log 5 check-ins",
@@ -111,6 +135,7 @@ interface UserStats {
   likesGiven: number;
   following: number;
   commentsGiven: number;
+  bestStreak: number;
 }
 
 export const runtime = "edge";
@@ -149,6 +174,7 @@ export async function GET(): Promise<Response> {
       likesResult,
       followingResult,
       commentsResult,
+      datesResult,
     ] = await Promise.all([
       db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ?").bind(userId).first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ? AND rating IS NOT NULL").bind(userId).first<{ count: number }>(),
@@ -158,7 +184,31 @@ export async function GET(): Promise<Response> {
       db.prepare("SELECT COUNT(*) as count FROM likes WHERE user_id = ?").bind(userId).first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) as count FROM follows WHERE follower_id = ?").bind(userId).first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) as count FROM comments WHERE user_id = ?").bind(userId).first<{ count: number }>(),
+      db.prepare(`
+        SELECT DISTINCT date(created_at, 'unixepoch') as checkin_date
+        FROM checkins
+        WHERE user_id = ?
+        ORDER BY checkin_date DESC
+      `).bind(userId).all<{ checkin_date: string }>(),
     ]);
+
+    // Calculate best streak from dates
+    const dates = datesResult.results?.map(r => r.checkin_date) || [];
+    let bestStreak = 0;
+    if (dates.length > 0) {
+      let tempStreak = 1;
+      for (let i = 1; i < dates.length; i++) {
+        const prevDate = new Date(dates[i - 1]);
+        prevDate.setDate(prevDate.getDate() - 1);
+        if (prevDate.toISOString().split('T')[0] === dates[i]) {
+          tempStreak++;
+        } else {
+          bestStreak = Math.max(bestStreak, tempStreak);
+          tempStreak = 1;
+        }
+      }
+      bestStreak = Math.max(bestStreak, tempStreak);
+    }
 
     const stats: UserStats = {
       checkins: checkinsResult?.count || 0,
@@ -169,6 +219,7 @@ export async function GET(): Promise<Response> {
       likesGiven: likesResult?.count || 0,
       following: followingResult?.count || 0,
       commentsGiven: commentsResult?.count || 0,
+      bestStreak,
     };
 
     // Calculate badges
