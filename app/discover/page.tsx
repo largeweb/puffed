@@ -2,9 +2,14 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiUser, FiHome } from "react-icons/fi";
+import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse } from "@/lib/types";
+import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand } from "@/lib/types";
+
+interface CheckinWithLikes extends Checkin {
+  like_count?: number;
+  liked_by_me?: boolean;
+}
 
 function getTimeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -15,9 +20,33 @@ function getTimeAgo(date: Date): string {
   return date.toLocaleDateString();
 }
 
-function CheckinCard({ checkin }: { checkin: Checkin }) {
+function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (id: string) => void }) {
   const date = new Date(checkin.created_at * 1000);
   const timeAgo = getTimeAgo(date);
+  const [liked, setLiked] = useState(checkin.liked_by_me || false);
+  const [likeCount, setLikeCount] = useState(checkin.like_count || 0);
+  const [liking, setLiking] = useState(false);
+
+  const handleLike = async () => {
+    if (liking) return;
+    setLiking(true);
+    try {
+      const res = await fetch("/api/likes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checkinId: checkin.id }),
+      });
+      if (res.ok) {
+        const data: LikeResponse = await res.json();
+        setLiked(data.liked);
+        setLikeCount(prev => data.liked ? prev + 1 : prev - 1);
+      }
+    } catch (err) {
+      console.error("Like error:", err);
+    } finally {
+      setLiking(false);
+    }
+  };
 
   return (
     <motion.div
@@ -26,11 +55,15 @@ function CheckinCard({ checkin }: { checkin: Checkin }) {
       className="glass rounded-2xl p-5"
     >
       {/* User info */}
-      <div className="flex items-center gap-2 mb-3 text-sm text-gray-400">
-        <FiUser size={14} />
-        <span>@{checkin.username}</span>
-        <span>•</span>
-        <span>{timeAgo}</span>
+      <div className="flex items-center gap-2 mb-3 text-sm">
+        <Link 
+          href={`/user/${checkin.username}`}
+          className="text-amber-500 hover:underline font-medium"
+        >
+          @{checkin.username}
+        </Link>
+        <span className="text-gray-500">•</span>
+        <span className="text-gray-500">{timeAgo}</span>
       </div>
 
       {/* Image */}
@@ -83,18 +116,36 @@ function CheckinCard({ checkin }: { checkin: Checkin }) {
           </span>
         )}
       </div>
+
+      {/* Like button */}
+      <div className="mt-3 pt-3 border-t border-white/5 flex items-center">
+        <button
+          onClick={handleLike}
+          disabled={liking}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+            liked 
+              ? "text-red-400 bg-red-500/10" 
+              : "text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+          }`}
+        >
+          <FiHeart size={16} fill={liked ? "currentColor" : "none"} />
+          <span className="text-sm">{likeCount > 0 ? likeCount : "Like"}</span>
+        </button>
+      </div>
     </motion.div>
   );
 }
 
 export default function DiscoverPage() {
-  const [checkins, setCheckins] = useState<Checkin[]>([]);
+  const [checkins, setCheckins] = useState<CheckinWithLikes[]>([]);
+  const [trending, setTrending] = useState<TrendingBrand[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     loadFeed();
+    loadTrending();
   }, []);
 
   async function loadFeed(query = "") {
@@ -114,9 +165,23 @@ export default function DiscoverPage() {
     }
   }
 
+  async function loadTrending() {
+    try {
+      const res = await fetch("/api/trending");
+      const data: TrendingResponse = await res.json();
+      setTrending(data.trending || []);
+    } catch (error) {
+      console.error("Trending error:", error);
+    }
+  }
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     loadFeed(searchQuery);
+  };
+
+  const handleLike = (checkinId: string) => {
+    // Handled in CheckinCard
   };
 
   if (loading) {
@@ -170,6 +235,44 @@ export default function DiscoverPage() {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Trending Section */}
+        {trending.length > 0 && !searchQuery && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <FiTrendingUp className="text-amber-500" />
+              <h2 className="font-semibold">Trending This Week</h2>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+              {trending.map((brand, index) => (
+                <button
+                  key={brand.brand}
+                  onClick={() => {
+                    setSearchQuery(brand.brand);
+                    loadFeed(brand.brand);
+                  }}
+                  className="flex-shrink-0 glass px-4 py-2 rounded-xl hover:border-amber-500/50 transition-all"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🔥"}</span>
+                    <div className="text-left">
+                      <p className="font-medium text-sm">{brand.brand}</p>
+                      <p className="text-xs text-gray-400">
+                        {brand.checkin_count} {brand.checkin_count === 1 ? "smoke" : "smokes"}
+                        {brand.avg_rating && ` • ${brand.avg_rating}★`}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Feed */}
         {searching ? (
           <div className="flex justify-center py-8">
             <motion.div
@@ -186,7 +289,14 @@ export default function DiscoverPage() {
           >
             <p className="text-4xl mb-3">🔍</p>
             <p>No smokes found</p>
-            {searchQuery && <p className="text-sm">Try a different search</p>}
+            {searchQuery && (
+              <button 
+                onClick={() => { setSearchQuery(""); loadFeed(); }}
+                className="mt-2 text-amber-500 hover:underline text-sm"
+              >
+                Clear search
+              </button>
+            )}
           </motion.div>
         ) : (
           <div className="space-y-4">
@@ -197,7 +307,7 @@ export default function DiscoverPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <CheckinCard checkin={checkin} />
+                <CheckinCard checkin={checkin} onLike={handleLike} />
               </motion.div>
             ))}
           </div>

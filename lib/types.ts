@@ -73,3 +73,35 @@ export interface DiscoverResponse {
   checkins?: Checkin[];
   error?: string;
 }
+
+export interface LikeResponse {
+  liked: boolean;
+  error?: string;
+}
+
+export interface TrendingBrand {
+  brand: string;
+  checkin_count: number;
+  avg_rating: number;
+}
+
+export interface TrendingResponse {
+  trending?: TrendingBrand[];
+  topRated?: TrendingBrand[];
+  recentCheckins24h?: number;
+  error?: string;
+}
+
+export interface UserProfileResponse {
+  user?: {
+    username: string;
+    joinedAt: number;
+  };
+  stats?: {
+    totalCheckins: number;
+    avgRating: number;
+    uniqueBrands: number;
+  };
+  checkins?: Checkin[];
+  error?: string;
+}
