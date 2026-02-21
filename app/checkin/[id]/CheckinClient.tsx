@@ -2,9 +2,10 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiArrowLeft, FiHeart, FiMessageCircle, FiSend, FiShare2 } from "react-icons/fi";
+import { FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiArrowLeft, FiHeart, FiMessageCircle, FiSend } from "react-icons/fi";
 import Link from "next/link";
 import type { Checkin, Comment, CommentsResponse, CommentResponse, LikeResponse } from "@/lib/types";
+import ShareMenu from "@/components/ShareMenu";
 
 export interface CheckinWithMeta extends Checkin {
   like_count?: number;
@@ -35,7 +36,6 @@ export default function CheckinClient({ initialCheckin }: Props) {
   const [loadingComments, setLoadingComments] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [posting, setPosting] = useState(false);
-  const [shareStatus, setShareStatus] = useState<string | null>(null);
 
   useEffect(() => {
     loadComments();
@@ -100,42 +100,11 @@ export default function CheckinClient({ initialCheckin }: Props) {
     }
   };
 
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/checkin/${checkin.id}`;
-    const shareText = checkin.rating 
-      ? `I just smoked a ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} and rated it ${checkin.rating}/5! 🚬`
-      : `Check out this ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} smoke session! 🚬`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${checkin.brand} - Puffed`,
-          text: shareText,
-          url: shareUrl,
-        });
-        setShareStatus("Shared!");
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          copyToClipboard(shareUrl);
-        }
-      }
-    } else {
-      copyToClipboard(shareUrl);
-    }
-  };
-
-  const copyToClipboard = async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareStatus("Link copied!");
-      setTimeout(() => setShareStatus(null), 2000);
-    } catch (err) {
-      setShareStatus("Failed to copy");
-      setTimeout(() => setShareStatus(null), 2000);
-    }
-  };
-
   const date = new Date(checkin.created_at * 1000);
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/checkin/${checkin.id}` : `/checkin/${checkin.id}`;
+  const shareText = checkin.rating 
+    ? `I just smoked a ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} and rated it ${checkin.rating}/5! 🚬 #Puffed`
+    : `Check out this ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} smoke session! 🚬 #Puffed`;
   const timeAgo = getTimeAgo(date);
 
   return (
@@ -153,23 +122,13 @@ export default function CheckinClient({ initialCheckin }: Props) {
             <h1 className="font-semibold">{checkin.brand}</h1>
             <p className="text-xs text-gray-400">by @{checkin.username}</p>
           </div>
-          <button
-            onClick={handleShare}
-            className="relative p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-500 transition-all"
-            title="Share"
-          >
-            <FiShare2 size={20} />
-            {shareStatus && (
-              <motion.span
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-amber-500 text-black px-2 py-1 rounded whitespace-nowrap"
-              >
-                {shareStatus}
-              </motion.span>
-            )}
-          </button>
+          <ShareMenu
+            url={shareUrl}
+            text={shareText}
+            title={`${checkin.brand} - Puffed`}
+            iconOnly
+            className="p-2 hover:bg-white/5"
+          />
         </div>
       </header>
 
@@ -263,13 +222,12 @@ export default function CheckinClient({ initialCheckin }: Props) {
               <FiHeart size={18} fill={liked ? "currentColor" : "none"} />
               <span>{likeCount > 0 ? likeCount : "Like"}</span>
             </button>
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 transition-all"
-            >
-              <FiShare2 size={18} />
-              <span>Share</span>
-            </button>
+            <ShareMenu
+              url={shareUrl}
+              text={shareText}
+              title={`${checkin.brand} - Puffed`}
+              className="px-4 py-2"
+            />
           </div>
         </motion.div>
 
