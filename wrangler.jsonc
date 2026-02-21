@@ -17,7 +17,7 @@
   "r2_buckets": [
     {
       "binding": "BUCKET",
-      "bucket_name": "puff"
+      "bucket_name": "puffed"
     }
   ],
 
@@ -34,7 +34,7 @@
       "r2_buckets": [
         {
           "binding": "BUCKET",
-          "bucket_name": "puff"
+          "bucket_name": "puffed"
         }
       ]
     },
@@ -50,7 +50,7 @@
       "r2_buckets": [
         {
           "binding": "BUCKET",
-          "bucket_name": "puff"
+          "bucket_name": "puffed"
         }
       ]
     }
