@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward } from "react-icons/fi";
+import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2 } from "react-icons/fi";
 import Link from "next/link";
 import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse } from "@/lib/types";
 
@@ -32,8 +32,44 @@ function StarRating({ value, onChange, label }: { value: number; onChange: (v: n
 function CheckinCard({ checkin, onDelete }: { checkin: Checkin; onDelete?: (id: string) => void }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
   const date = new Date(checkin.created_at * 1000);
   const timeAgo = getTimeAgo(date);
+  
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/checkin/${checkin.id}`;
+    const shareText = checkin.rating 
+      ? `I just smoked a ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} and rated it ${checkin.rating}/5! 🚬`
+      : `Check out this ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} smoke session! 🚬`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${checkin.brand} - Puffed`,
+          text: shareText,
+          url: shareUrl,
+        });
+        setShareStatus("Shared!");
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          copyToClipboard(shareUrl);
+        }
+      }
+    } else {
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  const copyToClipboard = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareStatus("Link copied!");
+      setTimeout(() => setShareStatus(null), 2000);
+    } catch {
+      setShareStatus("Failed");
+      setTimeout(() => setShareStatus(null), 2000);
+    }
+  };
 
   const handleDelete = async () => {
     if (!confirmDelete) {
@@ -87,6 +123,18 @@ function CheckinCard({ checkin, onDelete }: { checkin: Checkin; onDelete?: (id: 
               <span className="text-amber-500 font-semibold">{checkin.rating}</span>
             </div>
           )}
+          <button
+            onClick={handleShare}
+            className="relative p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-green-400 transition-all"
+            title="Share"
+          >
+            <FiShare2 size={16} />
+            {shareStatus && (
+              <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-green-500 text-black px-2 py-0.5 rounded whitespace-nowrap">
+                {shareStatus}
+              </span>
+            )}
+          </button>
           {onDelete && (
             <button
               onClick={handleDelete}
