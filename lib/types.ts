@@ -123,3 +123,28 @@ export interface FeedResponse {
   };
   error?: string;
 }
+
+// Comments
+export interface Comment {
+  id: string;
+  checkin_id: string;
+  user_id: string;
+  username: string;
+  text: string;
+  created_at: number;
+}
+
+export interface CommentRequest {
+  checkinId: string;
+  text: string;
+}
+
+export interface CommentsResponse {
+  comments?: Comment[];
+  error?: string;
+}
+
+export interface CommentResponse {
+  comment?: Comment;
+  error?: string;
+}

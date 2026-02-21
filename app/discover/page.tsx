@@ -2,13 +2,14 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp } from "react-icons/fi";
+import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand } from "@/lib/types";
+import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse } from "@/lib/types";
 
 interface CheckinWithLikes extends Checkin {
   like_count?: number;
   liked_by_me?: boolean;
+  comment_count?: number;
 }
 
 function getTimeAgo(date: Date): string {
@@ -26,6 +27,12 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
   const [liked, setLiked] = useState(checkin.liked_by_me || false);
   const [likeCount, setLikeCount] = useState(checkin.like_count || 0);
   const [liking, setLiking] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentCount, setCommentCount] = useState(checkin.comment_count || 0);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [posting, setPosting] = useState(false);
 
   const handleLike = async () => {
     if (liking) return;
@@ -45,6 +52,54 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
       console.error("Like error:", err);
     } finally {
       setLiking(false);
+    }
+  };
+
+  const loadComments = async () => {
+    if (loadingComments) return;
+    setLoadingComments(true);
+    try {
+      const res = await fetch(`/api/comments?checkinId=${checkin.id}`);
+      if (res.ok) {
+        const data: CommentsResponse = await res.json();
+        setComments(data.comments || []);
+      }
+    } catch (err) {
+      console.error("Load comments error:", err);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const toggleComments = () => {
+    if (!showComments && comments.length === 0) {
+      loadComments();
+    }
+    setShowComments(!showComments);
+  };
+
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || posting) return;
+    setPosting(true);
+    try {
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checkinId: checkin.id, text: newComment.trim() }),
+      });
+      if (res.ok) {
+        const data: CommentResponse = await res.json();
+        if (data.comment) {
+          setComments(prev => [...prev, data.comment!]);
+          setCommentCount(prev => prev + 1);
+          setNewComment("");
+        }
+      }
+    } catch (err) {
+      console.error("Post comment error:", err);
+    } finally {
+      setPosting(false);
     }
   };
 
@@ -117,8 +172,8 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
         )}
       </div>
 
-      {/* Like button */}
-      <div className="mt-3 pt-3 border-t border-white/5 flex items-center">
+      {/* Like & Comment buttons */}
+      <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-2">
         <button
           onClick={handleLike}
           disabled={liking}
@@ -131,7 +186,76 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
           <FiHeart size={16} fill={liked ? "currentColor" : "none"} />
           <span className="text-sm">{likeCount > 0 ? likeCount : "Like"}</span>
         </button>
+        <button
+          onClick={toggleComments}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+            showComments 
+              ? "text-amber-400 bg-amber-500/10" 
+              : "text-gray-400 hover:text-amber-400 hover:bg-amber-500/10"
+          }`}
+        >
+          <FiMessageCircle size={16} />
+          <span className="text-sm">{commentCount > 0 ? commentCount : "Comment"}</span>
+        </button>
       </div>
+
+      {/* Comments section */}
+      {showComments && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="mt-3 pt-3 border-t border-white/5"
+        >
+          {loadingComments ? (
+            <div className="flex justify-center py-3">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full"
+              />
+            </div>
+          ) : (
+            <>
+              {/* Existing comments */}
+              <div className="space-y-3 mb-3 max-h-48 overflow-y-auto">
+                {comments.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-2">No comments yet. Be the first!</p>
+                ) : (
+                  comments.map((comment) => (
+                    <div key={comment.id} className="flex gap-2 text-sm">
+                      <Link 
+                        href={`/user/${comment.username}`}
+                        className="text-amber-500 hover:underline font-medium flex-shrink-0"
+                      >
+                        @{comment.username}
+                      </Link>
+                      <p className="text-gray-300">{comment.text}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Add comment form */}
+              <form onSubmit={handlePostComment} className="flex gap-2">
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-amber-500/50"
+                />
+                <button
+                  type="submit"
+                  disabled={posting || !newComment.trim()}
+                  className="p-2 rounded-lg bg-amber-500 text-black disabled:opacity-50 transition-all hover:bg-amber-400"
+                >
+                  <FiSend size={16} />
+                </button>
+              </form>
+            </>
+          )}
+        </motion.div>
+      )}
     </motion.div>
   );
 }
