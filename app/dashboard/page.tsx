@@ -433,6 +433,58 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
+        {/* Quick Actions / Tips for new users */}
+        {checkins.length < 5 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass rounded-2xl p-4 mb-6 border border-amber-500/20"
+          >
+            <h3 className="text-sm font-medium text-amber-500 mb-3 flex items-center gap-2">
+              <span>🔥</span> Get Started
+            </h3>
+            <div className="space-y-2">
+              <Link
+                href="/discover"
+                className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-500">
+                  <FiCompass size={16} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium group-hover:text-amber-500 transition-colors">See what others are smoking</p>
+                  <p className="text-xs text-gray-500">Discover popular cigars and reviews</p>
+                </div>
+              </Link>
+              <Link
+                href="/leaderboard"
+                className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-500">
+                  <FiAward size={16} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium group-hover:text-amber-500 transition-colors">Check the leaderboard</p>
+                  <p className="text-xs text-gray-500">See top smokers this week</p>
+                </div>
+              </Link>
+              <button
+                onClick={() => setShowForm(true)}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 transition-all group border border-amber-500/30"
+              >
+                <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black">
+                  <FiPlus size={16} />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-amber-500">Log your {checkins.length === 0 ? "first" : "next"} smoke</p>
+                  <p className="text-xs text-gray-500">Track flavors, ratings & more</p>
+                </div>
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {/* Check-ins */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold">Recent Smokes</h2>
