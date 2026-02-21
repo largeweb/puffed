@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateId, hashPassword, createSessionCookie } from "@/lib/auth";
 import { getRequestContext } from "@cloudflare/next-on-pages";
+import type { SignupRequest } from "@/lib/types";
 
 export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    const { username, password } = (await request.json()) as SignupRequest;
 
     if (!username || !password) {
       return NextResponse.json(

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseSessionCookie, generateId } from "@/lib/auth";
 import { getRequestContext } from "@cloudflare/next-on-pages";
+import type { CheckinRequest } from "@/lib/types";
 
 export const runtime = "edge";
 
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as CheckinRequest;
     const { brand, product, rating, review, flavorNotes, drawRating, burnRating, aromaRating, smokeTimeMins } = body;
 
     if (!brand) {

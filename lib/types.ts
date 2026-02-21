@@ -1,17 +1,38 @@
-// API Response types
+// Request body types
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface SignupRequest {
+  username: string;
+  password: string;
+}
+
+export interface CheckinRequest {
+  brand: string;
+  product?: string;
+  rating?: number;
+  review?: string;
+  flavorNotes?: string;
+  drawRating?: number;
+  burnRating?: number;
+  aromaRating?: number;
+  smokeTimeMins?: number;
+}
+
+// Response types
+
 export interface AuthResponse {
   success?: boolean;
-  error?: string;
   username?: string;
+  error?: string;
 }
 
 export interface User {
   id: string;
   username: string;
-}
-
-export interface MeResponse {
-  user: User | null;
 }
 
 export interface Checkin {
@@ -29,13 +50,12 @@ export interface Checkin {
   created_at: number;
 }
 
-export interface CheckinsResponse {
-  checkins?: Checkin[];
+export interface MeResponse {
+  user?: User;
   error?: string;
 }
 
-export interface CreateCheckinResponse {
-  success?: boolean;
-  id?: string;
+export interface CheckinsResponse {
+  checkins?: Checkin[];
   error?: string;
 }

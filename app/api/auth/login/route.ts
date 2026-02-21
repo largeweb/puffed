@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateId, verifyPassword, createSessionCookie } from "@/lib/auth";
 import { getRequestContext } from "@cloudflare/next-on-pages";
+import type { LoginRequest } from "@/lib/types";
 
 export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    const { username, password } = (await request.json()) as LoginRequest;
 
     if (!username || !password) {
       return NextResponse.json(

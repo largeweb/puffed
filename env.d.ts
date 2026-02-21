@@ -3,6 +3,7 @@
 // Runtime types generated with workerd@1.20250617.0 2025-07-05 nodejs_compat
 declare namespace Cloudflare {
 	interface Env {
+		DB: D1Database;
 	}
 }
 interface CloudflareEnv extends Cloudflare.Env {}
