@@ -192,3 +192,17 @@ export interface LeaderboardResponse {
   thisMonth?: LeaderboardEntry[];
   error?: string;
 }
+
+// Suggested Users
+export interface SuggestedUser {
+  username: string;
+  bio: string | null;
+  checkin_count: number;
+  follower_count: number;
+  is_following: boolean;
+}
+
+export interface SuggestedUsersResponse {
+  users?: SuggestedUser[];
+  error?: string;
+}

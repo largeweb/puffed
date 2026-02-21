@@ -2,9 +2,9 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiShare2 } from "react-icons/fi";
+import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiShare2, FiUsers, FiUserPlus, FiUserCheck } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse } from "@/lib/types";
+import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse } from "@/lib/types";
 
 interface CheckinWithLikes extends Checkin {
   like_count?: number;
@@ -315,13 +315,16 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
 export default function DiscoverPage() {
   const [checkins, setCheckins] = useState<CheckinWithLikes[]>([]);
   const [trending, setTrending] = useState<TrendingBrand[]>([]);
+  const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
+  const [followingUsers, setFollowingUsers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadFeed();
     loadTrending();
+    loadSuggestedUsers();
   }, []);
 
   async function loadFeed(query = "") {
@@ -348,6 +351,45 @@ export default function DiscoverPage() {
       setTrending(data.trending || []);
     } catch (error) {
       console.error("Trending error:", error);
+    }
+  }
+
+  async function loadSuggestedUsers() {
+    try {
+      const res = await fetch("/api/users/suggested");
+      const data: SuggestedUsersResponse = await res.json();
+      setSuggestedUsers(data.users || []);
+      // Track which users are already followed
+      const followedSet = new Set(
+        (data.users || []).filter(u => u.is_following).map(u => u.username)
+      );
+      setFollowingUsers(followedSet);
+    } catch (error) {
+      console.error("Suggested users error:", error);
+    }
+  }
+
+  async function handleFollow(username: string) {
+    try {
+      const res = await fetch("/api/follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
+      });
+      if (res.ok) {
+        const data: FollowResponse = await res.json();
+        setFollowingUsers(prev => {
+          const next = new Set(prev);
+          if (data.following) {
+            next.add(username);
+          } else {
+            next.delete(username);
+          }
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error("Follow error:", error);
     }
   }
 
@@ -454,6 +496,66 @@ export default function DiscoverPage() {
                   </div>
                 </button>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* People to Follow Section */}
+        {suggestedUsers.length > 0 && !searchQuery && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <FiUsers className="text-amber-500" />
+              <h2 className="font-semibold">People to Follow</h2>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+              {suggestedUsers.map((user) => {
+                const isFollowing = followingUsers.has(user.username);
+                return (
+                  <div
+                    key={user.username}
+                    className="flex-shrink-0 glass px-4 py-3 rounded-xl min-w-[160px]"
+                  >
+                    <Link 
+                      href={`/user/${user.username}`}
+                      className="block mb-2"
+                    >
+                      <p className="font-medium text-amber-500 hover:underline">@{user.username}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {user.checkin_count} {user.checkin_count === 1 ? "smoke" : "smokes"}
+                        {user.follower_count > 0 && ` • ${user.follower_count} followers`}
+                      </p>
+                      {user.bio && (
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{user.bio}</p>
+                      )}
+                    </Link>
+                    <button
+                      onClick={() => handleFollow(user.username)}
+                      className={`w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                        isFollowing
+                          ? "bg-amber-500/20 text-amber-500 hover:bg-red-500/20 hover:text-red-400"
+                          : "bg-amber-500 text-black hover:bg-amber-400"
+                      }`}
+                    >
+                      {isFollowing ? (
+                        <>
+                          <FiUserCheck size={14} />
+                          <span>Following</span>
+                        </>
+                      ) : (
+                        <>
+                          <FiUserPlus size={14} />
+                          <span>Follow</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </motion.div>
         )}
