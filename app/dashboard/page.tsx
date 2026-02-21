@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2 } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge } from "@/lib/types";
 
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   return (
@@ -201,6 +201,8 @@ export default function DashboardPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [badgeStats, setBadgeStats] = useState({ earned: 0, total: 0 });
   const router = useRouter();
 
   // Form state
@@ -239,6 +241,12 @@ export default function DashboardPage() {
         const notifRes = await fetch("/api/notifications?countOnly=true");
         const notifData: NotificationCountResponse = await notifRes.json();
         setUnreadCount(notifData.unread_count || 0);
+
+        // Load badges
+        const badgesRes = await fetch("/api/badges");
+        const badgesData: BadgesResponse = await badgesRes.json();
+        setBadges(badgesData.badges || []);
+        setBadgeStats({ earned: badgesData.earned_count || 0, total: badgesData.total_count || 0 });
       } catch (error) {
         console.error("Load error:", error);
         router.push("/login");
@@ -432,6 +440,71 @@ export default function DashboardPage() {
             </div>
           </div>
         </motion.div>
+
+        {/* Badges Section */}
+        {badges.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="glass rounded-2xl p-5 mb-6"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <FiAward className="text-amber-500" />
+                <h2 className="text-sm text-gray-400">Badges</h2>
+              </div>
+              <span className="text-xs text-gray-500">{badgeStats.earned}/{badgeStats.total} earned</span>
+            </div>
+            
+            {/* Earned badges */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {badges.filter(b => b.earned).map(badge => (
+                <div
+                  key={badge.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/30"
+                  title={badge.description}
+                >
+                  <span className="text-lg">{badge.emoji}</span>
+                  <span className="text-xs font-medium text-amber-500">{badge.name}</span>
+                </div>
+              ))}
+              {badges.filter(b => b.earned).length === 0 && (
+                <p className="text-xs text-gray-500">No badges earned yet. Keep smoking! 🔥</p>
+              )}
+            </div>
+
+            {/* Next badge to unlock */}
+            {badges.filter(b => !b.earned).length > 0 && (
+              <div className="pt-3 border-t border-white/5">
+                <p className="text-xs text-gray-500 mb-2">Next up:</p>
+                {(() => {
+                  const nextBadge = badges.find(b => !b.earned && b.progress !== undefined);
+                  if (!nextBadge) return null;
+                  const progressPct = Math.min(100, Math.round((nextBadge.progress! / nextBadge.target!) * 100));
+                  return (
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl grayscale opacity-50">{nextBadge.emoji}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-gray-300">{nextBadge.name}</span>
+                          <span className="text-xs text-gray-500">{nextBadge.progress}/{nextBadge.target}</span>
+                        </div>
+                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all"
+                            style={{ width: `${progressPct}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">{nextBadge.description}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Quick Actions / Tips for new users */}
         {checkins.length < 5 && (
