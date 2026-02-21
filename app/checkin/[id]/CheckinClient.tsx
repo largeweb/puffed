@@ -6,6 +6,7 @@ import { FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiArrowLeft, FiHeart, FiMe
 import Link from "next/link";
 import type { Checkin, Comment, CommentsResponse, CommentResponse, LikeResponse } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
+import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 
 export interface CheckinWithMeta extends Checkin {
   like_count?: number;
@@ -181,9 +182,35 @@ export default function CheckinClient({ initialCheckin }: Props) {
             <p className="text-gray-200 mb-4 text-lg leading-relaxed">{checkin.review}</p>
           )}
 
-          {checkin.flavor_notes && (
-            <p className="text-gray-400 italic mb-4">&quot;{checkin.flavor_notes}&quot;</p>
-          )}
+          {/* Flavor tags */}
+          {checkin.flavor_notes && (() => {
+            try {
+              const tags = JSON.parse(checkin.flavor_notes) as string[];
+              if (tags.length > 0) {
+                return (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {tags.map(tagId => {
+                      const tag = FLAVOR_TAGS.find(t => t.id === tagId);
+                      if (!tag) return null;
+                      return (
+                        <span
+                          key={tagId}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-400 text-sm"
+                        >
+                          <span>{tag.emoji}</span>
+                          <span>{tag.label}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                );
+              }
+            } catch {
+              // Fall back to showing raw text if not JSON
+              return <p className="text-gray-400 italic mb-4">&quot;{checkin.flavor_notes}&quot;</p>;
+            }
+            return null;
+          })()}
 
           <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-4">
             {checkin.draw_rating && (

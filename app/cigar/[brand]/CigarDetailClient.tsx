@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import { GiCigarette } from "react-icons/gi";
 import type { LikeResponse } from "@/lib/types";
+import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 
 interface BrandStats {
   brand: string;
@@ -33,6 +34,7 @@ interface CheckinWithUser {
   product: string | null;
   rating: number | null;
   review: string | null;
+  flavor_notes: string | null;
   image_url: string | null;
   created_at: number;
   like_count: number;
@@ -141,6 +143,35 @@ function CheckinCard({ checkin }: { checkin: CheckinWithUser }) {
               "{checkin.review}"
             </p>
           )}
+
+          {/* Flavor tags */}
+          {checkin.flavor_notes && (() => {
+            try {
+              const tags = JSON.parse(checkin.flavor_notes) as string[];
+              if (tags.length > 0) {
+                return (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {tags.map(tagId => {
+                      const tag = FLAVOR_TAGS.find(t => t.id === tagId);
+                      if (!tag) return null;
+                      return (
+                        <span
+                          key={tagId}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-700/30 text-amber-300 text-xs"
+                        >
+                          <span>{tag.emoji}</span>
+                          <span>{tag.label}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                );
+              }
+            } catch {
+              return null;
+            }
+            return null;
+          })()}
 
           <div className="flex items-center gap-4 pt-2 border-t border-amber-900/20">
             <button
