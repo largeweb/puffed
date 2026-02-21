@@ -24,53 +24,58 @@ interface CheckinRow {
 }
 
 async function getCheckin(id: string): Promise<CheckinWithMeta | null> {
-  const { env } = getRequestContext();
-  const DB = env.DB;
+  try {
+    const { env } = getRequestContext();
+    const DB = env.DB;
 
-  const checkin = await DB.prepare(`
-    SELECT c.*, u.username
-    FROM checkins c
-    JOIN users u ON c.user_id = u.id
-    WHERE c.id = ?
-  `).bind(id).first<CheckinRow>();
+    const checkin = await DB.prepare(`
+      SELECT c.*, u.username
+      FROM checkins c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.id = ?
+    `).bind(id).first<CheckinRow>();
 
-  if (!checkin) return null;
+    if (!checkin) return null;
 
-  // Get like count
-  const likeCountResult = await DB.prepare(
-    "SELECT COUNT(*) as count FROM likes WHERE checkin_id = ?"
-  ).bind(id).first<{ count: number }>();
-  const likeCount = likeCountResult?.count || 0;
+    // Get like count
+    const likeCountResult = await DB.prepare(
+      "SELECT COUNT(*) as count FROM likes WHERE checkin_id = ?"
+    ).bind(id).first<{ count: number }>();
+    const likeCount = likeCountResult?.count || 0;
 
-  // Get comment count
-  const commentCountResult = await DB.prepare(
-    "SELECT COUNT(*) as count FROM comments WHERE checkin_id = ?"
-  ).bind(id).first<{ count: number }>();
-  const commentCount = commentCountResult?.count || 0;
+    // Get comment count
+    const commentCountResult = await DB.prepare(
+      "SELECT COUNT(*) as count FROM comments WHERE checkin_id = ?"
+    ).bind(id).first<{ count: number }>();
+    const commentCount = commentCountResult?.count || 0;
 
-  // Check if current user liked it
-  const cookieStore = await cookies();
-  const session = cookieStore.get("session")?.value;
-  let likedByMe = false;
+    // Check if current user liked it
+    const cookieStore = await cookies();
+    const session = cookieStore.get("session")?.value;
+    let likedByMe = false;
 
-  if (session) {
-    const sessionRow = await DB.prepare(
-      "SELECT user_id FROM sessions WHERE id = ?"
-    ).bind(session).first<{ user_id: string }>();
-    if (sessionRow) {
-      const likeRow = await DB.prepare(
-        "SELECT 1 FROM likes WHERE checkin_id = ? AND user_id = ?"
-      ).bind(id, sessionRow.user_id).first();
-      likedByMe = !!likeRow;
+    if (session) {
+      const sessionRow = await DB.prepare(
+        "SELECT user_id FROM sessions WHERE id = ?"
+      ).bind(session).first<{ user_id: string }>();
+      if (sessionRow) {
+        const likeRow = await DB.prepare(
+          "SELECT 1 FROM likes WHERE checkin_id = ? AND user_id = ?"
+        ).bind(id, sessionRow.user_id).first();
+        likedByMe = !!likeRow;
+      }
     }
-  }
 
-  return {
-    ...checkin,
-    like_count: likeCount,
-    liked_by_me: likedByMe,
-    comment_count: commentCount,
-  };
+    return {
+      ...checkin,
+      like_count: likeCount,
+      liked_by_me: likedByMe,
+      comment_count: commentCount,
+    };
+  } catch (error) {
+    console.error("getCheckin error:", error);
+    return null;
+  }
 }
 
 export async function generateMetadata({ 
