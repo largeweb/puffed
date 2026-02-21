@@ -219,43 +219,47 @@ export default function SearchPage() {
                 </h2>
                 <div className="space-y-2">
                   {cigars.map((cigar, idx) => (
-                    <motion.div
+                    <Link
                       key={`${cigar.brand}-${cigar.product}-${idx}`}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="flex items-center gap-3 p-3 bg-stone-800/40 rounded-xl border border-amber-900/20"
+                      href={`/cigar/${encodeURIComponent(cigar.brand || '')}`}
                     >
-                      {cigar.last_checkin_image ? (
-                        <img
-                          src={cigar.last_checkin_image}
-                          alt={cigar.brand}
-                          className="w-12 h-12 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gradient-to-br from-amber-800 to-amber-950 rounded-lg flex items-center justify-center">
-                          <GiCigarette className="text-amber-400/60" size={20} />
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium text-amber-100">{cigar.brand}</p>
-                        {cigar.product && (
-                          <p className="text-sm text-amber-200/70">{cigar.product}</p>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="flex items-center gap-3 p-3 bg-stone-800/40 rounded-xl border border-amber-900/20 hover:border-amber-700/40 transition-colors"
+                      >
+                        {cigar.last_checkin_image ? (
+                          <img
+                            src={cigar.last_checkin_image}
+                            alt={cigar.brand}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gradient-to-br from-amber-800 to-amber-950 rounded-lg flex items-center justify-center">
+                            <GiCigarette className="text-amber-400/60" size={20} />
+                          </div>
                         )}
-                        <div className="flex items-center gap-3 text-xs text-amber-400/50 mt-1">
-                          {cigar.avg_rating && (
-                            <span className="flex items-center gap-1">
-                              <FiStar className="text-amber-400" size={12} />
-                              {cigar.avg_rating}
-                            </span>
+                        <div className="flex-1">
+                          <p className="font-medium text-amber-100">{cigar.brand}</p>
+                          {cigar.product && (
+                            <p className="text-sm text-amber-200/70">{cigar.product}</p>
                           )}
-                          <span className="flex items-center gap-1">
-                            <FiHash size={12} />
-                            {cigar.total_checkins} check-in{cigar.total_checkins !== 1 ? "s" : ""}
-                          </span>
+                          <div className="flex items-center gap-3 text-xs text-amber-400/50 mt-1">
+                            {cigar.avg_rating && (
+                              <span className="flex items-center gap-1">
+                                <FiStar className="text-amber-400" size={12} />
+                                {cigar.avg_rating}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <FiHash size={12} />
+                              {cigar.total_checkins} check-in{cigar.total_checkins !== 1 ? "s" : ""}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
+                      </motion.div>
+                    </Link>
                   ))}
                 </div>
               </div>

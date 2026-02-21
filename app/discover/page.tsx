@@ -443,12 +443,9 @@ export default function DiscoverPage() {
             </div>
             <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
               {trending.map((brand, index) => (
-                <button
+                <Link
                   key={brand.brand}
-                  onClick={() => {
-                    setSearchQuery(brand.brand);
-                    loadFeed(brand.brand);
-                  }}
+                  href={`/cigar/${encodeURIComponent(brand.brand)}`}
                   className="flex-shrink-0 glass px-4 py-2 rounded-xl hover:border-amber-500/50 transition-all"
                 >
                   <div className="flex items-center gap-2">
@@ -461,7 +458,7 @@ export default function DiscoverPage() {
                       </p>
                     </div>
                   </div>
-                </button>
+                </Link>
               ))}
             </div>
           </motion.div>
