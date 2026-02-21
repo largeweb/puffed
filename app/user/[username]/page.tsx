@@ -2,9 +2,9 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect, use } from "react";
-import { FiArrowLeft, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHeart, FiAward } from "react-icons/fi";
+import { FiArrowLeft, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHeart, FiUserPlus, FiUserCheck } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, UserProfileResponse } from "@/lib/types";
+import type { Checkin, UserProfileResponse, FollowResponse } from "@/lib/types";
 
 interface CheckinWithLikes extends Checkin {
   like_count: number;
@@ -100,6 +100,8 @@ interface UserStats {
   totalCheckins: number;
   avgRating: number;
   uniqueBrands: number;
+  following: number;
+  followers: number;
 }
 
 export default function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {
@@ -109,6 +111,9 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const [checkins, setCheckins] = useState<CheckinWithLikes[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -126,6 +131,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         setUser(data.user || null);
         setStats(data.stats || null);
         setCheckins((data.checkins as CheckinWithLikes[]) || []);
+        setIsFollowing(data.isFollowing || false);
+        setIsOwnProfile(data.isOwnProfile || false);
       } catch (err) {
         console.error("Load error:", err);
         setError("Failed to load profile");
@@ -136,6 +143,33 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
     loadProfile();
   }, [username]);
+
+  const handleFollow = async () => {
+    if (followLoading) return;
+    setFollowLoading(true);
+    try {
+      const res = await fetch("/api/follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
+      });
+      if (res.ok) {
+        const data: FollowResponse = await res.json();
+        setIsFollowing(data.following);
+        // Update follower count
+        if (stats) {
+          setStats({
+            ...stats,
+            followers: data.following ? stats.followers + 1 : stats.followers - 1,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Follow error:", err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -167,14 +201,39 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     <main className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-white/5">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/discover" className="p-2 -ml-2 rounded-lg hover:bg-white/5 transition-all">
-            <FiArrowLeft size={20} />
-          </Link>
-          <div>
-            <h1 className="font-semibold">@{user?.username}</h1>
-            <p className="text-xs text-gray-400">Joined {joinDate}</p>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/discover" className="p-2 -ml-2 rounded-lg hover:bg-white/5 transition-all">
+              <FiArrowLeft size={20} />
+            </Link>
+            <div>
+              <h1 className="font-semibold">@{user?.username}</h1>
+              <p className="text-xs text-gray-400">Joined {joinDate}</p>
+            </div>
           </div>
+          {!isOwnProfile && (
+            <button
+              onClick={handleFollow}
+              disabled={followLoading}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                isFollowing
+                  ? "bg-white/10 text-white hover:bg-red-500/20 hover:text-red-400"
+                  : "bg-amber-500 text-black hover:bg-amber-400"
+              }`}
+            >
+              {isFollowing ? (
+                <>
+                  <FiUserCheck size={16} />
+                  <span>Following</span>
+                </>
+              ) : (
+                <>
+                  <FiUserPlus size={16} />
+                  <span>Follow</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </header>
 
@@ -185,18 +244,26 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           animate={{ opacity: 1, y: 0 }}
           className="glass rounded-2xl p-5 mb-6"
         >
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-5 gap-2 text-center">
             <div>
-              <p className="text-2xl font-bold text-amber-500">{stats?.totalCheckins || 0}</p>
+              <p className="text-xl font-bold text-amber-500">{stats?.totalCheckins || 0}</p>
               <p className="text-xs text-gray-400">Smokes</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-amber-500">{stats?.avgRating || 0}</p>
-              <p className="text-xs text-gray-400">Avg Rating</p>
+              <p className="text-xl font-bold text-amber-500">{stats?.avgRating || 0}</p>
+              <p className="text-xs text-gray-400">Rating</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-amber-500">{stats?.uniqueBrands || 0}</p>
+              <p className="text-xl font-bold text-amber-500">{stats?.uniqueBrands || 0}</p>
               <p className="text-xs text-gray-400">Brands</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-white">{stats?.followers || 0}</p>
+              <p className="text-xs text-gray-400">Followers</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-white">{stats?.following || 0}</p>
+              <p className="text-xs text-gray-400">Following</p>
             </div>
           </div>
         </motion.div>

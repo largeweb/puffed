@@ -35,6 +35,17 @@ CREATE TABLE IF NOT EXISTS checkins (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Follows table
+CREATE TABLE IF NOT EXISTS follows (
+  id TEXT PRIMARY KEY,
+  follower_id TEXT NOT NULL,
+  following_id TEXT NOT NULL,
+  created_at INTEGER DEFAULT (unixepoch()),
+  FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(follower_id, following_id)
+);
+
 -- Likes table
 CREATE TABLE IF NOT EXISTS likes (
   id TEXT PRIMARY KEY,
@@ -54,3 +65,5 @@ CREATE INDEX IF NOT EXISTS idx_checkins_created_at ON checkins(created_at);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_likes_checkin_id ON likes(checkin_id);
 CREATE INDEX IF NOT EXISTS idx_likes_user_id ON likes(user_id);
+CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
+CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);

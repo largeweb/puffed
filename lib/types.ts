@@ -101,7 +101,25 @@ export interface UserProfileResponse {
     totalCheckins: number;
     avgRating: number;
     uniqueBrands: number;
+    following: number;
+    followers: number;
   };
+  isFollowing?: boolean;
+  isOwnProfile?: boolean;
   checkins?: Checkin[];
+  error?: string;
+}
+
+export interface FollowResponse {
+  following: boolean;
+  error?: string;
+}
+
+export interface FeedResponse {
+  checkins?: Checkin[];
+  stats?: {
+    following: number;
+    followers: number;
+  };
   error?: string;
 }
