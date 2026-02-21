@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2 } from "react-icons/fi";
+import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch } from "react-icons/fi";
 import Link from "next/link";
 import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge } from "@/lib/types";
 
@@ -381,6 +381,13 @@ export default function DashboardPage() {
               title="Discover"
             >
               <FiCompass size={20} />
+            </Link>
+            <Link
+              href="/search"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+              title="Search"
+            >
+              <FiSearch size={20} />
             </Link>
             <Link
               href="/leaderboard"

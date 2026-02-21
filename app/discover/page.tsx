@@ -391,6 +391,13 @@ export default function DiscoverPage() {
             </div>
             <div className="flex items-center gap-1">
               <Link 
+                href="/search"
+                className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+                title="Search"
+              >
+                <FiSearch size={20} />
+              </Link>
+              <Link 
                 href="/leaderboard"
                 className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-500 transition-all"
                 title="Leaderboard"
