@@ -4,9 +4,10 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse } from "@/lib/types";
+import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
-import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
+import { FLAVOR_TAGS } from "@/lib/flavors";
+import { CATEGORIES, getCategory } from "@/lib/categories";
 
 interface CheckinWithLikes extends Checkin {
   like_count?: number;
@@ -35,6 +36,8 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
   const [loadingComments, setLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [posting, setPosting] = useState(false);
+
+  const category = getCategory(checkin.category);
 
   const handleLike = async () => {
     if (liking) return;
@@ -107,8 +110,8 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
 
   const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/checkin/${checkin.id}` : `/checkin/${checkin.id}`;
   const shareText = checkin.rating 
-    ? `I just smoked a ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} and rated it ${checkin.rating}/5! 🚬 #Puffed`
-    : `Check out this ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} smoke session! 🚬 #Puffed`;
+    ? `I just smoked a ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} and rated it ${checkin.rating}/5! ${category.emoji} #Puffed`
+    : `Check out this ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} smoke session! ${category.emoji} #Puffed`;
 
   return (
     <motion.div
@@ -116,7 +119,7 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
       animate={{ opacity: 1, y: 0 }}
       className="glass rounded-2xl p-5"
     >
-      {/* User info */}
+      {/* User info + Category badge */}
       <div className="flex items-center gap-2 mb-3 text-sm">
         <Link 
           href={`/user/${checkin.username}`}
@@ -126,6 +129,9 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
         </Link>
         <span className="text-gray-500">•</span>
         <span className="text-gray-500">{timeAgo}</span>
+        <span className={`ml-auto px-2 py-0.5 rounded-full text-xs ${category.bgColor} ${category.color}`}>
+          {category.emoji} {category.label}
+        </span>
       </div>
 
       {/* Image */}
@@ -143,11 +149,19 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
         <div>
           <h3 className="font-semibold text-lg">{checkin.brand}</h3>
           {checkin.product && <p className="text-gray-400 text-sm">{checkin.product}</p>}
+          {/* Cannabis strain info */}
+          {checkin.category === "cannabis" && checkin.strain_name && (
+            <p className="text-green-400 text-sm mt-1">
+              {checkin.strain_name}
+              {checkin.strain_type && <span className="text-gray-500"> ({checkin.strain_type})</span>}
+              {checkin.thc_percent && <span className="text-gray-500"> • {checkin.thc_percent}% THC</span>}
+            </p>
+          )}
         </div>
         {checkin.rating && (
-          <div className="flex items-center gap-1 bg-amber-500/20 px-2 py-1 rounded-lg">
-            <FiStar className="text-amber-500" fill="currentColor" />
-            <span className="text-amber-500 font-semibold">{checkin.rating}</span>
+          <div className={`flex items-center gap-1 ${category.bgColor} px-2 py-1 rounded-lg`}>
+            <FiStar className={category.color} fill="currentColor" />
+            <span className={`${category.color} font-semibold`}>{checkin.rating}</span>
           </div>
         )}
       </div>
@@ -156,30 +170,40 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
         <p className="text-gray-300 text-sm mb-3">{checkin.review}</p>
       )}
 
-      <div className="flex flex-wrap gap-3 text-xs text-gray-400">
-        {checkin.draw_rating && (
-          <span className="flex items-center gap-1">
-            <FiWind /> Draw: {checkin.draw_rating}/5
-          </span>
-        )}
-        {checkin.burn_rating && (
-          <span className="flex items-center gap-1">
-            <FiDroplet /> Burn: {checkin.burn_rating}/5
-          </span>
-        )}
-        {checkin.aroma_rating && (
-          <span className="flex items-center gap-1">
-            <FiSmile /> Aroma: {checkin.aroma_rating}/5
-          </span>
-        )}
-        {checkin.smoke_time_mins && (
-          <span className="flex items-center gap-1">
-            <FiClock /> {checkin.smoke_time_mins} min
-          </span>
-        )}
-      </div>
+      {/* Cannabis effects */}
+      {checkin.category === "cannabis" && checkin.effects && (
+        <p className="text-gray-400 text-sm mb-3">
+          <span className="text-green-400">Effects:</span> {checkin.effects}
+        </p>
+      )}
 
-      {/* Flavor tags */}
+      {/* Cigar-specific ratings */}
+      {checkin.category === "cigar" && (
+        <div className="flex flex-wrap gap-3 text-xs text-gray-400">
+          {checkin.draw_rating && (
+            <span className="flex items-center gap-1">
+              <FiWind /> Draw: {checkin.draw_rating}/5
+            </span>
+          )}
+          {checkin.burn_rating && (
+            <span className="flex items-center gap-1">
+              <FiDroplet /> Burn: {checkin.burn_rating}/5
+            </span>
+          )}
+          {checkin.aroma_rating && (
+            <span className="flex items-center gap-1">
+              <FiSmile /> Aroma: {checkin.aroma_rating}/5
+            </span>
+          )}
+          {checkin.smoke_time_mins && (
+            <span className="flex items-center gap-1">
+              <FiClock /> {checkin.smoke_time_mins} min
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Flavor tags (cigar) */}
       {checkin.flavor_notes && (() => {
         try {
           const tags = JSON.parse(checkin.flavor_notes) as string[];
@@ -190,13 +214,14 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
                   const tag = FLAVOR_TAGS.find(t => t.id === tagId);
                   if (!tag) return null;
                   return (
-                    <span
+                    <Link
                       key={tagId}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-xs"
+                      href={`/flavor/${tagId}`}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-xs hover:bg-amber-500/20 transition-all"
                     >
                       <span>{tag.emoji}</span>
                       <span>{tag.label}</span>
-                    </span>
+                    </Link>
                   );
                 })}
               </div>
@@ -310,6 +335,7 @@ export default function DiscoverPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [followingUsers, setFollowingUsers] = useState<Set<string>>(new Set());
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   useEffect(() => {
     loadFeed();
@@ -317,12 +343,15 @@ export default function DiscoverPage() {
     loadSuggestedUsers();
   }, []);
 
-  async function loadFeed(query = "") {
+  async function loadFeed(query = "", category = activeCategory) {
     try {
       setSearching(true);
-      const url = query 
-        ? `/api/discover?q=${encodeURIComponent(query)}`
-        : "/api/discover";
+      let url = "/api/discover";
+      const params = new URLSearchParams();
+      if (query) params.set("q", query);
+      if (category && category !== "all") params.set("category", category);
+      if (params.toString()) url += `?${params.toString()}`;
+      
       const res = await fetch(url);
       const data: DiscoverResponse = await res.json();
       setCheckins(data.checkins || []);
@@ -385,7 +414,12 @@ export default function DiscoverPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    loadFeed(searchQuery);
+    loadFeed(searchQuery, activeCategory);
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
+    loadFeed(searchQuery, category);
   };
 
   const handleLike = (checkinId: string) => {
@@ -445,7 +479,7 @@ export default function DiscoverPage() {
           </div>
 
           {/* Search */}
-          <form onSubmit={handleSearch} className="relative">
+          <form onSubmit={handleSearch} className="relative mb-3">
             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
@@ -455,13 +489,41 @@ export default function DiscoverPage() {
               className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-all"
             />
           </form>
+
+          {/* Category Filter Tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <button
+              onClick={() => handleCategoryChange("all")}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                activeCategory === "all"
+                  ? "bg-amber-500 text-black font-medium"
+                  : "bg-white/5 text-gray-400 hover:bg-white/10"
+              }`}
+            >
+              All
+            </button>
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => handleCategoryChange(cat.id)}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                  activeCategory === cat.id
+                    ? `${cat.bgColor} ${cat.color} font-medium border border-current`
+                    : "bg-white/5 text-gray-400 hover:bg-white/10"
+                }`}
+              >
+                <span>{cat.emoji}</span>
+                <span>{cat.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Browse by Flavor Section */}
-        {!searchQuery && (
+        {/* Browse by Flavor Section - only show for cigars or all */}
+        {!searchQuery && (activeCategory === "all" || activeCategory === "cigar") && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -493,7 +555,7 @@ export default function DiscoverPage() {
         )}
 
         {/* Trending Section */}
-        {trending.length > 0 && !searchQuery && (
+        {trending.length > 0 && !searchQuery && activeCategory === "all" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -527,7 +589,7 @@ export default function DiscoverPage() {
         )}
 
         {/* People to Follow Section */}
-        {suggestedUsers.length > 0 && !searchQuery && (
+        {suggestedUsers.length > 0 && !searchQuery && activeCategory === "all" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -603,12 +665,12 @@ export default function DiscoverPage() {
           >
             <p className="text-4xl mb-3">🔍</p>
             <p>No smokes found</p>
-            {searchQuery && (
+            {(searchQuery || activeCategory !== "all") && (
               <button 
-                onClick={() => { setSearchQuery(""); loadFeed(); }}
+                onClick={() => { setSearchQuery(""); setActiveCategory("all"); loadFeed("", "all"); }}
                 className="mt-2 text-amber-500 hover:underline text-sm"
               >
-                Clear search
+                Clear filters
               </button>
             )}
           </motion.div>
