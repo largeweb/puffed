@@ -22,16 +22,23 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS checkins (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
+  category TEXT DEFAULT 'cigar',
   brand TEXT NOT NULL,
   product TEXT,
   rating INTEGER,
   review TEXT,
+  image_url TEXT,
+  -- Cigar-specific
   flavor_notes TEXT,
   draw_rating INTEGER,
   burn_rating INTEGER,
   aroma_rating INTEGER,
   smoke_time_mins INTEGER,
-  image_url TEXT,
+  -- Cannabis-specific
+  strain_name TEXT,
+  strain_type TEXT,
+  effects TEXT,
+  thc_percent REAL,
   created_at INTEGER DEFAULT (unixepoch()),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
