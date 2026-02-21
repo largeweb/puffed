@@ -2,9 +2,10 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiShare2, FiUsers, FiUserPlus, FiUserCheck } from "react-icons/fi";
+import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck } from "react-icons/fi";
 import Link from "next/link";
 import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse } from "@/lib/types";
+import ShareMenu from "@/components/ShareMenu";
 
 interface CheckinWithLikes extends Checkin {
   like_count?: number;
@@ -33,7 +34,6 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
   const [loadingComments, setLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [posting, setPosting] = useState(false);
-  const [shareStatus, setShareStatus] = useState<string | null>(null);
 
   const handleLike = async () => {
     if (liking) return;
@@ -104,40 +104,10 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
     }
   };
 
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/checkin/${checkin.id}`;
-    const shareText = checkin.rating 
-      ? `I just smoked a ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} and rated it ${checkin.rating}/5! 🚬`
-      : `Check out this ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} smoke session! 🚬`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${checkin.brand} - Puffed`,
-          text: shareText,
-          url: shareUrl,
-        });
-        setShareStatus("Shared!");
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          copyToClipboard(shareUrl);
-        }
-      }
-    } else {
-      copyToClipboard(shareUrl);
-    }
-  };
-
-  const copyToClipboard = async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareStatus("Link copied!");
-      setTimeout(() => setShareStatus(null), 2000);
-    } catch {
-      setShareStatus("Failed to copy");
-      setTimeout(() => setShareStatus(null), 2000);
-    }
-  };
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/checkin/${checkin.id}` : `/checkin/${checkin.id}`;
+  const shareText = checkin.rating 
+    ? `I just smoked a ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} and rated it ${checkin.rating}/5! 🚬 #Puffed`
+    : `Check out this ${checkin.brand}${checkin.product ? ` ${checkin.product}` : ''} smoke session! 🚬 #Puffed`;
 
   return (
     <motion.div
@@ -233,22 +203,12 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
           <FiMessageCircle size={16} />
           <span className="text-sm">{commentCount > 0 ? commentCount : "Comment"}</span>
         </button>
-        <button
-          onClick={handleShare}
-          className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-gray-400 hover:text-green-400 hover:bg-green-500/10 transition-all ml-auto"
-        >
-          <FiShare2 size={16} />
-          <span className="text-sm">Share</span>
-          {shareStatus && (
-            <motion.span
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs bg-green-500 text-black px-2 py-1 rounded whitespace-nowrap"
-            >
-              {shareStatus}
-            </motion.span>
-          )}
-        </button>
+        <ShareMenu
+          url={shareUrl}
+          text={shareText}
+          title={`${checkin.brand} - Puffed`}
+          className="ml-auto"
+        />
       </div>
 
       {/* Comments section */}
