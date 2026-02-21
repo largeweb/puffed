@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as CheckinRequest;
-    const { brand, product, rating, review, flavorNotes, drawRating, burnRating, aromaRating, smokeTimeMins } = body;
+    const { brand, product, rating, review, flavorNotes, drawRating, burnRating, aromaRating, smokeTimeMins, imageUrl } = body;
 
     if (!brand) {
       return NextResponse.json({ error: "Brand is required" }, { status: 400 });
@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
 
     await db
       .prepare(`
-        INSERT INTO checkins (id, user_id, brand, product, rating, review, flavor_notes, draw_rating, burn_rating, aroma_rating, smoke_time_mins)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO checkins (id, user_id, brand, product, rating, review, flavor_notes, draw_rating, burn_rating, aroma_rating, smoke_time_mins, image_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
         checkinId,
@@ -96,7 +96,8 @@ export async function POST(request: NextRequest) {
         drawRating || null,
         burnRating || null,
         aromaRating || null,
-        smokeTimeMins || null
+        smokeTimeMins || null,
+        imageUrl || null
       )
       .run();
 

@@ -14,6 +14,13 @@
     }
   ],
 
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "puff"
+    }
+  ],
+
   "env": {
     "preview": {
       "vars": { "ENVIRONMENT": "PREVIEW" },
@@ -22,6 +29,12 @@
           "binding": "DB",
           "database_name": "puffed",
           "database_id": "fef01190-390e-4be9-af4c-aa3275960b60"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "BUCKET",
+          "bucket_name": "puff"
         }
       ]
     },
@@ -32,6 +45,12 @@
           "binding": "DB",
           "database_name": "puffed",
           "database_id": "fef01190-390e-4be9-af4c-aa3275960b60"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "BUCKET",
+          "bucket_name": "puff"
         }
       ]
     }

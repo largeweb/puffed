@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS checkins (
   burn_rating INTEGER,
   aroma_rating INTEGER,
   smoke_time_mins INTEGER,
+  image_url TEXT,
   created_at INTEGER DEFAULT (unixepoch()),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

@@ -20,6 +20,7 @@ export interface CheckinRequest {
   burnRating?: number;
   aromaRating?: number;
   smokeTimeMins?: number;
+  imageUrl?: string;
 }
 
 // Response types
@@ -38,6 +39,7 @@ export interface User {
 export interface Checkin {
   id: string;
   user_id: string;
+  username?: string;
   brand: string;
   product?: string;
   rating?: number;
@@ -47,6 +49,7 @@ export interface Checkin {
   burn_rating?: number;
   aroma_rating?: number;
   smoke_time_mins?: number;
+  image_url?: string;
   created_at: number;
 }
 
@@ -56,6 +59,17 @@ export interface MeResponse {
 }
 
 export interface CheckinsResponse {
+  checkins?: Checkin[];
+  error?: string;
+}
+
+export interface UploadResponse {
+  success?: boolean;
+  imageUrl?: string;
+  error?: string;
+}
+
+export interface DiscoverResponse {
   checkins?: Checkin[];
   error?: string;
 }

@@ -3,8 +3,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile } from "react-icons/fi";
-import type { User, Checkin, MeResponse, CheckinsResponse } from "@/lib/types";
+import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX } from "react-icons/fi";
+import Link from "next/link";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse } from "@/lib/types";
 
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   return (
@@ -38,6 +39,17 @@ function CheckinCard({ checkin }: { checkin: Checkin }) {
       animate={{ opacity: 1, y: 0 }}
       className="glass rounded-2xl p-5"
     >
+      {/* Image */}
+      {checkin.image_url && (
+        <div className="mb-3 -mx-5 -mt-5 rounded-t-2xl overflow-hidden">
+          <img 
+            src={checkin.image_url} 
+            alt={checkin.brand}
+            className="w-full h-48 object-cover"
+          />
+        </div>
+      )}
+
       <div className="flex justify-between items-start mb-3">
         <div>
           <h3 className="font-semibold text-lg">{checkin.brand}</h3>
@@ -110,6 +122,9 @@ export default function DashboardPage() {
   const [burnRating, setBurnRating] = useState(0);
   const [aromaRating, setAromaRating] = useState(0);
   const [smokeTime, setSmokeTime] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -145,6 +160,21 @@ export default function DashboardPage() {
     router.push("/");
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => setImagePreview(e.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!brand.trim()) return;
@@ -152,6 +182,26 @@ export default function DashboardPage() {
     setSubmitting(true);
 
     try {
+      let imageUrl: string | undefined;
+
+      // Upload image first if present
+      if (imageFile) {
+        setUploading(true);
+        const formData = new FormData();
+        formData.append("file", imageFile);
+        
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (uploadRes.ok) {
+          const uploadData: UploadResponse = await uploadRes.json();
+          imageUrl = uploadData.imageUrl;
+        }
+        setUploading(false);
+      }
+
       const res = await fetch("/api/checkins", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -164,6 +214,7 @@ export default function DashboardPage() {
           burnRating: burnRating || undefined,
           aromaRating: aromaRating || undefined,
           smokeTimeMins: smokeTime ? parseInt(smokeTime) : undefined,
+          imageUrl,
         }),
       });
 
@@ -182,12 +233,15 @@ export default function DashboardPage() {
         setBurnRating(0);
         setAromaRating(0);
         setSmokeTime("");
+        setImageFile(null);
+        setImagePreview(null);
         setShowForm(false);
       }
     } catch (error) {
       console.error("Submit error:", error);
     } finally {
       setSubmitting(false);
+      setUploading(false);
     }
   };
 
@@ -217,12 +271,20 @@ export default function DashboardPage() {
               <p className="text-xs text-gray-400">@{user?.username}</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
-          >
-            <FiLogOut size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/discover"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+            >
+              <FiCompass size={20} />
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+            >
+              <FiLogOut size={20} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -313,6 +375,34 @@ export default function DashboardPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Image Upload */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Photo (optional)</label>
+                  {imagePreview ? (
+                    <div className="relative rounded-xl overflow-hidden">
+                      <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover" />
+                      <button
+                        type="button"
+                        onClick={clearImage}
+                        className="absolute top-2 right-2 p-2 bg-black/50 rounded-full hover:bg-black/70 transition-all"
+                      >
+                        <FiX size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center justify-center gap-2 w-full py-8 rounded-xl bg-white/5 border border-dashed border-white/20 cursor-pointer hover:border-amber-500/50 transition-all">
+                      <FiCamera size={20} className="text-gray-400" />
+                      <span className="text-gray-400">Add a photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Brand *</label>
                   <input
@@ -338,7 +428,7 @@ export default function DashboardPage() {
 
                 <StarRating value={rating} onChange={setRating} label="Overall Rating" />
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <StarRating value={drawRating} onChange={setDrawRating} label="Draw" />
                   <StarRating value={burnRating} onChange={setBurnRating} label="Burn" />
                   <StarRating value={aromaRating} onChange={setAromaRating} label="Aroma" />
@@ -368,10 +458,10 @@ export default function DashboardPage() {
 
                 <button
                   type="submit"
-                  disabled={submitting || !brand.trim()}
+                  disabled={submitting || uploading || !brand.trim()}
                   className="w-full px-5 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold btn-glow transition-all active:scale-95 disabled:opacity-50"
                 >
-                  {submitting ? "Logging..." : "Log Smoke 🚬"}
+                  {uploading ? "Uploading image..." : submitting ? "Logging..." : "Log Smoke 🚬"}
                 </button>
               </form>
             </motion.div>
