@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect, use } from "react";
 import { FiArrowLeft, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHeart, FiUserPlus, FiUserCheck } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, UserProfileResponse, FollowResponse } from "@/lib/types";
+import type { Checkin, UserProfileResponse, FollowResponse, Badge } from "@/lib/types";
 
 interface CheckinWithLikes extends Checkin {
   like_count: number;
@@ -115,6 +115,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const [isFollowing, setIsFollowing] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [badges, setBadges] = useState<Badge[]>([]);
 
   useEffect(() => {
     async function loadProfile() {
@@ -134,6 +135,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         setCheckins((data.checkins as CheckinWithLikes[]) || []);
         setIsFollowing(data.isFollowing || false);
         setIsOwnProfile(data.isOwnProfile || false);
+        setBadges(data.badges || []);
       } catch (err) {
         console.error("Load error:", err);
         setError("Failed to load profile");
@@ -269,6 +271,30 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
             </div>
           </div>
         </motion.div>
+
+        {/* Badges */}
+        {badges.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="glass rounded-2xl p-4 mb-6"
+          >
+            <p className="text-xs text-gray-400 mb-2">Badges</p>
+            <div className="flex flex-wrap gap-2">
+              {badges.map(badge => (
+                <div
+                  key={badge.id}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30"
+                  title={badge.name}
+                >
+                  <span>{badge.emoji}</span>
+                  <span className="text-xs font-medium text-amber-500">{badge.name}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Bio */}
         {hasBio && (
