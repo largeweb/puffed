@@ -16,7 +16,7 @@ function getTimeAgo(date: Date): string {
   return date.toLocaleDateString();
 }
 
-function NotificationIcon({ type }: { type: string }) {
+function NotificationIcon({ type, emoji }: { type: string; emoji?: string }) {
   switch (type) {
     case 'like':
       return <FiHeart className="text-red-400" />;
@@ -26,6 +26,8 @@ function NotificationIcon({ type }: { type: string }) {
       return <FiMessageCircle className="text-amber-400" />;
     case 'featured':
       return <FiStar className="text-yellow-400" />;
+    case 'reaction':
+      return <span className="text-xl">{emoji || '🔥'}</span>;
     default:
       return <FiBell className="text-gray-400" />;
   }
@@ -79,6 +81,20 @@ function NotificationCard({ notification, onMarkRead }: { notification: Notifica
             )}
           </>
         );
+      case 'reaction':
+        return (
+          <>
+            <Link href={`/user/${notification.from_username}`} className="font-semibold hover:text-amber-500">
+              @{notification.from_username}
+            </Link>
+            {" reacted "}
+            <span className="text-lg">{notification.reaction_emoji || '🔥'}</span>
+            {" to your check-in"}
+            {notification.checkin_brand && (
+              <span className="text-gray-400"> on {notification.checkin_brand}</span>
+            )}
+          </>
+        );
       default:
         return "New notification";
     }
@@ -101,7 +117,7 @@ function NotificationCard({ notification, onMarkRead }: { notification: Notifica
     >
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">
-          <NotificationIcon type={notification.type} />
+          <NotificationIcon type={notification.type} emoji={notification.reaction_emoji} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm">{getMessage()}</p>

@@ -39,6 +39,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<Notificati
   }
 
   // Get notifications with user info and checkin/comment details
+  // For reaction notifications, get the most recent emoji from that user on that checkin
   const notifications = await db.prepare(`
     SELECT 
       n.id,
@@ -51,7 +52,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<Notificati
       n.comment_id,
       cm.text as comment_text,
       n.read,
-      n.created_at
+      n.created_at,
+      (SELECT emoji FROM reactions r 
+       WHERE r.user_id = n.from_user_id AND r.checkin_id = n.checkin_id 
+       ORDER BY r.created_at DESC LIMIT 1) as reaction_emoji
     FROM notifications n
     JOIN users u ON n.from_user_id = u.id
     LEFT JOIN checkins c ON n.checkin_id = c.id
@@ -71,6 +75,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<Notificati
     comment_text: string | null;
     read: number;
     created_at: number;
+    reaction_emoji: string | null;
   }>();
 
   const unreadResult = await db.prepare(
@@ -81,6 +86,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<Notificati
     notifications: notifications.results?.map(n => ({
       ...n,
       read: n.read === 1,
+      reaction_emoji: n.reaction_emoji || undefined,
     })) || [],
     unread_count: unreadResult?.count || 0,
   });
