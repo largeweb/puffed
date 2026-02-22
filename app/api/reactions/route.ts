@@ -122,11 +122,49 @@ export async function POST(request: NextRequest) {
 
       // Create notification if reacting to someone else's checkin
       if (checkin && checkin.user_id !== userId) {
+        const checkinOwnerId = checkin.user_id as string;
+        
+        // Check if this is the owner's first-ever engagement (reaction or like)
+        const existingEngagement = await db.prepare(`
+          SELECT 1 FROM (
+            SELECT 1 FROM reactions r 
+            JOIN checkins c ON r.checkin_id = c.id 
+            WHERE c.user_id = ? AND r.id != ?
+            LIMIT 1
+          )
+          UNION ALL
+          SELECT 1 FROM (
+            SELECT 1 FROM likes l 
+            JOIN checkins c ON l.checkin_id = c.id 
+            WHERE c.user_id = ?
+            LIMIT 1
+          )
+          LIMIT 1
+        `).bind(checkinOwnerId, id, checkinOwnerId).first();
+        
+        const isFirstEngagement = !existingEngagement;
+        
+        // Create the reaction notification
         const notifId = generateId();
         await db.prepare(`
           INSERT INTO notifications (id, user_id, type, from_user_id, checkin_id)
           VALUES (?, ?, 'reaction', ?, ?)
-        `).bind(notifId, checkin.user_id, userId, checkinId).run();
+        `).bind(notifId, checkinOwnerId, userId, checkinId).run();
+        
+        // If this is their first engagement ever, send a celebration notification!
+        if (isFirstEngagement) {
+          const celebrationId = generateId();
+          await db.prepare(`
+            INSERT INTO notifications (id, user_id, type, from_user_id, checkin_id, message)
+            VALUES (?, ?, 'milestone', ?, ?, ?)
+          `).bind(
+            celebrationId, 
+            checkinOwnerId, 
+            userId, 
+            checkinId,
+            '🎉 Your first reaction! The community is noticing your smokes!'
+          ).run();
+        }
       }
 
       return NextResponse.json({ reacted: true, emoji });

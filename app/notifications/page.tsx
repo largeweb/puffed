@@ -36,6 +36,8 @@ function NotificationIcon({ type, emoji }: { type: string; emoji?: string }) {
       return <span className="text-xl">📊</span>;
     case 'nudge':
       return <span className="text-xl">🔥</span>;
+    case 'milestone':
+      return <span className="text-xl">🎉</span>;
     default:
       return <FiBell className="text-gray-400" />;
   }
@@ -154,6 +156,20 @@ function NotificationCard({ notification, onMarkRead }: { notification: Notifica
             ) : (
               <Link href="/discover" className="block text-amber-500 hover:underline text-sm mt-1">
                 Explore the community →
+              </Link>
+            )}
+          </>
+        );
+      case 'milestone':
+        return (
+          <>
+            <span className="font-semibold text-green-400">{notification.message || '🎉 Milestone reached!'}</span>
+            <p className="text-gray-400 text-sm mt-1">
+              Keep sharing your smokes — the community is here for you!
+            </p>
+            {notification.checkin_id && (
+              <Link href={`/checkin/${notification.checkin_id}`} className="block text-amber-500 hover:underline text-sm mt-1">
+                View the check-in →
               </Link>
             )}
           </>

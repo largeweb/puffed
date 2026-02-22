@@ -67,11 +67,49 @@ export async function POST(request: NextRequest) {
         .first<{ user_id: string }>();
 
       if (checkin && checkin.user_id !== session.user_id) {
+        const checkinOwnerId = checkin.user_id;
+        
+        // Check if this is the owner's first-ever engagement (reaction or like)
+        const existingEngagement = await db.prepare(`
+          SELECT 1 FROM (
+            SELECT 1 FROM reactions r 
+            JOIN checkins c ON r.checkin_id = c.id 
+            WHERE c.user_id = ?
+            LIMIT 1
+          )
+          UNION ALL
+          SELECT 1 FROM (
+            SELECT 1 FROM likes l 
+            JOIN checkins c ON l.checkin_id = c.id 
+            WHERE c.user_id = ? AND l.id != ?
+            LIMIT 1
+          )
+          LIMIT 1
+        `).bind(checkinOwnerId, checkinOwnerId, likeId).first();
+        
+        const isFirstEngagement = !existingEngagement;
+        
+        // Create the like notification
         const notifId = generateId();
         await db
           .prepare("INSERT INTO notifications (id, user_id, type, from_user_id, checkin_id) VALUES (?, ?, 'like', ?, ?)")
-          .bind(notifId, checkin.user_id, session.user_id, checkinId)
+          .bind(notifId, checkinOwnerId, session.user_id, checkinId)
           .run();
+        
+        // If this is their first engagement ever, send a celebration notification!
+        if (isFirstEngagement) {
+          const celebrationId = generateId();
+          await db.prepare(`
+            INSERT INTO notifications (id, user_id, type, from_user_id, checkin_id, message)
+            VALUES (?, ?, 'milestone', ?, ?, ?)
+          `).bind(
+            celebrationId, 
+            checkinOwnerId, 
+            session.user_id, 
+            checkinId,
+            '🎉 Your first like! Someone loves your smoke!'
+          ).run();
+        }
       }
 
       return NextResponse.json({ liked: true });
