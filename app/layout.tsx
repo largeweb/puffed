@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description: "The social app for cigar and tobacco enthusiasts. Log, rate, discover, and share your smoke journey.",
   keywords: ["cigar", "tobacco", "smoking", "cigar app", "cigar tracking", "cigar journal"],
   authors: [{ name: "Puffed" }],
-  manifest: "/manifest.json",
+  manifest: "/api/manifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
