@@ -253,3 +253,26 @@ export interface StreakResponse {
   streakActive: boolean;
   error?: string;
 }
+
+// Featured Checkin of the Day
+export interface FeaturedCheckin {
+  id: string;
+  user_id: string;
+  username: string;
+  brand: string;
+  product?: string;
+  rating?: number;
+  review?: string;
+  image_url?: string;
+  category: string;
+  created_at: number;
+  like_count: number;
+  comment_count: number;
+  flavor_notes?: string;
+}
+
+export interface FeaturedResponse {
+  featured: FeaturedCheckin | null;
+  date: string;
+  error?: string;
+}

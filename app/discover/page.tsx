@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory } from "@/lib/types";
+import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
 import { FLAVOR_TAGS } from "@/lib/flavors";
 import { CATEGORIES, getCategory } from "@/lib/categories";
@@ -331,6 +331,7 @@ export default function DiscoverPage() {
   const [checkins, setCheckins] = useState<CheckinWithLikes[]>([]);
   const [trending, setTrending] = useState<TrendingBrand[]>([]);
   const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
+  const [featured, setFeatured] = useState<FeaturedCheckin | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
@@ -341,6 +342,7 @@ export default function DiscoverPage() {
     loadFeed();
     loadTrending();
     loadSuggestedUsers();
+    loadFeatured();
   }, []);
 
   async function loadFeed(query = "", category = activeCategory) {
@@ -385,6 +387,16 @@ export default function DiscoverPage() {
       setFollowingUsers(followedSet);
     } catch (error) {
       console.error("Suggested users error:", error);
+    }
+  }
+
+  async function loadFeatured() {
+    try {
+      const res = await fetch("/api/featured");
+      const data: FeaturedResponse = await res.json();
+      setFeatured(data.featured);
+    } catch (error) {
+      console.error("Featured error:", error);
     }
   }
 
@@ -522,6 +534,87 @@ export default function DiscoverPage() {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Featured Check-in of the Day */}
+        {featured && !searchQuery && activeCategory === "all" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-amber-500">⭐</span>
+              <h2 className="font-semibold">Featured Today</h2>
+              <span className="text-xs text-gray-500 ml-auto">Updated daily</span>
+            </div>
+            <Link
+              href={`/checkin/${featured.id}`}
+              className="block glass rounded-2xl overflow-hidden border border-amber-500/30 hover:border-amber-500/50 transition-all group"
+            >
+              {/* Featured Image or Gradient Header */}
+              {featured.image_url ? (
+                <div className="relative h-40 overflow-hidden">
+                  <img 
+                    src={featured.image_url} 
+                    alt={featured.brand}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                  <div className="absolute bottom-3 left-4 right-4">
+                    <h3 className="font-bold text-lg text-white">{featured.brand}</h3>
+                    {featured.product && <p className="text-gray-300 text-sm">{featured.product}</p>}
+                  </div>
+                  {featured.rating && (
+                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-amber-500 px-2 py-1 rounded-lg">
+                      <FiStar className="text-black" fill="currentColor" size={14} />
+                      <span className="text-black font-bold text-sm">{featured.rating}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="relative h-32 bg-gradient-to-br from-amber-500/20 to-orange-600/20 flex items-center justify-center">
+                  <div className="text-center">
+                    <span className="text-4xl mb-2">🚬</span>
+                    <h3 className="font-bold text-lg">{featured.brand}</h3>
+                    {featured.product && <p className="text-gray-400 text-sm">{featured.product}</p>}
+                  </div>
+                  {featured.rating && (
+                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-amber-500 px-2 py-1 rounded-lg">
+                      <FiStar className="text-black" fill="currentColor" size={14} />
+                      <span className="text-black font-bold text-sm">{featured.rating}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="p-4">
+                {featured.review && (
+                  <p className="text-gray-300 text-sm mb-3 line-clamp-2">"{featured.review}"</p>
+                )}
+                <div className="flex items-center justify-between">
+                  <Link 
+                    href={`/user/${featured.username}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-amber-500 hover:underline text-sm font-medium"
+                  >
+                    @{featured.username}
+                  </Link>
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    {featured.like_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <FiHeart size={12} /> {featured.like_count}
+                      </span>
+                    )}
+                    {featured.comment_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <FiMessageCircle size={12} /> {featured.comment_count}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        )}
+
         {/* Browse by Flavor Section - only show for cigars or all */}
         {!searchQuery && (activeCategory === "all" || activeCategory === "cigar") && (
           <motion.div
