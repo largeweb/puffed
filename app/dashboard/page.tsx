@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2 } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse } from "@/lib/types";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
@@ -280,6 +280,7 @@ export default function DashboardPage() {
   const [insights, setInsights] = useState<WeeklyInsights | null>(null);
   const [followingFeed, setFollowingFeed] = useState<Checkin[]>([]);
   const [followStats, setFollowStats] = useState({ following: 0, followers: 0 });
+  const [communityActivity, setCommunityActivity] = useState<Activity[]>([]);
   const router = useRouter();
 
   // Form state
@@ -364,6 +365,15 @@ export default function DashboardPage() {
           if (feedData.stats) {
             setFollowStats(feedData.stats);
           }
+        }
+
+        // Load community activity (global feed)
+        const activityRes = await fetch("/api/activity?limit=10");
+        if (activityRes.ok) {
+          const activityData: ActivityResponse = await activityRes.json();
+          // Filter out user's own activity
+          const otherActivity = (activityData.activities || []).filter(a => a.user_id !== authData.user?.id);
+          setCommunityActivity(otherActivity);
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -888,6 +898,66 @@ export default function DashboardPage() {
                 Discover
               </Link>
             </div>
+          </motion.div>
+        )}
+
+        {/* Community Activity Feed - Shows what's happening across the platform */}
+        {communityActivity.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.075 }}
+            className="glass rounded-2xl p-5 mb-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🔥</span>
+                <h2 className="text-sm text-gray-400">Happening Now</h2>
+              </div>
+              <span className="text-xs text-gray-500 animate-pulse">Live</span>
+            </div>
+            
+            <div className="space-y-2">
+              {communityActivity.slice(0, 6).map((activity, idx) => {
+                const timeAgo = getTimeAgo(new Date(activity.created_at * 1000));
+                const activityIcon = activity.type === 'checkin' ? '🚬' :
+                                    activity.type === 'like' ? '❤️' :
+                                    activity.type === 'reaction' ? activity.emoji || '⚡' :
+                                    activity.type === 'follow' ? '👤' :
+                                    activity.type === 'comment' ? '💬' : '📣';
+                
+                return (
+                  <motion.div
+                    key={`${activity.type}-${activity.created_at}-${idx}`}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all"
+                  >
+                    <span className="text-base">{activityIcon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate">
+                        <Link 
+                          href={`/user/${activity.username}`} 
+                          className="font-medium text-amber-500 hover:text-amber-400"
+                        >
+                          @{activity.username}
+                        </Link>
+                        <span className="text-gray-400 ml-1">{activity.details.replace(`@${activity.username}`, '').trim()}</span>
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">{timeAgo}</span>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            <Link
+              href="/discover"
+              className="block mt-3 pt-3 border-t border-white/5 text-center text-xs text-gray-500 hover:text-amber-500 transition-colors"
+            >
+              See all activity →
+            </Link>
           </motion.div>
         )}
 

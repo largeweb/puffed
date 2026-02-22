@@ -311,3 +311,22 @@ export interface FeaturedResponse {
   date: string;
   error?: string;
 }
+
+// Community Activity
+export interface Activity {
+  type: 'checkin' | 'like' | 'reaction' | 'follow' | 'comment';
+  username: string;
+  user_id: string;
+  details: string;
+  created_at: number;
+  target_user?: string;
+  brand?: string;
+  checkin_id?: string;
+  emoji?: string;
+}
+
+export interface ActivityResponse {
+  activities?: Activity[];
+  count?: number;
+  error?: string;
+}
