@@ -38,6 +38,8 @@ function NotificationIcon({ type, emoji }: { type: string; emoji?: string }) {
       return <span className="text-xl">🔥</span>;
     case 'milestone':
       return <span className="text-xl">🎉</span>;
+    case 'streak_alert':
+      return <span className="text-xl">🔥</span>;
     default:
       return <FiBell className="text-gray-400" />;
   }
@@ -172,6 +174,15 @@ function NotificationCard({ notification, onMarkRead }: { notification: Notifica
                 View the check-in →
               </Link>
             )}
+          </>
+        );
+      case 'streak_alert':
+        return (
+          <>
+            <span className="font-semibold text-orange-400">{notification.message || '🔥 Your streak is at risk!'}</span>
+            <Link href="/checkin" className="block text-amber-500 hover:underline text-sm mt-1">
+              Log a smoke now →
+            </Link>
           </>
         );
       default:
