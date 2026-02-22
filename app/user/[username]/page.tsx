@@ -1,348 +1,328 @@
-"use client";
+import { getRequestContext } from "@cloudflare/next-on-pages";
+import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import UserProfileClient from "./UserProfileClient";
 
 export const runtime = "edge";
 
-import { motion } from "framer-motion";
-import { useState, useEffect, use } from "react";
-import { FiArrowLeft, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHeart, FiUserPlus, FiUserCheck } from "react-icons/fi";
-import Link from "next/link";
-import type { Checkin, UserProfileResponse, FollowResponse, Badge } from "@/lib/types";
-
-interface CheckinWithLikes extends Checkin {
-  like_count: number;
-}
-
-function getTimeAgo(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return "Just now";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  return date.toLocaleDateString();
-}
-
-function CheckinCard({ checkin }: { checkin: CheckinWithLikes }) {
-  const date = new Date(checkin.created_at * 1000);
-  const timeAgo = getTimeAgo(date);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass rounded-2xl p-5"
-    >
-      {checkin.image_url && (
-        <div className="mb-3 -mx-5 -mt-5 rounded-t-2xl overflow-hidden">
-          <img 
-            src={checkin.image_url} 
-            alt={checkin.brand}
-            className="w-full h-48 object-cover"
-          />
-        </div>
-      )}
-
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <h3 className="font-semibold text-lg">{checkin.brand}</h3>
-          {checkin.product && <p className="text-gray-400 text-sm">{checkin.product}</p>}
-        </div>
-        {checkin.rating && (
-          <div className="flex items-center gap-1 bg-amber-500/20 px-2 py-1 rounded-lg">
-            <FiStar className="text-amber-500" fill="currentColor" />
-            <span className="text-amber-500 font-semibold">{checkin.rating}</span>
-          </div>
-        )}
-      </div>
-
-      {checkin.review && (
-        <p className="text-gray-300 text-sm mb-3">{checkin.review}</p>
-      )}
-
-      <div className="flex flex-wrap gap-3 text-xs text-gray-400">
-        {checkin.draw_rating && (
-          <span className="flex items-center gap-1">
-            <FiWind /> Draw: {checkin.draw_rating}/5
-          </span>
-        )}
-        {checkin.burn_rating && (
-          <span className="flex items-center gap-1">
-            <FiDroplet /> Burn: {checkin.burn_rating}/5
-          </span>
-        )}
-        {checkin.aroma_rating && (
-          <span className="flex items-center gap-1">
-            <FiSmile /> Aroma: {checkin.aroma_rating}/5
-          </span>
-        )}
-        {checkin.smoke_time_mins && (
-          <span className="flex items-center gap-1">
-            <FiClock /> {checkin.smoke_time_mins} min
-          </span>
-        )}
-      </div>
-
-      <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-gray-500">
-        <span>{timeAgo}</span>
-        {checkin.like_count > 0 && (
-          <span className="flex items-center gap-1 text-red-400">
-            <FiHeart size={12} fill="currentColor" /> {checkin.like_count}
-          </span>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-interface UserProfile {
-  username: string;
-  bio: string | null;
-  joinedAt: number;
-}
-
-interface UserStats {
-  totalCheckins: number;
-  avgRating: number;
-  uniqueBrands: number;
-  following: number;
-  followers: number;
-}
-
-export default function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {
-  const { username } = use(params);
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [checkins, setCheckins] = useState<CheckinWithLikes[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isOwnProfile, setIsOwnProfile] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
-  const [badges, setBadges] = useState<Badge[]>([]);
-
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const res = await fetch(`/api/users/${username}`);
-        if (!res.ok) {
-          if (res.status === 404) {
-            setError("User not found");
-          } else {
-            setError("Failed to load profile");
-          }
-          return;
-        }
-        const data: UserProfileResponse = await res.json();
-        setUser(data.user || null);
-        setStats(data.stats || null);
-        setCheckins((data.checkins as CheckinWithLikes[]) || []);
-        setIsFollowing(data.isFollowing || false);
-        setIsOwnProfile(data.isOwnProfile || false);
-        setBadges(data.badges || []);
-      } catch (err) {
-        console.error("Load error:", err);
-        setError("Failed to load profile");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadProfile();
-  }, [username]);
-
-  const handleFollow = async () => {
-    if (followLoading) return;
-    setFollowLoading(true);
-    try {
-      const res = await fetch("/api/follow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username }),
-      });
-      if (res.ok) {
-        const data: FollowResponse = await res.json();
-        setIsFollowing(data.following);
-        // Update follower count
-        if (stats) {
-          setStats({
-            ...stats,
-            followers: data.following ? stats.followers + 1 : stats.followers - 1,
-          });
-        }
-      }
-    } catch (err) {
-      console.error("Follow error:", err);
-    } finally {
-      setFollowLoading(false);
-    }
+interface UserProfileData {
+  user: {
+    id: string;
+    username: string;
+    bio: string | null;
+    joinedAt: number;
   };
+  stats: {
+    totalCheckins: number;
+    avgRating: number;
+    uniqueBrands: number;
+    following: number;
+    followers: number;
+  };
+  checkins: Array<{
+    id: string;
+    user_id: string;
+    brand: string;
+    product?: string;
+    rating?: number;
+    review?: string;
+    flavor_notes?: string;
+    image_url?: string;
+    created_at: number;
+    like_count: number;
+  }>;
+  badges: Array<{
+    id: string;
+    name: string;
+    emoji: string;
+    description: string;
+    earned: boolean;
+  }>;
+  isFollowing: boolean;
+  isOwnProfile: boolean;
+  topBrand?: string;
+}
 
-  if (loading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full"
-        />
-      </main>
-    );
+async function getUserProfile(username: string): Promise<UserProfileData | null> {
+  const { env } = getRequestContext();
+  const DB = env.DB;
+
+  // Get user
+  const userRow = await DB.prepare(`
+    SELECT id, username, bio, created_at as joined_at
+    FROM users
+    WHERE LOWER(username) = LOWER(?)
+  `).bind(username).first<{
+    id: string;
+    username: string;
+    bio: string | null;
+    joined_at: number;
+  }>();
+
+  if (!userRow) return null;
+
+  // Get current user if logged in
+  const cookieStore = await cookies();
+  const session = cookieStore.get("session")?.value;
+  let currentUserId: string | null = null;
+  let isOwnProfile = false;
+  let isFollowing = false;
+
+  if (session) {
+    const sessionRow = await DB.prepare(
+      "SELECT user_id FROM sessions WHERE id = ?"
+    ).bind(session).first<{ user_id: string }>();
+    currentUserId = sessionRow?.user_id || null;
+    isOwnProfile = currentUserId === userRow.id;
+
+    if (currentUserId && !isOwnProfile) {
+      const followRow = await DB.prepare(
+        "SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?"
+      ).bind(currentUserId, userRow.id).first();
+      isFollowing = !!followRow;
+    }
   }
 
-  if (error) {
-    return (
-      <main className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-4xl">😕</p>
-        <p className="text-gray-400">{error}</p>
-        <Link href="/discover" className="text-amber-500 hover:underline">
-          ← Back to Discover
-        </Link>
-      </main>
-    );
+  // Get stats
+  const statsRow = await DB.prepare(`
+    SELECT 
+      COUNT(*) as total_checkins,
+      AVG(CASE WHEN rating IS NOT NULL THEN rating END) as avg_rating,
+      COUNT(DISTINCT brand) as unique_brands
+    FROM checkins
+    WHERE user_id = ?
+  `).bind(userRow.id).first<{
+    total_checkins: number;
+    avg_rating: number | null;
+    unique_brands: number;
+  }>();
+
+  const followingCount = await DB.prepare(
+    "SELECT COUNT(*) as count FROM follows WHERE follower_id = ?"
+  ).bind(userRow.id).first<{ count: number }>();
+
+  const followerCount = await DB.prepare(
+    "SELECT COUNT(*) as count FROM follows WHERE following_id = ?"
+  ).bind(userRow.id).first<{ count: number }>();
+
+  // Get top brand
+  const topBrandRow = await DB.prepare(`
+    SELECT brand, COUNT(*) as count
+    FROM checkins
+    WHERE user_id = ?
+    GROUP BY brand
+    ORDER BY count DESC
+    LIMIT 1
+  `).bind(userRow.id).first<{ brand: string; count: number }>();
+
+  // Get check-ins
+  const checkinsResult = await DB.prepare(`
+    SELECT 
+      c.id,
+      c.user_id,
+      c.brand,
+      c.product,
+      c.rating,
+      c.review,
+      c.flavor_notes,
+      c.image_url,
+      c.created_at,
+      (SELECT COUNT(*) FROM likes WHERE checkin_id = c.id) as like_count
+    FROM checkins c
+    WHERE c.user_id = ?
+    ORDER BY c.created_at DESC
+    LIMIT 20
+  `).bind(userRow.id).all<{
+    id: string;
+    user_id: string;
+    brand: string;
+    product: string | null;
+    rating: number | null;
+    review: string | null;
+    flavor_notes: string | null;
+    image_url: string | null;
+    created_at: number;
+    like_count: number;
+  }>();
+
+  // Get earned badges
+  const badgesResult = await DB.prepare(`
+    SELECT badge_id as id
+    FROM user_badges
+    WHERE user_id = ?
+  `).bind(userRow.id).all<{ id: string }>();
+
+  const earnedBadgeIds = new Set((badgesResult.results || []).map(b => b.id));
+
+  // Badge definitions
+  const allBadges = [
+    { id: 'first_smoke', name: 'First Smoke', emoji: '🚬', description: 'Log your first smoke' },
+    { id: 'getting_started', name: 'Getting Started', emoji: '🌟', description: 'Log 5 smokes' },
+    { id: 'regular', name: 'Regular', emoji: '🔥', description: 'Log 10 smokes' },
+    { id: 'aficionado', name: 'Aficionado', emoji: '👑', description: 'Log 25 smokes' },
+    { id: 'legend', name: 'Legend', emoji: '🏆', description: 'Log 50 smokes' },
+    { id: 'five_star', name: 'Five Star', emoji: '⭐', description: 'Give a perfect 5-star rating' },
+    { id: 'critic', name: 'Critic', emoji: '📝', description: 'Write 5 reviews' },
+    { id: 'photographer', name: 'Photographer', emoji: '📸', description: 'Upload 5 photos' },
+    { id: 'first_love', name: 'First Love', emoji: '❤️', description: 'Like your first check-in' },
+    { id: 'socialite', name: 'Socialite', emoji: '🤝', description: 'Follow 5 people' },
+    { id: 'commentator', name: 'Commentator', emoji: '💬', description: 'Leave 5 comments' },
+    { id: 'explorer', name: 'Explorer', emoji: '🗺️', description: 'Try 10 different brands' },
+  ];
+
+  const badges = allBadges
+    .filter(b => earnedBadgeIds.has(b.id))
+    .map(b => ({ ...b, earned: true }));
+
+  return {
+    user: {
+      id: userRow.id,
+      username: userRow.username,
+      bio: userRow.bio,
+      joinedAt: userRow.joined_at,
+    },
+    stats: {
+      totalCheckins: statsRow?.total_checkins || 0,
+      avgRating: statsRow?.avg_rating ? Math.round(statsRow.avg_rating * 10) / 10 : 0,
+      uniqueBrands: statsRow?.unique_brands || 0,
+      following: followingCount?.count || 0,
+      followers: followerCount?.count || 0,
+    },
+    checkins: (checkinsResult.results || []).map(c => ({
+      id: c.id,
+      user_id: c.user_id,
+      brand: c.brand,
+      product: c.product || undefined,
+      rating: c.rating || undefined,
+      review: c.review || undefined,
+      flavor_notes: c.flavor_notes || undefined,
+      image_url: c.image_url || undefined,
+      created_at: c.created_at,
+      like_count: c.like_count,
+    })),
+    badges,
+    isFollowing,
+    isOwnProfile,
+    topBrand: topBrandRow?.brand,
+  };
+}
+
+export async function generateMetadata({ 
+  params 
+}: { 
+  params: Promise<{ username: string }> 
+}): Promise<Metadata> {
+  const { username } = await params;
+  
+  try {
+    const { env } = getRequestContext();
+    const DB = env.DB;
+    
+    // Get basic user info for OG tags
+    const userRow = await DB.prepare(`
+      SELECT id, username, bio
+      FROM users
+      WHERE LOWER(username) = LOWER(?)
+    `).bind(username).first<{
+      id: string;
+      username: string;
+      bio: string | null;
+    }>();
+
+    if (!userRow) {
+      return {
+        title: "User Not Found - Puffed",
+      };
+    }
+
+    // Get stats
+    const statsRow = await DB.prepare(`
+      SELECT 
+        COUNT(*) as total_checkins,
+        AVG(CASE WHEN rating IS NOT NULL THEN rating END) as avg_rating,
+        COUNT(DISTINCT brand) as unique_brands
+      FROM checkins
+      WHERE user_id = ?
+    `).bind(userRow.id).first<{
+      total_checkins: number;
+      avg_rating: number | null;
+      unique_brands: number;
+    }>();
+
+    const followerCount = await DB.prepare(
+      "SELECT COUNT(*) as count FROM follows WHERE following_id = ?"
+    ).bind(userRow.id).first<{ count: number }>();
+
+    const topBrand = await DB.prepare(`
+      SELECT brand FROM checkins WHERE user_id = ? GROUP BY brand ORDER BY COUNT(*) DESC LIMIT 1
+    `).bind(userRow.id).first<{ brand: string }>();
+
+    // Build description
+    const checkins = statsRow?.total_checkins || 0;
+    const avgRating = statsRow?.avg_rating ? `${statsRow.avg_rating.toFixed(1)}/5 avg` : "";
+    const brands = statsRow?.unique_brands || 0;
+    const followers = followerCount?.count || 0;
+
+    let description = `@${userRow.username} on Puffed`;
+    if (checkins > 0) {
+      description += ` • ${checkins} smoke${checkins !== 1 ? 's' : ''} logged`;
+      if (brands > 1) description += ` • ${brands} brands explored`;
+      if (avgRating) description += ` • ${avgRating}`;
+    }
+    if (followers > 0) {
+      description += ` • ${followers} follower${followers !== 1 ? 's' : ''}`;
+    }
+    if (topBrand?.brand) {
+      description += ` • Favorite: ${topBrand.brand}`;
+    }
+    if (userRow.bio) {
+      description = `${userRow.bio.slice(0, 100)}${userRow.bio.length > 100 ? '...' : ''} — ${description}`;
+    }
+
+    // Get recent check-in image for OG if available
+    const recentImage = await DB.prepare(`
+      SELECT image_url FROM checkins WHERE user_id = ? AND image_url IS NOT NULL ORDER BY created_at DESC LIMIT 1
+    `).bind(userRow.id).first<{ image_url: string }>();
+
+    const title = `@${userRow.username} 🚬 Puffed`;
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: "profile",
+        siteName: "Puffed",
+        images: recentImage?.image_url ? [{ url: recentImage.image_url }] : undefined,
+      },
+      twitter: {
+        card: recentImage?.image_url ? "summary_large_image" : "summary",
+        title,
+        description,
+        images: recentImage?.image_url ? [recentImage.image_url] : undefined,
+      },
+    };
+  } catch (error) {
+    console.error("generateMetadata error:", error);
+    return {
+      title: "Puffed - Track Your Smoke",
+    };
+  }
+}
+
+export default async function UserProfilePage({ 
+  params 
+}: { 
+  params: Promise<{ username: string }> 
+}) {
+  const { username } = await params;
+  const data = await getUserProfile(username);
+
+  if (!data) {
+    notFound();
   }
 
-  const joinDate = user ? new Date(user.joinedAt * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
-  const hasBio = user?.bio && user.bio.trim().length > 0;
-
-  return (
-    <main className="min-h-screen pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-white/5">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/discover" className="p-2 -ml-2 rounded-lg hover:bg-white/5 transition-all">
-              <FiArrowLeft size={20} />
-            </Link>
-            <div>
-              <h1 className="font-semibold">@{user?.username}</h1>
-              <p className="text-xs text-gray-400">Joined {joinDate}</p>
-            </div>
-          </div>
-          {!isOwnProfile && (
-            <button
-              onClick={handleFollow}
-              disabled={followLoading}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
-                isFollowing
-                  ? "bg-white/10 text-white hover:bg-red-500/20 hover:text-red-400"
-                  : "bg-amber-500 text-black hover:bg-amber-400"
-              }`}
-            >
-              {isFollowing ? (
-                <>
-                  <FiUserCheck size={16} />
-                  <span>Following</span>
-                </>
-              ) : (
-                <>
-                  <FiUserPlus size={16} />
-                  <span>Follow</span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* Stats */}
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass rounded-2xl p-5 mb-6"
-        >
-          <div className="grid grid-cols-5 gap-2 text-center">
-            <div>
-              <p className="text-xl font-bold text-amber-500">{stats?.totalCheckins || 0}</p>
-              <p className="text-xs text-gray-400">Smokes</p>
-            </div>
-            <div>
-              <p className="text-xl font-bold text-amber-500">{stats?.avgRating || 0}</p>
-              <p className="text-xs text-gray-400">Rating</p>
-            </div>
-            <div>
-              <p className="text-xl font-bold text-amber-500">{stats?.uniqueBrands || 0}</p>
-              <p className="text-xs text-gray-400">Brands</p>
-            </div>
-            <Link
-              href={`/user/${user?.username}/followers`}
-              className="block hover:bg-white/5 rounded-lg py-1 transition-all"
-            >
-              <p className="text-xl font-bold text-white">{stats?.followers || 0}</p>
-              <p className="text-xs text-gray-400">Followers</p>
-            </Link>
-            <Link
-              href={`/user/${user?.username}/following`}
-              className="block hover:bg-white/5 rounded-lg py-1 transition-all"
-            >
-              <p className="text-xl font-bold text-white">{stats?.following || 0}</p>
-              <p className="text-xs text-gray-400">Following</p>
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Badges */}
-        {badges.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="glass rounded-2xl p-4 mb-6"
-          >
-            <p className="text-xs text-gray-400 mb-2">Badges</p>
-            <div className="flex flex-wrap gap-2">
-              {badges.map(badge => (
-                <div
-                  key={badge.id}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30"
-                  title={badge.name}
-                >
-                  <span>{badge.emoji}</span>
-                  <span className="text-xs font-medium text-amber-500">{badge.name}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Bio */}
-        {hasBio && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="glass rounded-2xl p-4 mb-6"
-          >
-            <p className="text-gray-300 text-sm">{user?.bio}</p>
-          </motion.div>
-        )}
-
-        {/* Check-ins */}
-        <h2 className="font-semibold mb-4">Recent Smokes</h2>
-        
-        {checkins.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12 text-gray-400"
-          >
-            <p className="text-4xl mb-3">🚬</p>
-            <p>No smokes logged yet</p>
-          </motion.div>
-        ) : (
-          <div className="space-y-4">
-            {checkins.map((checkin, index) => (
-              <motion.div
-                key={checkin.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <CheckinCard checkin={checkin} />
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
-  );
+  return <UserProfileClient initialData={data} />;
 }
