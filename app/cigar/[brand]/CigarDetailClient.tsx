@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   FiHome, 
@@ -12,10 +12,12 @@ import {
   FiMessageCircle,
   FiArrowLeft,
   FiClock,
-  FiTrendingUp
+  FiTrendingUp,
+  FiBookmark,
+  FiCheck
 } from "react-icons/fi";
 import { GiCigarette } from "react-icons/gi";
-import type { LikeResponse } from "@/lib/types";
+import type { LikeResponse, WishlistResponse } from "@/lib/types";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 
 interface BrandStats {
@@ -196,6 +198,60 @@ function CheckinCard({ checkin }: { checkin: CheckinWithUser }) {
 
 export default function CigarDetailClient({ initialData }: { initialData: CigarDetailData }) {
   const { brand, stats, checkins, products } = initialData;
+  const [inWishlist, setInWishlist] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(true);
+  const [wishlistUpdating, setWishlistUpdating] = useState(false);
+
+  // Check if this brand is in the user's wishlist
+  useEffect(() => {
+    async function checkWishlist() {
+      try {
+        const res = await fetch("/api/wishlist");
+        if (res.ok) {
+          const data: WishlistResponse = await res.json();
+          const isInList = (data.wishlist || []).some(
+            item => item.brand.toLowerCase() === brand.toLowerCase()
+          );
+          setInWishlist(isInList);
+        }
+      } catch (error) {
+        console.error("Wishlist check error:", error);
+      } finally {
+        setWishlistLoading(false);
+      }
+    }
+    checkWishlist();
+  }, [brand]);
+
+  const toggleWishlist = async () => {
+    if (wishlistUpdating) return;
+    setWishlistUpdating(true);
+    try {
+      if (inWishlist) {
+        // Remove from wishlist
+        const res = await fetch(`/api/wishlist?brand=${encodeURIComponent(brand)}`, {
+          method: "DELETE"
+        });
+        if (res.ok) {
+          setInWishlist(false);
+        }
+      } else {
+        // Add to wishlist
+        const res = await fetch("/api/wishlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ brand })
+        });
+        if (res.ok) {
+          setInWishlist(true);
+        }
+      }
+    } catch (error) {
+      console.error("Wishlist toggle error:", error);
+    } finally {
+      setWishlistUpdating(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-950 via-stone-900 to-black text-amber-50">
@@ -221,14 +277,40 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
           animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-br from-amber-900/40 to-stone-800/40 rounded-2xl p-6 border border-amber-800/30"
         >
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-amber-700 to-amber-900 rounded-2xl flex items-center justify-center">
-              <GiCigarette className="text-amber-200" size={32} />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-700 to-amber-900 rounded-2xl flex items-center justify-center">
+                <GiCigarette className="text-amber-200" size={32} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-amber-100">{brand}</h2>
+                <p className="text-amber-400/60 text-sm">Cigar Brand</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-amber-100">{brand}</h2>
-              <p className="text-amber-400/60 text-sm">Cigar Brand</p>
-            </div>
+            {/* Wishlist Button */}
+            {!wishlistLoading && (
+              <button
+                onClick={toggleWishlist}
+                disabled={wishlistUpdating}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+                  inWishlist
+                    ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                    : "bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30"
+                } ${wishlistUpdating ? "opacity-50" : ""}`}
+              >
+                {inWishlist ? (
+                  <>
+                    <FiCheck size={18} />
+                    <span className="text-sm font-medium">On List</span>
+                  </>
+                ) : (
+                  <>
+                    <FiBookmark size={18} />
+                    <span className="text-sm font-medium">Want to Try</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Stats Grid */}

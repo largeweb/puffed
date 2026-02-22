@@ -233,6 +233,35 @@ export async function POST(request: NextRequest) {
       console.error("Failed to create milestone notification:", e);
     }
 
+    // Check if this brand was on user's wishlist and celebrate!
+    try {
+      const wishlistItem = await db
+        .prepare(`
+          SELECT id FROM wishlist 
+          WHERE user_id = ? AND LOWER(brand) = LOWER(?)
+        `)
+        .bind(session.user_id, normalizedBrand)
+        .first<{ id: string }>();
+
+      if (wishlistItem) {
+        // Send celebration notification
+        const notifId = generateId();
+        const wishlistMsg = `🎯 Wishlist complete! You finally tried ${normalizedBrand}! How was it? 🎉`;
+        await db
+          .prepare(`
+            INSERT INTO notifications (id, user_id, type, from_user_id, message, checkin_id, created_at)
+            VALUES (?, ?, 'milestone', ?, ?, ?, unixepoch())
+          `)
+          .bind(notifId, session.user_id, session.user_id, wishlistMsg, checkinId)
+          .run();
+        
+        // Note: We don't auto-remove from wishlist - the UI shows it as "completed" instead
+        // Users can remove manually if they want
+      }
+    } catch (e) {
+      console.error("Failed to check wishlist:", e);
+    }
+
     return NextResponse.json({ success: true, id: checkinId });
   } catch (error) {
     console.error("Create checkin error:", error);

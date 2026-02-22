@@ -330,3 +330,18 @@ export interface ActivityResponse {
   count?: number;
   error?: string;
 }
+
+// Wishlist
+export interface WishlistItem {
+  id: string;
+  brand: string;
+  notes: string | null;
+  created_at: number;
+  smoked?: boolean;
+}
+
+export interface WishlistResponse {
+  wishlist?: WishlistItem[];
+  count?: number;
+  error?: string;
+}
