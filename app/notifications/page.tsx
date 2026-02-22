@@ -30,6 +30,8 @@ function NotificationIcon({ type, emoji }: { type: string; emoji?: string }) {
       return <span className="text-xl">{emoji || '🔥'}</span>;
     case 'welcome':
       return <span className="text-xl">🚬</span>;
+    case 'smoke_buddy':
+      return <span className="text-xl">🤝</span>;
     default:
       return <FiBell className="text-gray-400" />;
   }
@@ -105,6 +107,24 @@ function NotificationCard({ notification, onMarkRead }: { notification: Notifica
               🔥 Log your first smoke to get started. Check out the Discover page to see what others are enjoying, 
               and don't forget to react to check-ins you like!
             </p>
+          </>
+        );
+      case 'smoke_buddy':
+        return (
+          <>
+            <Link href={`/user/${notification.from_username}`} className="font-semibold hover:text-amber-500">
+              @{notification.from_username}
+            </Link>
+            {" just smoked "}
+            {notification.checkin_brand && (
+              <span className="font-medium text-amber-400">{notification.checkin_brand}</span>
+            )}
+            {" — you've had this one too! "}
+            {notification.checkin_id && (
+              <Link href={`/checkin/${notification.checkin_id}`} className="text-amber-500 hover:underline">
+                Check it out →
+              </Link>
+            )}
           </>
         );
       default:
