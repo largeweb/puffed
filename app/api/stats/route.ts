@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
-  const { env } = await getCloudflareContext();
+  const { env } = getRequestContext();
   const db = env.DB;
 
   const now = Math.floor(Date.now() / 1000);

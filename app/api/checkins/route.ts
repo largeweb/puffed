@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { parseSessionCookie, generateId } from "@/lib/auth";
 import { getRequestContext } from "@cloudflare/next-on-pages";
 import type { CheckinRequest } from "@/lib/types";
+import { normalizeBrandName, normalizeProductName } from "@/lib/normalize";
 
 export const runtime = "edge";
 
@@ -140,6 +141,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Brand is required" }, { status: 400 });
     }
 
+    // Normalize brand and product names for consistency
+    const normalizedBrand = normalizeBrandName(brand);
+    const normalizedProduct = normalizeProductName(product || null);
+
     const checkinId = generateId();
 
     await db
@@ -155,8 +160,8 @@ export async function POST(request: NextRequest) {
         checkinId,
         session.user_id,
         category,
-        brand,
-        product || null,
+        normalizedBrand,
+        normalizedProduct,
         rating || null,
         review || null,
         imageUrl || null,
@@ -184,7 +189,7 @@ export async function POST(request: NextRequest) {
             AND c.user_id != ?
           LIMIT 10
         `)
-        .bind(brand, session.user_id)
+        .bind(normalizedBrand, session.user_id)
         .all<{ user_id: string }>();
 
       // Create notifications for each smoke buddy
