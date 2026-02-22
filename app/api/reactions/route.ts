@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user_id as string;
-    const body = await request.json();
+    const body = await request.json() as { checkinId?: string; emoji?: string };
     const { checkinId, emoji } = body;
 
     if (!checkinId || !emoji) {
