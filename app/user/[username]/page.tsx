@@ -182,6 +182,12 @@ interface TasteMatch {
   noData?: boolean;
 }
 
+interface WishlistItem {
+  id: string;
+  brand: string;
+  created_at: number;
+}
+
 interface UserProfileData {
   user: {
     id: string;
@@ -215,6 +221,7 @@ interface UserProfileData {
     description: string;
     earned: boolean;
   }>;
+  wishlist: WishlistItem[];
   isFollowing: boolean;
   isOwnProfile: boolean;
   topBrand?: string;
@@ -353,6 +360,22 @@ async function getUserProfile(username: string): Promise<UserProfileData | null>
     .filter(b => earnedBadgeIds.has(b.id))
     .map(b => ({ ...b, earned: true }));
 
+  // Get user's wishlist (items they haven't smoked yet)
+  const wishlistResult = await DB.prepare(`
+    SELECT w.id, w.brand, w.created_at
+    FROM wishlist w
+    WHERE w.user_id = ?
+      AND NOT EXISTS (
+        SELECT 1 FROM checkins c 
+        WHERE c.user_id = w.user_id 
+        AND LOWER(c.brand) = LOWER(w.brand)
+      )
+    ORDER BY w.created_at DESC
+    LIMIT 10
+  `).bind(userRow.id).all<WishlistItem>();
+  
+  const wishlist = wishlistResult.results || [];
+
   // Get common brands if viewing another user's profile
   let commonBrands: string[] = [];
   let tasteMatch: TasteMatch | undefined;
@@ -399,6 +422,7 @@ async function getUserProfile(username: string): Promise<UserProfileData | null>
       like_count: c.like_count,
     })),
     badges,
+    wishlist,
     isFollowing,
     isOwnProfile,
     topBrand: topBrandRow?.brand,

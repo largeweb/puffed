@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { FiArrowLeft, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHeart, FiUserPlus, FiUserCheck, FiShare2 } from "react-icons/fi";
+import { FiArrowLeft, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHeart, FiUserPlus, FiUserCheck, FiShare2, FiBookmark } from "react-icons/fi";
 import Link from "next/link";
 import type { FollowResponse, Badge } from "@/lib/types";
 
@@ -37,6 +37,12 @@ interface TasteMatch {
   };
 }
 
+interface WishlistItem {
+  id: string;
+  brand: string;
+  created_at: number;
+}
+
 interface UserProfileData {
   user: {
     id: string;
@@ -53,6 +59,7 @@ interface UserProfileData {
   };
   checkins: CheckinWithLikes[];
   badges: Badge[];
+  wishlist: WishlistItem[];
   isFollowing: boolean;
   isOwnProfile: boolean;
   topBrand?: string;
@@ -144,7 +151,7 @@ function CheckinCard({ checkin }: { checkin: CheckinWithLikes }) {
 }
 
 export default function UserProfileClient({ initialData }: { initialData: UserProfileData }) {
-  const { user, stats: initialStats, checkins, badges, isOwnProfile } = initialData;
+  const { user, stats: initialStats, checkins, badges, wishlist, isOwnProfile } = initialData;
   const [isFollowing, setIsFollowing] = useState(initialData.isFollowing);
   const [stats, setStats] = useState(initialStats);
   const [followLoading, setFollowLoading] = useState(false);
@@ -472,6 +479,48 @@ export default function UserProfileClient({ initialData }: { initialData: UserPr
                 </div>
               ))}
             </div>
+          </motion.div>
+        )}
+
+        {/* Wishlist - Want to Try */}
+        {wishlist.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.06 }}
+            className="glass rounded-2xl p-4 mb-6 border border-purple-500/20"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <FiBookmark className="text-purple-400" size={14} />
+              <p className="text-xs text-gray-400">
+                {isOwnProfile ? "Your Bucket List" : `${user.username}'s Bucket List`}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {wishlist.map(item => (
+                <Link
+                  key={item.id}
+                  href={`/cigar/${encodeURIComponent(item.brand)}`}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 text-xs hover:bg-purple-500/30 transition-all border border-purple-500/30"
+                >
+                  <span>📋</span>
+                  <span>{item.brand}</span>
+                </Link>
+              ))}
+            </div>
+            {!isOwnProfile && (
+              <p className="text-xs text-gray-500 mt-3 pt-2 border-t border-white/5 text-center">
+                💡 Know about any of these? Share your experience!
+              </p>
+            )}
+            {isOwnProfile && (
+              <Link
+                href="/wishlist"
+                className="block text-xs text-purple-400 mt-3 pt-2 border-t border-white/5 text-center hover:text-purple-300 transition-colors"
+              >
+                Manage your wishlist →
+              </Link>
+            )}
           </motion.div>
         )}
 
