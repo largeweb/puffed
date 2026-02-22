@@ -1,258 +1,267 @@
-import { getRequestContext } from "@cloudflare/next-on-pages";
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export const runtime = "edge";
 
-interface DailyStat {
-  date: string;
-  users: number;
-  checkins: number;
-  likes: number;
-  follows: number;
-  comments: number;
-  reactions: number;
-}
-
-interface RecentActivity {
-  type: 'signup' | 'checkin' | 'like' | 'follow' | 'comment' | 'reaction';
-  username: string;
-  details: string;
-  created_at: number;
-}
-
-export async function GET() {
-  const { env } = getRequestContext();
+export async function GET(request: NextRequest) {
+  const { env } = await getCloudflareContext();
   const db = env.DB;
 
-  try {
-    // Get overall stats
-    const overallStats = await db.prepare(`
-      SELECT 
-        (SELECT COUNT(*) FROM users) as total_users,
-        (SELECT COUNT(*) FROM checkins) as total_checkins,
-        (SELECT COUNT(*) FROM likes) as total_likes,
-        (SELECT COUNT(*) FROM follows) as total_follows,
-        (SELECT COUNT(*) FROM comments) as total_comments,
-        (SELECT COUNT(*) FROM reactions) as total_reactions,
-        (SELECT COUNT(*) FROM notifications) as total_notifications
-    `).first();
+  const now = Math.floor(Date.now() / 1000);
+  const todayStart = now - (now % 86400); // Start of UTC day
+  const yesterdayStart = todayStart - 86400;
+  const weekStart = todayStart - (7 * 86400);
 
-    // Get today's stats (Unix timestamp for today midnight)
-    const now = Math.floor(Date.now() / 1000);
-    const todayStart = now - (now % 86400);
-    const yesterdayStart = todayStart - 86400;
-    const weekAgoStart = todayStart - (7 * 86400);
+  // Overall stats
+  const [
+    usersResult,
+    checkinsResult,
+    likesResult,
+    followsResult,
+    commentsResult,
+    reactionsResult,
+    notificationsResult,
+  ] = await Promise.all([
+    db.prepare("SELECT COUNT(*) as count FROM users").first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM checkins").first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM likes").first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM follows").first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM comments").first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM reactions").first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM notifications").first<{ count: number }>(),
+  ]);
 
-    // Today's activity
-    const todayStats = await db.prepare(`
-      SELECT 
-        (SELECT COUNT(*) FROM users WHERE created_at >= ?) as new_users,
-        (SELECT COUNT(*) FROM checkins WHERE created_at >= ?) as new_checkins,
-        (SELECT COUNT(*) FROM likes WHERE created_at >= ?) as new_likes,
-        (SELECT COUNT(*) FROM follows WHERE created_at >= ?) as new_follows,
-        (SELECT COUNT(*) FROM comments WHERE created_at >= ?) as new_comments,
-        (SELECT COUNT(*) FROM reactions WHERE created_at >= ?) as new_reactions
-    `).bind(todayStart, todayStart, todayStart, todayStart, todayStart, todayStart).first();
+  // Today's stats
+  const [
+    todayUsersResult,
+    todayCheckinsResult,
+    todayLikesResult,
+    todayFollowsResult,
+    todayCommentsResult,
+    todayReactionsResult,
+  ] = await Promise.all([
+    db.prepare("SELECT COUNT(*) as count FROM users WHERE created_at >= ?").bind(todayStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM checkins WHERE created_at >= ?").bind(todayStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM likes WHERE created_at >= ?").bind(todayStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM follows WHERE created_at >= ?").bind(todayStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM comments WHERE created_at >= ?").bind(todayStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM reactions WHERE created_at >= ?").bind(todayStart).first<{ count: number }>(),
+  ]);
 
-    // Yesterday's activity
-    const yesterdayStats = await db.prepare(`
-      SELECT 
-        (SELECT COUNT(*) FROM users WHERE created_at >= ? AND created_at < ?) as new_users,
-        (SELECT COUNT(*) FROM checkins WHERE created_at >= ? AND created_at < ?) as new_checkins,
-        (SELECT COUNT(*) FROM likes WHERE created_at >= ? AND created_at < ?) as new_likes,
-        (SELECT COUNT(*) FROM follows WHERE created_at >= ? AND created_at < ?) as new_follows,
-        (SELECT COUNT(*) FROM comments WHERE created_at >= ? AND created_at < ?) as new_comments,
-        (SELECT COUNT(*) FROM reactions WHERE created_at >= ? AND created_at < ?) as new_reactions
-    `).bind(
-      yesterdayStart, todayStart,
-      yesterdayStart, todayStart,
-      yesterdayStart, todayStart,
-      yesterdayStart, todayStart,
-      yesterdayStart, todayStart,
-      yesterdayStart, todayStart
-    ).first();
+  // Yesterday's stats
+  const [
+    yesterdayUsersResult,
+    yesterdayCheckinsResult,
+    yesterdayLikesResult,
+    yesterdayFollowsResult,
+    yesterdayCommentsResult,
+    yesterdayReactionsResult,
+  ] = await Promise.all([
+    db.prepare("SELECT COUNT(*) as count FROM users WHERE created_at >= ? AND created_at < ?").bind(yesterdayStart, todayStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM checkins WHERE created_at >= ? AND created_at < ?").bind(yesterdayStart, todayStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM likes WHERE created_at >= ? AND created_at < ?").bind(yesterdayStart, todayStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM follows WHERE created_at >= ? AND created_at < ?").bind(yesterdayStart, todayStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM comments WHERE created_at >= ? AND created_at < ?").bind(yesterdayStart, todayStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM reactions WHERE created_at >= ? AND created_at < ?").bind(yesterdayStart, todayStart).first<{ count: number }>(),
+  ]);
 
-    // This week's activity
-    const weekStats = await db.prepare(`
-      SELECT 
-        (SELECT COUNT(*) FROM users WHERE created_at >= ?) as new_users,
-        (SELECT COUNT(*) FROM checkins WHERE created_at >= ?) as new_checkins,
-        (SELECT COUNT(*) FROM likes WHERE created_at >= ?) as new_likes,
-        (SELECT COUNT(*) FROM follows WHERE created_at >= ?) as new_follows,
-        (SELECT COUNT(*) FROM comments WHERE created_at >= ?) as new_comments,
-        (SELECT COUNT(*) FROM reactions WHERE created_at >= ?) as new_reactions
-    `).bind(weekAgoStart, weekAgoStart, weekAgoStart, weekAgoStart, weekAgoStart, weekAgoStart).first();
+  // This week's stats
+  const [
+    weekUsersResult,
+    weekCheckinsResult,
+    weekLikesResult,
+    weekFollowsResult,
+    weekCommentsResult,
+    weekReactionsResult,
+  ] = await Promise.all([
+    db.prepare("SELECT COUNT(*) as count FROM users WHERE created_at >= ?").bind(weekStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM checkins WHERE created_at >= ?").bind(weekStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM likes WHERE created_at >= ?").bind(weekStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM follows WHERE created_at >= ?").bind(weekStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM comments WHERE created_at >= ?").bind(weekStart).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) as count FROM reactions WHERE created_at >= ?").bind(weekStart).first<{ count: number }>(),
+  ]);
 
-    // Daily stats for the past 7 days
-    const dailyStats: DailyStat[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const dayStart = todayStart - (i * 86400);
-      const dayEnd = dayStart + 86400;
-      const date = new Date(dayStart * 1000).toISOString().split('T')[0];
-      
-      const dayStat = await db.prepare(`
-        SELECT 
-          (SELECT COUNT(*) FROM users WHERE created_at >= ? AND created_at < ?) as users,
-          (SELECT COUNT(*) FROM checkins WHERE created_at >= ? AND created_at < ?) as checkins,
-          (SELECT COUNT(*) FROM likes WHERE created_at >= ? AND created_at < ?) as likes,
-          (SELECT COUNT(*) FROM follows WHERE created_at >= ? AND created_at < ?) as follows,
-          (SELECT COUNT(*) FROM comments WHERE created_at >= ? AND created_at < ?) as comments,
-          (SELECT COUNT(*) FROM reactions WHERE created_at >= ? AND created_at < ?) as reactions
-      `).bind(
-        dayStart, dayEnd,
-        dayStart, dayEnd,
-        dayStart, dayEnd,
-        dayStart, dayEnd,
-        dayStart, dayEnd,
-        dayStart, dayEnd
-      ).first();
-      
-      dailyStats.push({
-        date,
-        users: (dayStat?.users as number) || 0,
-        checkins: (dayStat?.checkins as number) || 0,
-        likes: (dayStat?.likes as number) || 0,
-        follows: (dayStat?.follows as number) || 0,
-        comments: (dayStat?.comments as number) || 0,
-        reactions: (dayStat?.reactions as number) || 0,
-      });
-    }
+  // Daily stats for the last 7 days
+  const dailyStats: Array<{
+    date: string;
+    users: number;
+    checkins: number;
+    likes: number;
+    follows: number;
+    comments: number;
+    reactions: number;
+  }> = [];
 
-    // Recent activity (last 20 events)
-    const recentActivity: RecentActivity[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const dayStart = todayStart - (i * 86400);
+    const dayEnd = dayStart + 86400;
+    const dateStr = new Date(dayStart * 1000).toISOString().split('T')[0];
 
-    // Get recent signups
-    const recentSignups = await db.prepare(`
-      SELECT username, created_at FROM users ORDER BY created_at DESC LIMIT 5
-    `).all();
-    for (const row of recentSignups.results) {
-      recentActivity.push({
-        type: 'signup',
-        username: row.username as string,
-        details: 'joined Puffed',
-        created_at: row.created_at as number,
-      });
-    }
+    const [dayUsers, dayCheckins, dayLikes, dayFollows, dayComments, dayReactions] = await Promise.all([
+      db.prepare("SELECT COUNT(*) as count FROM users WHERE created_at >= ? AND created_at < ?").bind(dayStart, dayEnd).first<{ count: number }>(),
+      db.prepare("SELECT COUNT(*) as count FROM checkins WHERE created_at >= ? AND created_at < ?").bind(dayStart, dayEnd).first<{ count: number }>(),
+      db.prepare("SELECT COUNT(*) as count FROM likes WHERE created_at >= ? AND created_at < ?").bind(dayStart, dayEnd).first<{ count: number }>(),
+      db.prepare("SELECT COUNT(*) as count FROM follows WHERE created_at >= ? AND created_at < ?").bind(dayStart, dayEnd).first<{ count: number }>(),
+      db.prepare("SELECT COUNT(*) as count FROM comments WHERE created_at >= ? AND created_at < ?").bind(dayStart, dayEnd).first<{ count: number }>(),
+      db.prepare("SELECT COUNT(*) as count FROM reactions WHERE created_at >= ? AND created_at < ?").bind(dayStart, dayEnd).first<{ count: number }>(),
+    ]);
 
-    // Get recent check-ins
-    const recentCheckins = await db.prepare(`
-      SELECT u.username, c.brand, c.product, c.created_at 
-      FROM checkins c 
-      JOIN users u ON c.user_id = u.id 
-      ORDER BY c.created_at DESC LIMIT 5
-    `).all();
-    for (const row of recentCheckins.results) {
-      recentActivity.push({
-        type: 'checkin',
-        username: row.username as string,
-        details: `checked in ${row.brand}${row.product ? ` ${row.product}` : ''}`,
-        created_at: row.created_at as number,
-      });
-    }
-
-    // Get recent likes
-    const recentLikes = await db.prepare(`
-      SELECT u.username, c.brand, l.created_at 
-      FROM likes l 
-      JOIN users u ON l.user_id = u.id 
-      JOIN checkins c ON l.checkin_id = c.id 
-      ORDER BY l.created_at DESC LIMIT 5
-    `).all();
-    for (const row of recentLikes.results) {
-      recentActivity.push({
-        type: 'like',
-        username: row.username as string,
-        details: `liked a ${row.brand} check-in`,
-        created_at: row.created_at as number,
-      });
-    }
-
-    // Get recent follows
-    const recentFollows = await db.prepare(`
-      SELECT follower.username as follower_name, followed.username as followed_name, f.created_at 
-      FROM follows f 
-      JOIN users follower ON f.follower_id = follower.id 
-      JOIN users followed ON f.following_id = followed.id 
-      ORDER BY f.created_at DESC LIMIT 5
-    `).all();
-    for (const row of recentFollows.results) {
-      recentActivity.push({
-        type: 'follow',
-        username: row.follower_name as string,
-        details: `followed @${row.followed_name}`,
-        created_at: row.created_at as number,
-      });
-    }
-
-    // Get recent comments
-    const recentComments = await db.prepare(`
-      SELECT u.username, c.brand, cm.created_at 
-      FROM comments cm 
-      JOIN users u ON cm.user_id = u.id 
-      JOIN checkins c ON cm.checkin_id = c.id 
-      ORDER BY cm.created_at DESC LIMIT 5
-    `).all();
-    for (const row of recentComments.results) {
-      recentActivity.push({
-        type: 'comment',
-        username: row.username as string,
-        details: `commented on a ${row.brand} check-in`,
-        created_at: row.created_at as number,
-      });
-    }
-
-    // Get recent reactions
-    const recentReactions = await db.prepare(`
-      SELECT u.username, c.brand, r.emoji, r.created_at 
-      FROM reactions r 
-      JOIN users u ON r.user_id = u.id 
-      JOIN checkins c ON r.checkin_id = c.id 
-      ORDER BY r.created_at DESC LIMIT 5
-    `).all();
-    for (const row of recentReactions.results) {
-      recentActivity.push({
-        type: 'reaction',
-        username: row.username as string,
-        details: `reacted ${row.emoji} to a ${row.brand} check-in`,
-        created_at: row.created_at as number,
-      });
-    }
-
-    // Sort all activity by time
-    recentActivity.sort((a, b) => b.created_at - a.created_at);
-
-    // Top brands
-    const topBrands = await db.prepare(`
-      SELECT brand, COUNT(*) as count, AVG(rating) as avg_rating
-      FROM checkins
-      WHERE rating IS NOT NULL
-      GROUP BY brand
-      ORDER BY count DESC
-      LIMIT 5
-    `).all();
-
-    // Active users (most check-ins)
-    const activeUsers = await db.prepare(`
-      SELECT u.username, COUNT(c.id) as checkin_count
-      FROM users u
-      LEFT JOIN checkins c ON c.user_id = u.id
-      GROUP BY u.id
-      ORDER BY checkin_count DESC
-      LIMIT 5
-    `).all();
-
-    return NextResponse.json({
-      overall: overallStats,
-      today: todayStats,
-      yesterday: yesterdayStats,
-      week: weekStats,
-      dailyStats,
-      recentActivity: recentActivity.slice(0, 20),
-      topBrands: topBrands.results,
-      activeUsers: activeUsers.results,
+    dailyStats.push({
+      date: dateStr,
+      users: dayUsers?.count || 0,
+      checkins: dayCheckins?.count || 0,
+      likes: dayLikes?.count || 0,
+      follows: dayFollows?.count || 0,
+      comments: dayComments?.count || 0,
+      reactions: dayReactions?.count || 0,
     });
-  } catch (error) {
-    console.error("Admin stats error:", error);
-    return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
   }
+
+  // Top brands
+  const topBrandsResult = await db.prepare(`
+    SELECT brand, COUNT(*) as count, AVG(rating) as avg_rating
+    FROM checkins
+    GROUP BY brand
+    ORDER BY count DESC
+    LIMIT 5
+  `).all<{ brand: string; count: number; avg_rating: number }>();
+
+  // Most active users
+  const activeUsersResult = await db.prepare(`
+    SELECT u.username, COUNT(c.id) as checkin_count
+    FROM users u
+    LEFT JOIN checkins c ON u.id = c.user_id
+    GROUP BY u.id
+    ORDER BY checkin_count DESC
+    LIMIT 5
+  `).all<{ username: string; checkin_count: number }>();
+
+  // Recent activity - combine recent signups, checkins, likes, follows, comments, reactions
+  const [recentSignups, recentCheckins, recentLikes, recentFollows, recentComments, recentReactions] = await Promise.all([
+    db.prepare(`
+      SELECT username, created_at FROM users ORDER BY created_at DESC LIMIT 10
+    `).all<{ username: string; created_at: number }>(),
+    db.prepare(`
+      SELECT u.username, c.brand, c.created_at
+      FROM checkins c
+      JOIN users u ON c.user_id = u.id
+      ORDER BY c.created_at DESC LIMIT 10
+    `).all<{ username: string; brand: string; created_at: number }>(),
+    db.prepare(`
+      SELECT u.username, c.brand, l.created_at
+      FROM likes l
+      JOIN users u ON l.user_id = u.id
+      JOIN checkins c ON l.checkin_id = c.id
+      ORDER BY l.created_at DESC LIMIT 10
+    `).all<{ username: string; brand: string; created_at: number }>(),
+    db.prepare(`
+      SELECT follower.username as follower_name, followed.username as followed_name, f.created_at
+      FROM follows f
+      JOIN users follower ON f.follower_id = follower.id
+      JOIN users followed ON f.following_id = followed.id
+      ORDER BY f.created_at DESC LIMIT 10
+    `).all<{ follower_name: string; followed_name: string; created_at: number }>(),
+    db.prepare(`
+      SELECT u.username, c.brand, cm.created_at
+      FROM comments cm
+      JOIN users u ON cm.user_id = u.id
+      JOIN checkins c ON cm.checkin_id = c.id
+      ORDER BY cm.created_at DESC LIMIT 10
+    `).all<{ username: string; brand: string; created_at: number }>(),
+    db.prepare(`
+      SELECT u.username, c.brand, r.emoji, r.created_at
+      FROM reactions r
+      JOIN users u ON r.user_id = u.id
+      JOIN checkins c ON r.checkin_id = c.id
+      ORDER BY r.created_at DESC LIMIT 10
+    `).all<{ username: string; brand: string; emoji: string; created_at: number }>(),
+  ]);
+
+  // Combine and sort recent activity
+  const recentActivity: Array<{
+    type: 'signup' | 'checkin' | 'like' | 'follow' | 'comment' | 'reaction';
+    username: string;
+    details: string;
+    created_at: number;
+  }> = [
+    ...(recentSignups.results || []).map((s) => ({
+      type: 'signup' as const,
+      username: s.username,
+      details: 'joined Puffed',
+      created_at: s.created_at,
+    })),
+    ...(recentCheckins.results || []).map((c) => ({
+      type: 'checkin' as const,
+      username: c.username,
+      details: `logged ${c.brand}`,
+      created_at: c.created_at,
+    })),
+    ...(recentLikes.results || []).map((l) => ({
+      type: 'like' as const,
+      username: l.username,
+      details: `liked a ${l.brand} check-in`,
+      created_at: l.created_at,
+    })),
+    ...(recentFollows.results || []).map((f) => ({
+      type: 'follow' as const,
+      username: f.follower_name,
+      details: `followed @${f.followed_name}`,
+      created_at: f.created_at,
+    })),
+    ...(recentComments.results || []).map((c) => ({
+      type: 'comment' as const,
+      username: c.username,
+      details: `commented on ${c.brand}`,
+      created_at: c.created_at,
+    })),
+    ...(recentReactions.results || []).map((r) => ({
+      type: 'reaction' as const,
+      username: r.username,
+      details: `reacted ${r.emoji} to ${r.brand}`,
+      created_at: r.created_at,
+    })),
+  ]
+    .sort((a, b) => b.created_at - a.created_at)
+    .slice(0, 20);
+
+  return Response.json({
+    overall: {
+      total_users: usersResult?.count || 0,
+      total_checkins: checkinsResult?.count || 0,
+      total_likes: likesResult?.count || 0,
+      total_follows: followsResult?.count || 0,
+      total_comments: commentsResult?.count || 0,
+      total_reactions: reactionsResult?.count || 0,
+      total_notifications: notificationsResult?.count || 0,
+    },
+    today: {
+      new_users: todayUsersResult?.count || 0,
+      new_checkins: todayCheckinsResult?.count || 0,
+      new_likes: todayLikesResult?.count || 0,
+      new_follows: todayFollowsResult?.count || 0,
+      new_comments: todayCommentsResult?.count || 0,
+      new_reactions: todayReactionsResult?.count || 0,
+    },
+    yesterday: {
+      new_users: yesterdayUsersResult?.count || 0,
+      new_checkins: yesterdayCheckinsResult?.count || 0,
+      new_likes: yesterdayLikesResult?.count || 0,
+      new_follows: yesterdayFollowsResult?.count || 0,
+      new_comments: yesterdayCommentsResult?.count || 0,
+      new_reactions: yesterdayReactionsResult?.count || 0,
+    },
+    week: {
+      new_users: weekUsersResult?.count || 0,
+      new_checkins: weekCheckinsResult?.count || 0,
+      new_likes: weekLikesResult?.count || 0,
+      new_follows: weekFollowsResult?.count || 0,
+      new_comments: weekCommentsResult?.count || 0,
+      new_reactions: weekReactionsResult?.count || 0,
+    },
+    dailyStats,
+    topBrands: topBrandsResult.results || [],
+    activeUsers: activeUsersResult.results || [],
+    recentActivity,
+  });
 }
