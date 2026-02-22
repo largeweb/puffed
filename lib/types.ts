@@ -174,13 +174,14 @@ export interface CommentResponse {
 export interface Notification {
   id: string;
   user_id: string;
-  type: 'like' | 'follow' | 'comment' | 'featured';
+  type: 'like' | 'follow' | 'comment' | 'featured' | 'reaction';
   from_user_id: string;
   from_username: string;
   checkin_id?: string;
   checkin_brand?: string;
   comment_id?: string;
   comment_text?: string;
+  reaction_emoji?: string;
   read: boolean;
   created_at: number;
 }
