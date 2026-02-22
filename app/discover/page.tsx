@@ -343,6 +343,8 @@ export default function DiscoverPage() {
   const [searching, setSearching] = useState(false);
   const [followingUsers, setFollowingUsers] = useState<Set<string>>(new Set());
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [followingAll, setFollowingAll] = useState(false);
+  const [followAllMessage, setFollowAllMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadFeed();
@@ -427,6 +429,36 @@ export default function DiscoverPage() {
       }
     } catch (error) {
       console.error("Follow error:", error);
+    }
+  }
+
+  async function handleFollowAll() {
+    if (followingAll) return;
+    setFollowingAll(true);
+    setFollowAllMessage(null);
+    try {
+      const res = await fetch("/api/follow-all", {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFollowAllMessage(data.message);
+        // Mark all suggested users as followed
+        if (data.followedCount > 0) {
+          setFollowingUsers(prev => {
+            const next = new Set(prev);
+            suggestedUsers.forEach(u => next.add(u.username));
+            return next;
+          });
+        }
+        // Clear message after 3 seconds
+        setTimeout(() => setFollowAllMessage(null), 3000);
+      }
+    } catch (error) {
+      console.error("Follow all error:", error);
+      setFollowAllMessage("Something went wrong");
+    } finally {
+      setFollowingAll(false);
     }
   }
 
@@ -704,10 +736,27 @@ export default function DiscoverPage() {
             transition={{ delay: 0.1 }}
             className="mb-6"
           >
-            <div className="flex items-center gap-2 mb-3">
-              <FiUsers className="text-amber-500" />
-              <h2 className="font-semibold">People to Follow</h2>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <FiUsers className="text-amber-500" />
+                <h2 className="font-semibold">People to Follow</h2>
+              </div>
+              {suggestedUsers.some(u => !followingUsers.has(u.username)) && (
+                <button
+                  onClick={handleFollowAll}
+                  disabled={followingAll}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm bg-amber-500 text-black hover:bg-amber-400 disabled:opacity-50 transition-all"
+                >
+                  <FiUserPlus size={14} />
+                  {followingAll ? "Following..." : "Follow All"}
+                </button>
+              )}
             </div>
+            {followAllMessage && (
+              <div className="mb-3 px-3 py-2 rounded-lg bg-green-500/20 text-green-400 text-sm text-center">
+                {followAllMessage}
+              </div>
+            )}
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
               {suggestedUsers.map((user) => {
                 const isFollowing = followingUsers.has(user.username);

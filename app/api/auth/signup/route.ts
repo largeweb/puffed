@@ -62,6 +62,39 @@ export async function POST(request: NextRequest) {
       .bind(notificationId, userId, userId)
       .run();
 
+    // Auto-follow the top 2 most active users (to seed their feed)
+    try {
+      const activeUsers = await db.prepare(`
+        SELECT u.id, u.username, COUNT(c.id) as checkin_count
+        FROM users u
+        LEFT JOIN checkins c ON u.id = c.user_id
+        WHERE u.id != ?
+        GROUP BY u.id
+        HAVING checkin_count > 0
+        ORDER BY checkin_count DESC
+        LIMIT 2
+      `).bind(userId).all<{ id: string; username: string; checkin_count: number }>();
+
+      for (const activeUser of activeUsers.results || []) {
+        // Create the follow
+        const followId = generateId();
+        await db.prepare(`
+          INSERT INTO follows (id, follower_id, following_id)
+          VALUES (?, ?, ?)
+        `).bind(followId, userId, activeUser.id).run();
+
+        // Notify the followed user
+        const followNotifId = generateId();
+        await db.prepare(`
+          INSERT INTO notifications (id, user_id, type, from_user_id)
+          VALUES (?, ?, 'follow', ?)
+        `).bind(followNotifId, activeUser.id, userId).run();
+      }
+    } catch (autoFollowError) {
+      // Non-critical, don't fail signup if auto-follow fails
+      console.error("Auto-follow error:", autoFollowError);
+    }
+
     // Create session
     const sessionId = generateId();
     const expiresAt = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60; // 7 days
