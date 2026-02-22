@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FiArrowLeft, FiUsers, FiCheckCircle, FiHeart, FiUserPlus, FiMessageCircle, FiTrendingUp, FiActivity, FiRefreshCw } from "react-icons/fi";
+import { FiArrowLeft, FiUsers, FiCheckCircle, FiHeart, FiUserPlus, FiMessageCircle, FiTrendingUp, FiActivity, FiRefreshCw, FiZap } from "react-icons/fi";
 
 interface AdminStats {
   overall: {
@@ -12,6 +12,7 @@ interface AdminStats {
     total_likes: number;
     total_follows: number;
     total_comments: number;
+    total_reactions: number;
     total_notifications: number;
   };
   today: {
@@ -20,6 +21,7 @@ interface AdminStats {
     new_likes: number;
     new_follows: number;
     new_comments: number;
+    new_reactions: number;
   };
   yesterday: {
     new_users: number;
@@ -27,6 +29,7 @@ interface AdminStats {
     new_likes: number;
     new_follows: number;
     new_comments: number;
+    new_reactions: number;
   };
   week: {
     new_users: number;
@@ -34,6 +37,7 @@ interface AdminStats {
     new_likes: number;
     new_follows: number;
     new_comments: number;
+    new_reactions: number;
   };
   dailyStats: Array<{
     date: string;
@@ -42,9 +46,10 @@ interface AdminStats {
     likes: number;
     follows: number;
     comments: number;
+    reactions: number;
   }>;
   recentActivity: Array<{
-    type: 'signup' | 'checkin' | 'like' | 'follow' | 'comment';
+    type: 'signup' | 'checkin' | 'like' | 'follow' | 'comment' | 'reaction';
     username: string;
     details: string;
     created_at: number;
@@ -109,6 +114,7 @@ function getActivityIcon(type: string) {
     case 'like': return { icon: '❤️', color: 'text-pink-400' };
     case 'follow': return { icon: '👥', color: 'text-purple-400' };
     case 'comment': return { icon: '💬', color: 'text-green-400' };
+    case 'reaction': return { icon: '⚡', color: 'text-yellow-400' };
     default: return { icon: '📌', color: 'text-gray-400' };
   }
 }
@@ -161,14 +167,15 @@ export default function AdminStatsPage() {
     );
   }
 
-  // Calculate engagement rate
+  // Calculate engagement rate (include reactions)
+  const totalEngagement = stats.overall.total_likes + stats.overall.total_comments + stats.overall.total_follows + (stats.overall.total_reactions || 0);
   const engagementRate = stats.overall.total_checkins > 0
-    ? ((stats.overall.total_likes + stats.overall.total_comments + stats.overall.total_follows) / stats.overall.total_checkins * 100).toFixed(1)
+    ? (totalEngagement / stats.overall.total_checkins * 100).toFixed(1)
     : '0';
 
   // Max value for chart scaling
   const maxDailyValue = Math.max(
-    ...stats.dailyStats.map(d => Math.max(d.users, d.checkins, d.likes, d.follows, d.comments)),
+    ...stats.dailyStats.map(d => Math.max(d.users, d.checkins, d.likes, d.follows, d.comments, d.reactions || 0)),
     1
   );
 
@@ -242,6 +249,13 @@ export default function AdminStatsPage() {
             color="bg-green-500/20 text-green-400"
             change={stats.today.new_comments}
           />
+          <StatCard
+            title="Reactions"
+            value={stats.overall.total_reactions || 0}
+            icon={FiZap}
+            color="bg-yellow-500/20 text-yellow-400"
+            change={stats.today.new_reactions || 0}
+          />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -258,7 +272,7 @@ export default function AdminStatsPage() {
         </div>
 
         {/* Engagement Warning */}
-        {stats.overall.total_likes === 0 && stats.overall.total_follows === 0 && stats.overall.total_comments === 0 && (
+        {stats.overall.total_likes === 0 && stats.overall.total_follows === 0 && stats.overall.total_comments === 0 && (stats.overall.total_reactions || 0) === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -269,9 +283,10 @@ export default function AdminStatsPage() {
               <div>
                 <h3 className="font-semibold text-red-400 mb-1">Zero Engagement</h3>
                 <p className="text-sm text-gray-400">
-                  No likes, follows, or comments yet. Recent features shipped to address this:
+                  No likes, follows, comments, or reactions yet. Recent features shipped to address this:
                 </p>
                 <ul className="text-sm text-gray-500 mt-2 space-y-1">
+                  <li>✓ Quick Reactions (🔥💨👌🤤😍)</li>
                   <li>✓ Community Engagement Prompts on Dashboard</li>
                   <li>✓ Featured Check-in of the Day</li>
                   <li>✓ Enhanced Social Sharing buttons</li>
@@ -303,6 +318,7 @@ export default function AdminStatsPage() {
                   <th className="text-right py-2">Likes</th>
                   <th className="text-right py-2">Follows</th>
                   <th className="text-right py-2">Comments</th>
+                  <th className="text-right py-2">Reactions</th>
                 </tr>
               </thead>
               <tbody>
@@ -313,6 +329,7 @@ export default function AdminStatsPage() {
                   <td className="py-3 text-right">{stats.today.new_likes}</td>
                   <td className="py-3 text-right">{stats.today.new_follows}</td>
                   <td className="py-3 text-right">{stats.today.new_comments}</td>
+                  <td className="py-3 text-right">{stats.today.new_reactions || 0}</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-3 font-medium">Yesterday</td>
@@ -321,6 +338,7 @@ export default function AdminStatsPage() {
                   <td className="py-3 text-right">{stats.yesterday.new_likes}</td>
                   <td className="py-3 text-right">{stats.yesterday.new_follows}</td>
                   <td className="py-3 text-right">{stats.yesterday.new_comments}</td>
+                  <td className="py-3 text-right">{stats.yesterday.new_reactions || 0}</td>
                 </tr>
                 <tr>
                   <td className="py-3 font-medium">This Week</td>
@@ -329,6 +347,7 @@ export default function AdminStatsPage() {
                   <td className="py-3 text-right">{stats.week.new_likes}</td>
                   <td className="py-3 text-right">{stats.week.new_follows}</td>
                   <td className="py-3 text-right">{stats.week.new_comments}</td>
+                  <td className="py-3 text-right">{stats.week.new_reactions || 0}</td>
                 </tr>
               </tbody>
             </table>
@@ -345,7 +364,7 @@ export default function AdminStatsPage() {
           <h2 className="font-semibold mb-4">Last 7 Days</h2>
           <div className="flex items-end gap-2 h-32">
             {stats.dailyStats.map((day, i) => {
-              const totalActivity = day.users + day.checkins + day.likes + day.follows + day.comments;
+              const totalActivity = day.users + day.checkins + day.likes + day.follows + day.comments + (day.reactions || 0);
               const height = maxDailyValue > 0 ? (totalActivity / maxDailyValue) * 100 : 0;
               const isToday = i === stats.dailyStats.length - 1;
               return (
