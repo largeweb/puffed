@@ -10,10 +10,11 @@ interface DailyStat {
   likes: number;
   follows: number;
   comments: number;
+  reactions: number;
 }
 
 interface RecentActivity {
-  type: 'signup' | 'checkin' | 'like' | 'follow' | 'comment';
+  type: 'signup' | 'checkin' | 'like' | 'follow' | 'comment' | 'reaction';
   username: string;
   details: string;
   created_at: number;
@@ -32,6 +33,7 @@ export async function GET() {
         (SELECT COUNT(*) FROM likes) as total_likes,
         (SELECT COUNT(*) FROM follows) as total_follows,
         (SELECT COUNT(*) FROM comments) as total_comments,
+        (SELECT COUNT(*) FROM reactions) as total_reactions,
         (SELECT COUNT(*) FROM notifications) as total_notifications
     `).first();
 
@@ -48,8 +50,9 @@ export async function GET() {
         (SELECT COUNT(*) FROM checkins WHERE created_at >= ?) as new_checkins,
         (SELECT COUNT(*) FROM likes WHERE created_at >= ?) as new_likes,
         (SELECT COUNT(*) FROM follows WHERE created_at >= ?) as new_follows,
-        (SELECT COUNT(*) FROM comments WHERE created_at >= ?) as new_comments
-    `).bind(todayStart, todayStart, todayStart, todayStart, todayStart).first();
+        (SELECT COUNT(*) FROM comments WHERE created_at >= ?) as new_comments,
+        (SELECT COUNT(*) FROM reactions WHERE created_at >= ?) as new_reactions
+    `).bind(todayStart, todayStart, todayStart, todayStart, todayStart, todayStart).first();
 
     // Yesterday's activity
     const yesterdayStats = await db.prepare(`
@@ -58,8 +61,10 @@ export async function GET() {
         (SELECT COUNT(*) FROM checkins WHERE created_at >= ? AND created_at < ?) as new_checkins,
         (SELECT COUNT(*) FROM likes WHERE created_at >= ? AND created_at < ?) as new_likes,
         (SELECT COUNT(*) FROM follows WHERE created_at >= ? AND created_at < ?) as new_follows,
-        (SELECT COUNT(*) FROM comments WHERE created_at >= ? AND created_at < ?) as new_comments
+        (SELECT COUNT(*) FROM comments WHERE created_at >= ? AND created_at < ?) as new_comments,
+        (SELECT COUNT(*) FROM reactions WHERE created_at >= ? AND created_at < ?) as new_reactions
     `).bind(
+      yesterdayStart, todayStart,
       yesterdayStart, todayStart,
       yesterdayStart, todayStart,
       yesterdayStart, todayStart,
@@ -74,8 +79,9 @@ export async function GET() {
         (SELECT COUNT(*) FROM checkins WHERE created_at >= ?) as new_checkins,
         (SELECT COUNT(*) FROM likes WHERE created_at >= ?) as new_likes,
         (SELECT COUNT(*) FROM follows WHERE created_at >= ?) as new_follows,
-        (SELECT COUNT(*) FROM comments WHERE created_at >= ?) as new_comments
-    `).bind(weekAgoStart, weekAgoStart, weekAgoStart, weekAgoStart, weekAgoStart).first();
+        (SELECT COUNT(*) FROM comments WHERE created_at >= ?) as new_comments,
+        (SELECT COUNT(*) FROM reactions WHERE created_at >= ?) as new_reactions
+    `).bind(weekAgoStart, weekAgoStart, weekAgoStart, weekAgoStart, weekAgoStart, weekAgoStart).first();
 
     // Daily stats for the past 7 days
     const dailyStats: DailyStat[] = [];
@@ -90,8 +96,10 @@ export async function GET() {
           (SELECT COUNT(*) FROM checkins WHERE created_at >= ? AND created_at < ?) as checkins,
           (SELECT COUNT(*) FROM likes WHERE created_at >= ? AND created_at < ?) as likes,
           (SELECT COUNT(*) FROM follows WHERE created_at >= ? AND created_at < ?) as follows,
-          (SELECT COUNT(*) FROM comments WHERE created_at >= ? AND created_at < ?) as comments
+          (SELECT COUNT(*) FROM comments WHERE created_at >= ? AND created_at < ?) as comments,
+          (SELECT COUNT(*) FROM reactions WHERE created_at >= ? AND created_at < ?) as reactions
       `).bind(
+        dayStart, dayEnd,
         dayStart, dayEnd,
         dayStart, dayEnd,
         dayStart, dayEnd,
@@ -106,6 +114,7 @@ export async function GET() {
         likes: (dayStat?.likes as number) || 0,
         follows: (dayStat?.follows as number) || 0,
         comments: (dayStat?.comments as number) || 0,
+        reactions: (dayStat?.reactions as number) || 0,
       });
     }
 
@@ -163,7 +172,7 @@ export async function GET() {
       SELECT follower.username as follower_name, followed.username as followed_name, f.created_at 
       FROM follows f 
       JOIN users follower ON f.follower_id = follower.id 
-      JOIN users followed ON f.followed_id = followed.id 
+      JOIN users followed ON f.following_id = followed.id 
       ORDER BY f.created_at DESC LIMIT 5
     `).all();
     for (const row of recentFollows.results) {
@@ -188,6 +197,23 @@ export async function GET() {
         type: 'comment',
         username: row.username as string,
         details: `commented on a ${row.brand} check-in`,
+        created_at: row.created_at as number,
+      });
+    }
+
+    // Get recent reactions
+    const recentReactions = await db.prepare(`
+      SELECT u.username, c.brand, r.emoji, r.created_at 
+      FROM reactions r 
+      JOIN users u ON r.user_id = u.id 
+      JOIN checkins c ON r.checkin_id = c.id 
+      ORDER BY r.created_at DESC LIMIT 5
+    `).all();
+    for (const row of recentReactions.results) {
+      recentActivity.push({
+        type: 'reaction',
+        username: row.username as string,
+        details: `reacted ${row.emoji} to a ${row.brand} check-in`,
         created_at: row.created_at as number,
       });
     }
