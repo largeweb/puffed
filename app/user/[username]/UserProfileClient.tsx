@@ -23,6 +23,20 @@ interface CheckinWithLikes {
   smoke_time_mins?: number;
 }
 
+interface TasteMatch {
+  score: number;
+  commonBrands: number;
+  totalBrands: number;
+  ratingCorrelation: number;
+  sharedFlavors: string[];
+  matchLevel: 'soulmate' | 'great' | 'good' | 'different' | 'opposite';
+  details: {
+    brandScore: number;
+    ratingScore: number;
+    flavorScore: number;
+  };
+}
+
 interface UserProfileData {
   user: {
     id: string;
@@ -43,6 +57,7 @@ interface UserProfileData {
   isOwnProfile: boolean;
   topBrand?: string;
   commonBrands?: string[];
+  tasteMatch?: TasteMatch;
 }
 
 function getTimeAgo(date: Date): string {
@@ -295,27 +310,146 @@ export default function UserProfileClient({ initialData }: { initialData: UserPr
               </p>
             </div>
           )}
+        </motion.div>
 
-          {/* Common brands indicator */}
-          {initialData.commonBrands && initialData.commonBrands.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-white/5">
-              <p className="text-xs text-gray-500 mb-2 text-center">
-                🤝 You both smoke:
-              </p>
-              <div className="flex flex-wrap gap-1.5 justify-center">
-                {initialData.commonBrands.map(brand => (
-                  <Link
-                    key={brand}
-                    href={`/cigar/${encodeURIComponent(brand)}`}
-                    className="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs hover:bg-green-500/30 transition-all"
-                  >
-                    {brand}
-                  </Link>
-                ))}
+        {/* Taste Match Score Card */}
+        {initialData.tasteMatch && !isOwnProfile && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.03 }}
+            className={`glass rounded-2xl p-5 mb-6 border ${
+              initialData.tasteMatch.matchLevel === 'soulmate' ? 'border-pink-500/40 bg-pink-500/5' :
+              initialData.tasteMatch.matchLevel === 'great' ? 'border-green-500/40 bg-green-500/5' :
+              initialData.tasteMatch.matchLevel === 'good' ? 'border-blue-500/40 bg-blue-500/5' :
+              'border-white/10'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">
+                  {initialData.tasteMatch.matchLevel === 'soulmate' ? '💕' :
+                   initialData.tasteMatch.matchLevel === 'great' ? '🔥' :
+                   initialData.tasteMatch.matchLevel === 'good' ? '👍' :
+                   initialData.tasteMatch.matchLevel === 'different' ? '🤷' : '😬'}
+                </span>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-300">Taste Match</h3>
+                  <p className={`text-xs ${
+                    initialData.tasteMatch.matchLevel === 'soulmate' ? 'text-pink-400' :
+                    initialData.tasteMatch.matchLevel === 'great' ? 'text-green-400' :
+                    initialData.tasteMatch.matchLevel === 'good' ? 'text-blue-400' :
+                    'text-gray-500'
+                  }`}>
+                    {initialData.tasteMatch.matchLevel === 'soulmate' ? 'Smoke Soulmates!' :
+                     initialData.tasteMatch.matchLevel === 'great' ? 'Great Match!' :
+                     initialData.tasteMatch.matchLevel === 'good' ? 'Good Match' :
+                     initialData.tasteMatch.matchLevel === 'different' ? 'Different Tastes' : 'Opposite Tastes'}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Score Circle */}
+              <div className="relative w-16 h-16">
+                <svg className="w-full h-full -rotate-90">
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    className="text-white/10"
+                  />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    strokeDasharray={`${initialData.tasteMatch.score * 1.76} 176`}
+                    strokeLinecap="round"
+                    className={
+                      initialData.tasteMatch.matchLevel === 'soulmate' ? 'text-pink-500' :
+                      initialData.tasteMatch.matchLevel === 'great' ? 'text-green-500' :
+                      initialData.tasteMatch.matchLevel === 'good' ? 'text-blue-500' :
+                      initialData.tasteMatch.matchLevel === 'different' ? 'text-yellow-500' : 'text-gray-500'
+                    }
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className={`text-lg font-bold ${
+                    initialData.tasteMatch.matchLevel === 'soulmate' ? 'text-pink-400' :
+                    initialData.tasteMatch.matchLevel === 'great' ? 'text-green-400' :
+                    initialData.tasteMatch.matchLevel === 'good' ? 'text-blue-400' :
+                    'text-gray-400'
+                  }`}>
+                    {initialData.tasteMatch.score}%
+                  </span>
+                </div>
               </div>
             </div>
-          )}
-        </motion.div>
+
+            {/* Score breakdown */}
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="bg-white/5 rounded-lg p-2">
+                <p className="text-lg font-semibold text-amber-400">{initialData.tasteMatch.commonBrands}</p>
+                <p className="text-xs text-gray-500">Brands in common</p>
+              </div>
+              <div className="bg-white/5 rounded-lg p-2">
+                <p className="text-lg font-semibold text-blue-400">
+                  {initialData.tasteMatch.ratingCorrelation > 0 ? '+' : ''}{Math.round(initialData.tasteMatch.ratingCorrelation * 100)}%
+                </p>
+                <p className="text-xs text-gray-500">Rating similarity</p>
+              </div>
+              <div className="bg-white/5 rounded-lg p-2">
+                <p className="text-lg font-semibold text-purple-400">{initialData.tasteMatch.sharedFlavors.length}</p>
+                <p className="text-xs text-gray-500">Flavor overlap</p>
+              </div>
+            </div>
+
+            {/* Insight text */}
+            <div className="mt-3 pt-3 border-t border-white/5 text-center">
+              <p className="text-xs text-gray-400">
+                {initialData.tasteMatch.matchLevel === 'soulmate' 
+                  ? "You two have incredibly similar taste! This could be your new smoke buddy 🤝"
+                  : initialData.tasteMatch.matchLevel === 'great'
+                  ? "You share great taste! Check out what they're smoking for recommendations"
+                  : initialData.tasteMatch.matchLevel === 'good'
+                  ? "You have some overlap! Worth exploring their check-ins"
+                  : initialData.tasteMatch.matchLevel === 'different'
+                  ? "Different palates — might discover something new from their picks"
+                  : "Very different tastes — but hey, variety is the spice of life!"}
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Common brands section - now in its own card */}
+        {initialData.commonBrands && initialData.commonBrands.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.04 }}
+            className="glass rounded-2xl p-4 mb-6"
+          >
+            <p className="text-xs text-gray-500 mb-2 text-center">
+              🤝 You both smoke:
+            </p>
+            <div className="flex flex-wrap gap-1.5 justify-center">
+              {initialData.commonBrands.map(brand => (
+                <Link
+                  key={brand}
+                  href={`/cigar/${encodeURIComponent(brand)}`}
+                  className="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs hover:bg-green-500/30 transition-all"
+                >
+                  {brand}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Badges */}
         {badges.length > 0 && (

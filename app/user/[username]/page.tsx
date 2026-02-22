@@ -6,6 +6,182 @@ import UserProfileClient from "./UserProfileClient";
 
 export const runtime = "edge";
 
+// Calculate taste match between two users
+async function calculateTasteMatch(
+  DB: D1Database,
+  currentUserId: string,
+  targetUserId: string
+): Promise<TasteMatch | undefined> {
+  try {
+    // Get all check-ins for both users
+    const [currentUserCheckins, targetUserCheckins] = await Promise.all([
+      DB.prepare(`
+        SELECT brand, rating, flavor_notes
+        FROM checkins
+        WHERE user_id = ?
+      `).bind(currentUserId).all<{ brand: string; rating: number | null; flavor_notes: string | null }>(),
+      
+      DB.prepare(`
+        SELECT brand, rating, flavor_notes
+        FROM checkins
+        WHERE user_id = ?
+      `).bind(targetUserId).all<{ brand: string; rating: number | null; flavor_notes: string | null }>(),
+    ]);
+
+    const currentCheckins = currentUserCheckins.results || [];
+    const targetCheckins = targetUserCheckins.results || [];
+
+    // If either user has no check-ins, return undefined
+    if (currentCheckins.length === 0 || targetCheckins.length === 0) {
+      return undefined;
+    }
+
+    // Build brand sets and rating maps
+    const currentBrands = new Set(currentCheckins.map(c => c.brand.toLowerCase()));
+    const targetBrands = new Set(targetCheckins.map(c => c.brand.toLowerCase()));
+    
+    // Get average ratings per brand for each user
+    const currentRatings = new Map<string, number[]>();
+    const targetRatings = new Map<string, number[]>();
+    
+    for (const c of currentCheckins) {
+      const brand = c.brand.toLowerCase();
+      if (c.rating) {
+        if (!currentRatings.has(brand)) currentRatings.set(brand, []);
+        currentRatings.get(brand)!.push(c.rating);
+      }
+    }
+    
+    for (const c of targetCheckins) {
+      const brand = c.brand.toLowerCase();
+      if (c.rating) {
+        if (!targetRatings.has(brand)) targetRatings.set(brand, []);
+        targetRatings.get(brand)!.push(c.rating);
+      }
+    }
+
+    // Calculate average rating per brand
+    const avgRating = (ratings: number[]) => ratings.reduce((a, b) => a + b, 0) / ratings.length;
+    const currentAvgRatings = new Map<string, number>();
+    const targetAvgRatings = new Map<string, number>();
+    
+    for (const [brand, ratings] of currentRatings) {
+      currentAvgRatings.set(brand, avgRating(ratings));
+    }
+    for (const [brand, ratings] of targetRatings) {
+      targetAvgRatings.set(brand, avgRating(ratings));
+    }
+
+    // Find common brands
+    const commonBrandsList = [...currentBrands].filter(b => targetBrands.has(b));
+    const totalUniqueBrands = new Set([...currentBrands, ...targetBrands]).size;
+
+    // 1. Brand overlap score (0-40 points)
+    const overlapRatio = commonBrandsList.length / Math.max(Math.min(currentBrands.size, targetBrands.size), 1);
+    const brandScore = Math.round(overlapRatio * 40);
+
+    // 2. Rating similarity score (0-40 points)
+    let ratingScore = 0;
+    let ratingCorrelation = 0;
+    const ratingDiffs: number[] = [];
+    
+    for (const brand of commonBrandsList) {
+      const currentRating = currentAvgRatings.get(brand);
+      const targetRating = targetAvgRatings.get(brand);
+      
+      if (currentRating !== undefined && targetRating !== undefined) {
+        const diff = Math.abs(currentRating - targetRating);
+        ratingDiffs.push(diff);
+      }
+    }
+
+    if (ratingDiffs.length > 0) {
+      const avgDiff = ratingDiffs.reduce((a, b) => a + b, 0) / ratingDiffs.length;
+      ratingScore = Math.round(Math.max(0, (4 - avgDiff) / 4 * 40));
+      ratingCorrelation = Math.round(((4 - avgDiff) / 4 * 2 - 1) * 100) / 100;
+    } else if (commonBrandsList.length > 0) {
+      ratingScore = 20;
+      ratingCorrelation = 0;
+    }
+
+    // 3. Flavor overlap score (0-20 points)
+    const currentFlavors = new Set<string>();
+    const targetFlavors = new Set<string>();
+    
+    for (const c of currentCheckins) {
+      if (c.flavor_notes) {
+        try {
+          const flavors = JSON.parse(c.flavor_notes) as string[];
+          flavors.forEach(f => currentFlavors.add(f));
+        } catch {}
+      }
+    }
+    
+    for (const c of targetCheckins) {
+      if (c.flavor_notes) {
+        try {
+          const flavors = JSON.parse(c.flavor_notes) as string[];
+          flavors.forEach(f => targetFlavors.add(f));
+        } catch {}
+      }
+    }
+
+    const sharedFlavors = [...currentFlavors].filter(f => targetFlavors.has(f));
+    const totalFlavors = new Set([...currentFlavors, ...targetFlavors]).size;
+    
+    let flavorScore = 0;
+    if (totalFlavors > 0) {
+      const flavorOverlapRatio = sharedFlavors.length / Math.max(Math.min(currentFlavors.size, targetFlavors.size), 1);
+      flavorScore = Math.round(flavorOverlapRatio * 20);
+    } else {
+      flavorScore = 10;
+    }
+
+    // Total score
+    const totalScore = brandScore + ratingScore + flavorScore;
+
+    // Match level
+    let matchLevel: TasteMatch['matchLevel'];
+    if (totalScore >= 85) matchLevel = 'soulmate';
+    else if (totalScore >= 65) matchLevel = 'great';
+    else if (totalScore >= 40) matchLevel = 'good';
+    else if (totalScore >= 20) matchLevel = 'different';
+    else matchLevel = 'opposite';
+
+    return {
+      score: totalScore,
+      commonBrands: commonBrandsList.length,
+      totalBrands: totalUniqueBrands,
+      ratingCorrelation,
+      sharedFlavors,
+      matchLevel,
+      details: {
+        brandScore,
+        ratingScore,
+        flavorScore,
+      },
+    };
+  } catch (error) {
+    console.error("Taste match calculation error:", error);
+    return undefined;
+  }
+}
+
+interface TasteMatch {
+  score: number;
+  commonBrands: number;
+  totalBrands: number;
+  ratingCorrelation: number;
+  sharedFlavors: string[];
+  matchLevel: 'soulmate' | 'great' | 'good' | 'different' | 'opposite';
+  details: {
+    brandScore: number;
+    ratingScore: number;
+    flavorScore: number;
+  };
+  noData?: boolean;
+}
+
 interface UserProfileData {
   user: {
     id: string;
@@ -43,6 +219,7 @@ interface UserProfileData {
   isOwnProfile: boolean;
   topBrand?: string;
   commonBrands?: string[];
+  tasteMatch?: TasteMatch;
 }
 
 async function getUserProfile(username: string): Promise<UserProfileData | null> {
@@ -178,6 +355,8 @@ async function getUserProfile(username: string): Promise<UserProfileData | null>
 
   // Get common brands if viewing another user's profile
   let commonBrands: string[] = [];
+  let tasteMatch: TasteMatch | undefined;
+  
   if (currentUserId && !isOwnProfile) {
     const commonResult = await DB.prepare(`
       SELECT DISTINCT c1.brand
@@ -188,6 +367,9 @@ async function getUserProfile(username: string): Promise<UserProfileData | null>
       LIMIT 10
     `).bind(userRow.id, currentUserId).all<{ brand: string }>();
     commonBrands = (commonResult.results || []).map(r => r.brand);
+
+    // Calculate taste match score
+    tasteMatch = await calculateTasteMatch(DB, currentUserId, userRow.id);
   }
 
   return {
@@ -221,6 +403,7 @@ async function getUserProfile(username: string): Promise<UserProfileData | null>
     isOwnProfile,
     topBrand: topBrandRow?.brand,
     commonBrands: commonBrands.length > 0 ? commonBrands : undefined,
+    tasteMatch,
   };
 }
 
