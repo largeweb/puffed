@@ -93,6 +93,35 @@ export async function POST(request: NextRequest) {
         .prepare("INSERT INTO notifications (id, user_id, type, from_user_id, checkin_id, comment_id) VALUES (?, ?, 'comment', ?, ?, ?)")
         .bind(notifId, checkin.user_id, session.user_id, checkinId, commentId)
         .run();
+
+      // Check if this is the owner's first-ever comment received
+      const existingComments = await db
+        .prepare(`
+          SELECT 1 FROM comments c2
+          JOIN checkins c ON c2.checkin_id = c.id
+          WHERE c.user_id = ? AND c2.id != ?
+          LIMIT 1
+        `)
+        .bind(checkin.user_id, commentId)
+        .first();
+
+      // If this is their first comment ever, send a celebration notification!
+      if (!existingComments) {
+        const celebrationId = crypto.randomUUID();
+        await db
+          .prepare(`
+            INSERT INTO notifications (id, user_id, type, from_user_id, checkin_id, message)
+            VALUES (?, ?, 'milestone', ?, ?, ?)
+          `)
+          .bind(
+            celebrationId,
+            checkin.user_id,
+            session.user_id,
+            checkinId,
+            '💬 Your first comment! Someone started a conversation about your smoke!'
+          )
+          .run();
+      }
     }
 
     // Get the created comment with username
