@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiHeart, FiUserPlus, FiMessageCircle, FiCheck, FiBell } from "react-icons/fi";
+import { FiArrowLeft, FiHeart, FiUserPlus, FiMessageCircle, FiCheck, FiBell, FiStar } from "react-icons/fi";
 import Link from "next/link";
 import type { Notification, NotificationsResponse, MeResponse } from "@/lib/types";
 
@@ -24,6 +24,8 @@ function NotificationIcon({ type }: { type: string }) {
       return <FiUserPlus className="text-blue-400" />;
     case 'comment':
       return <FiMessageCircle className="text-amber-400" />;
+    case 'featured':
+      return <FiStar className="text-yellow-400" />;
     default:
       return <FiBell className="text-gray-400" />;
   }
@@ -65,6 +67,15 @@ function NotificationCard({ notification, onMarkRead }: { notification: Notifica
             {" commented on your check-in"}
             {notification.comment_text && (
               <p className="text-gray-400 text-sm mt-1 line-clamp-2">"{notification.comment_text}"</p>
+            )}
+          </>
+        );
+      case 'featured':
+        return (
+          <>
+            <span className="font-semibold text-yellow-400">⭐ Your check-in was featured!</span>
+            {notification.checkin_brand && (
+              <span className="text-gray-400"> Your {notification.checkin_brand} check-in is today's Featured Smoke on Discover!</span>
             )}
           </>
         );
