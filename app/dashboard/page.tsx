@@ -7,6 +7,7 @@ import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompas
 import Link from "next/link";
 import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse } from "@/lib/types";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
+import { BrandAutocomplete } from "@/components/BrandAutocomplete";
 
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   return (
@@ -946,10 +947,10 @@ export default function DashboardPage() {
                   <label className="block text-sm text-gray-400 mb-2">
                     {category === 'cannabis' ? 'Dispensary / Brand *' : 'Brand *'}
                   </label>
-                  <input
-                    type="text"
+                  <BrandAutocomplete
                     value={brand}
-                    onChange={(e) => setBrand(e.target.value)}
+                    onChange={setBrand}
+                    category={category}
                     required
                     placeholder={
                       category === 'cannabis' ? "e.g., Cookies, Stiiizy" :
@@ -957,7 +958,6 @@ export default function DashboardPage() {
                       category === 'vape' ? "e.g., Pax, Juul" :
                       "e.g., Padron, Arturo Fuente"
                     }
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-all"
                   />
                 </div>
 
