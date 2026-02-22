@@ -79,7 +79,7 @@ export async function GET(request: Request) {
     // Fetch recent comments
     const comments = await db
       .prepare(`
-        SELECT cm.created_at, cm.user_id, cm.content, u.username, c.brand, c.id as checkin_id, cu.username as target_user
+        SELECT cm.created_at, cm.user_id, cm.text, u.username, c.brand, c.id as checkin_id, cu.username as target_user
         FROM comments cm
         JOIN users u ON cm.user_id = u.id
         JOIN checkins c ON cm.checkin_id = c.id
