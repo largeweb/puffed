@@ -122,7 +122,7 @@ export default function AdminStatsPage() {
   const loadStats = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     try {
-      const res = await fetch("/api/admin/stats");
+      const res = await fetch("/api/stats");
       const data: AdminStats = await res.json();
       setStats(data);
       setLastRefresh(new Date());
