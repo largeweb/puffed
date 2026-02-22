@@ -42,6 +42,7 @@ interface UserProfileData {
   isFollowing: boolean;
   isOwnProfile: boolean;
   topBrand?: string;
+  commonBrands?: string[];
 }
 
 function getTimeAgo(date: Date): string {
@@ -292,6 +293,26 @@ export default function UserProfileClient({ initialData }: { initialData: UserPr
               <p className="text-xs text-gray-500">
                 🏆 Favorite brand: <span className="text-amber-500 font-medium">{initialData.topBrand}</span>
               </p>
+            </div>
+          )}
+
+          {/* Common brands indicator */}
+          {initialData.commonBrands && initialData.commonBrands.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-white/5">
+              <p className="text-xs text-gray-500 mb-2 text-center">
+                🤝 You both smoke:
+              </p>
+              <div className="flex flex-wrap gap-1.5 justify-center">
+                {initialData.commonBrands.map(brand => (
+                  <Link
+                    key={brand}
+                    href={`/cigar/${encodeURIComponent(brand)}`}
+                    className="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs hover:bg-green-500/30 transition-all"
+                  >
+                    {brand}
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
         </motion.div>

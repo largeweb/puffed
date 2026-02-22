@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { parseSessionCookie } from "@/lib/auth";
 import { getTodaysPrompt } from "@/lib/daily-prompts";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
-
-interface Env {
-  DB: D1Database;
-}
 
 interface CheckinRow {
   id: string;
@@ -26,7 +23,8 @@ interface CheckinRow {
  */
 export async function GET(request: Request) {
   try {
-    const { DB } = process.env as unknown as Env;
+    const { env } = getRequestContext();
+    const DB = env.DB;
 
     // Get today's prompt
     const prompt = getTodaysPrompt();
@@ -51,16 +49,24 @@ export async function GET(request: Request) {
 
     // Check if current user has responded today
     let hasResponded = false;
-    const session = await getSession(request);
-    if (session) {
-      const userResponse = await DB.prepare(`
-        SELECT id FROM checkins
-        WHERE user_id = ?
-        AND created_at >= ? AND created_at < ?
-        AND review IS NOT NULL AND review != ''
-        LIMIT 1
-      `).bind(session.userId, todayStartUnix, tomorrowStartUnix).first();
-      hasResponded = !!userResponse;
+    const cookieHeader = request.headers.get("cookie");
+    const sessionId = parseSessionCookie(cookieHeader);
+    if (sessionId) {
+      const now = Math.floor(Date.now() / 1000);
+      const session = await DB.prepare(
+        "SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?"
+      ).bind(sessionId, now).first<{ user_id: string }>();
+      
+      if (session) {
+        const userResponse = await DB.prepare(`
+          SELECT id FROM checkins
+          WHERE user_id = ?
+          AND created_at >= ? AND created_at < ?
+          AND review IS NOT NULL AND review != ''
+          LIMIT 1
+        `).bind(session.user_id, todayStartUnix, tomorrowStartUnix).first();
+        hasResponded = !!userResponse;
+      }
     }
 
     return NextResponse.json({

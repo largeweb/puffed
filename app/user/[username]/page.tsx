@@ -42,6 +42,7 @@ interface UserProfileData {
   isFollowing: boolean;
   isOwnProfile: boolean;
   topBrand?: string;
+  commonBrands?: string[];
 }
 
 async function getUserProfile(username: string): Promise<UserProfileData | null> {
@@ -175,6 +176,20 @@ async function getUserProfile(username: string): Promise<UserProfileData | null>
     .filter(b => earnedBadgeIds.has(b.id))
     .map(b => ({ ...b, earned: true }));
 
+  // Get common brands if viewing another user's profile
+  let commonBrands: string[] = [];
+  if (currentUserId && !isOwnProfile) {
+    const commonResult = await DB.prepare(`
+      SELECT DISTINCT c1.brand
+      FROM checkins c1
+      WHERE c1.user_id = ?
+        AND c1.brand IN (SELECT DISTINCT brand FROM checkins WHERE user_id = ?)
+      ORDER BY c1.brand
+      LIMIT 10
+    `).bind(userRow.id, currentUserId).all<{ brand: string }>();
+    commonBrands = (commonResult.results || []).map(r => r.brand);
+  }
+
   return {
     user: {
       id: userRow.id,
@@ -205,6 +220,7 @@ async function getUserProfile(username: string): Promise<UserProfileData | null>
     isFollowing,
     isOwnProfile,
     topBrand: topBrandRow?.brand,
+    commonBrands: commonBrands.length > 0 ? commonBrands : undefined,
   };
 }
 
