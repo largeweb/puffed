@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch } from "react-icons/fi";
+import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2 } from "react-icons/fi";
 import Link from "next/link";
 import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse } from "@/lib/types";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
@@ -548,6 +548,13 @@ export default function DashboardPage() {
               <FiSearch size={20} />
             </Link>
             <Link
+              href="/mystats"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-cyan-400 transition-all"
+              title="My Stats"
+            >
+              <FiBarChart2 size={20} />
+            </Link>
+            <Link
               href="/leaderboard"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-500 transition-all"
               title="Leaderboard"
@@ -589,7 +596,15 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           className="glass rounded-2xl p-5 mb-6"
         >
-          <h2 className="text-sm text-gray-400 mb-2">Your Stats</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm text-gray-400">Your Stats</h2>
+            <Link
+              href="/mystats"
+              className="text-xs text-amber-500 hover:text-amber-400 transition-colors"
+            >
+              See detailed stats →
+            </Link>
+          </div>
           <div className="flex gap-6">
             <div>
               <p className="text-3xl font-bold text-amber-500">{checkins.length}</p>
