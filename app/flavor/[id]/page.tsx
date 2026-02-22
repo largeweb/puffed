@@ -1,5 +1,7 @@
 "use client";
 
+export const runtime = "edge";
+
 import { motion } from "framer-motion";
 import { useState, useEffect, use } from "react";
 import { FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiMessageCircle, FiSend, FiArrowLeft, FiSearch } from "react-icons/fi";
