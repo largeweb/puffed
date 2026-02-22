@@ -263,14 +263,20 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
               <p className="text-xl font-bold text-amber-500">{stats?.uniqueBrands || 0}</p>
               <p className="text-xs text-gray-400">Brands</p>
             </div>
-            <div>
+            <Link
+              href={`/user/${user?.username}/followers`}
+              className="block hover:bg-white/5 rounded-lg py-1 transition-all"
+            >
               <p className="text-xl font-bold text-white">{stats?.followers || 0}</p>
               <p className="text-xs text-gray-400">Followers</p>
-            </div>
-            <div>
+            </Link>
+            <Link
+              href={`/user/${user?.username}/following`}
+              className="block hover:bg-white/5 rounded-lg py-1 transition-all"
+            >
               <p className="text-xl font-bold text-white">{stats?.following || 0}</p>
               <p className="text-xs text-gray-400">Following</p>
-            </div>
+            </Link>
           </div>
         </motion.div>
 
