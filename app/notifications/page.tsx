@@ -32,6 +32,8 @@ function NotificationIcon({ type, emoji }: { type: string; emoji?: string }) {
       return <span className="text-xl">🚬</span>;
     case 'smoke_buddy':
       return <span className="text-xl">🤝</span>;
+    case 'digest':
+      return <span className="text-xl">📊</span>;
     default:
       return <FiBell className="text-gray-400" />;
   }
@@ -125,6 +127,18 @@ function NotificationCard({ notification, onMarkRead }: { notification: Notifica
                 Check it out →
               </Link>
             )}
+          </>
+        );
+      case 'digest':
+        return (
+          <>
+            <span className="font-semibold text-blue-400">📊 Yesterday on Puffed</span>
+            {notification.message && (
+              <p className="text-gray-400 text-sm mt-1">{notification.message}</p>
+            )}
+            <Link href="/discover" className="text-amber-500 hover:underline text-sm">
+              See what's trending →
+            </Link>
           </>
         );
       default:
