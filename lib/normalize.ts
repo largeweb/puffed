@@ -2,10 +2,43 @@
  * Text normalization utilities for Puffed
  */
 
+// Common spelling corrections for cigar/cigarette brands
+const SPELLING_CORRECTIONS: Record<string, string> = {
+  // American Spirit typos
+  'amarican': 'american',
+  'amercan': 'american',
+  'amerian': 'american',
+  'spirt': 'spirit',
+  'spririt': 'spirit',
+  'spirits': 'spirit', // singular form
+  'celadon': 'celadons', // correct plural
+  // Other common typos
+  'marlbro': 'marlboro',
+  'marlborro': 'marlboro',
+  'camal': 'camel',
+  'kool': 'kool', // already correct but common brand
+  'newprot': 'newport',
+  'parliment': 'parliament',
+};
+
+/**
+ * Fix common spelling mistakes in text
+ */
+function correctSpelling(text: string): string {
+  let corrected = text.toLowerCase();
+  for (const [typo, fix] of Object.entries(SPELLING_CORRECTIONS)) {
+    // Use word boundary-aware replacement
+    const regex = new RegExp(`\\b${typo}\\b`, 'gi');
+    corrected = corrected.replace(regex, fix);
+  }
+  return corrected;
+}
+
 /**
  * Normalize a brand name:
  * - Trim leading/trailing whitespace
  * - Remove duplicate spaces
+ * - Fix common spelling mistakes
  * - Apply smart title case (preserves common abbreviations)
  */
 export function normalizeBrandName(input: string): string {
@@ -22,6 +55,9 @@ export function normalizeBrandName(input: string): string {
 
   // Trim and normalize whitespace
   let normalized = input.trim().replace(/\s+/g, ' ');
+  
+  // Fix common spelling mistakes
+  normalized = correctSpelling(normalized);
 
   // Title case with smart handling
   normalized = normalized
