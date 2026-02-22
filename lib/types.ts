@@ -174,7 +174,7 @@ export interface CommentResponse {
 export interface Notification {
   id: string;
   user_id: string;
-  type: 'like' | 'follow' | 'comment' | 'featured' | 'reaction' | 'welcome' | 'smoke_buddy';
+  type: 'like' | 'follow' | 'comment' | 'featured' | 'reaction' | 'welcome' | 'smoke_buddy' | 'digest';
   from_user_id: string;
   from_username: string;
   checkin_id?: string;
@@ -182,6 +182,7 @@ export interface Notification {
   comment_id?: string;
   comment_text?: string;
   reaction_emoji?: string;
+  message?: string; // For digest notifications
   read: boolean;
   created_at: number;
 }

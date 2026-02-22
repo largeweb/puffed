@@ -93,10 +93,11 @@ CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
 CREATE TABLE IF NOT EXISTS notifications (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
-  type TEXT NOT NULL, -- 'like', 'follow', 'comment'
+  type TEXT NOT NULL, -- 'like', 'follow', 'comment', 'welcome', 'smoke_buddy', 'digest'
   from_user_id TEXT NOT NULL,
   checkin_id TEXT,
   comment_id TEXT,
+  message TEXT, -- Custom message for digest and other notification types
   read INTEGER DEFAULT 0,
   created_at INTEGER DEFAULT (unixepoch()),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
