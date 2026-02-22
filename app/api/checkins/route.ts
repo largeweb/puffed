@@ -208,6 +208,31 @@ export async function POST(request: NextRequest) {
       console.error("Failed to create smoke buddy notifications:", e);
     }
 
+    // Check for milestone check-in counts and celebrate!
+    try {
+      const countResult = await db
+        .prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ?")
+        .bind(session.user_id)
+        .first<{ count: number }>();
+
+      const checkInCount = countResult?.count || 0;
+      const milestones = [5, 10, 25, 50, 100, 250, 500, 1000];
+      
+      if (milestones.includes(checkInCount)) {
+        const notifId = generateId();
+        const milestoneMsg = `🎉 Milestone: ${checkInCount} check-ins! You're on fire! Keep the smokes coming 🔥`;
+        await db
+          .prepare(`
+            INSERT INTO notifications (id, user_id, type, from_user_id, message, created_at)
+            VALUES (?, ?, 'milestone', ?, ?, unixepoch())
+          `)
+          .bind(notifId, session.user_id, session.user_id, milestoneMsg)
+          .run();
+      }
+    } catch (e) {
+      console.error("Failed to create milestone notification:", e);
+    }
+
     return NextResponse.json({ success: true, id: checkinId });
   } catch (error) {
     console.error("Create checkin error:", error);
