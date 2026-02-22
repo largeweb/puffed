@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiArrowLeft, FiHeart, FiMessageCircle, FiSend, FiShare2 } from "react-icons/fi";
 import Link from "next/link";
 import type { Comment, CommentsResponse, CommentResponse, LikeResponse } from "@/lib/types";
+import QuickComments from "@/components/QuickComments";
 
 export interface CheckinWithMeta {
   id: string;
@@ -311,7 +312,13 @@ export default function CheckinDetailClient({ initialCheckin }: Props) {
             <>
               <div className="space-y-4 mb-4">
                 {comments.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">No comments yet. Be the first!</p>
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 mb-3">No comments yet. Be the first!</p>
+                    <QuickComments 
+                      onSelect={(text) => setNewComment(text)}
+                      disabled={posting}
+                    />
+                  </div>
                 ) : (
                   comments.map((comment) => {
                     const commentDate = new Date(comment.created_at * 1000);

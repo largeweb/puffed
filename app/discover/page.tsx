@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
+import QuickComments from "@/components/QuickComments";
 import { FLAVOR_TAGS } from "@/lib/flavors";
 import { CATEGORIES, getCategory } from "@/lib/categories";
 
@@ -292,7 +293,15 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
               {/* Existing comments */}
               <div className="space-y-3 mb-3 max-h-48 overflow-y-auto">
                 {comments.length === 0 ? (
-                  <p className="text-gray-500 text-sm text-center py-2">No comments yet. Be the first!</p>
+                  <div className="text-center py-2">
+                    <p className="text-gray-500 text-sm mb-3">No comments yet. Be the first!</p>
+                    <QuickComments 
+                      onSelect={(text) => {
+                        setNewComment(text);
+                      }}
+                      disabled={posting}
+                    />
+                  </div>
                 ) : (
                   comments.map((comment) => (
                     <div key={comment.id} className="flex gap-2 text-sm">
