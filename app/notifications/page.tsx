@@ -34,6 +34,8 @@ function NotificationIcon({ type, emoji }: { type: string; emoji?: string }) {
       return <span className="text-xl">🤝</span>;
     case 'digest':
       return <span className="text-xl">📊</span>;
+    case 'nudge':
+      return <span className="text-xl">🔥</span>;
     default:
       return <FiBell className="text-gray-400" />;
   }
@@ -139,6 +141,21 @@ function NotificationCard({ notification, onMarkRead }: { notification: Notifica
             <Link href="/discover" className="text-amber-500 hover:underline text-sm">
               See what's trending →
             </Link>
+          </>
+        );
+      case 'nudge':
+        return (
+          <>
+            <span className="font-semibold text-orange-400">{notification.message || '🔥 Time to engage!'}</span>
+            {notification.checkin_id ? (
+              <Link href={`/checkin/${notification.checkin_id}`} className="block text-amber-500 hover:underline text-sm mt-1">
+                Check out this smoke →
+              </Link>
+            ) : (
+              <Link href="/discover" className="block text-amber-500 hover:underline text-sm mt-1">
+                Explore the community →
+              </Link>
+            )}
           </>
         );
       default:
