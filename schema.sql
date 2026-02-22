@@ -108,3 +108,18 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, read);
 CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);
+
+-- Reactions table (emoji reactions - lower friction than likes)
+CREATE TABLE IF NOT EXISTS reactions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  checkin_id TEXT NOT NULL,
+  emoji TEXT NOT NULL, -- '🔥', '💨', '👌', '🤤', '😍'
+  created_at INTEGER DEFAULT (unixepoch()),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (checkin_id) REFERENCES checkins(id) ON DELETE CASCADE,
+  UNIQUE(user_id, checkin_id, emoji)
+);
+
+CREATE INDEX IF NOT EXISTS idx_reactions_checkin_id ON reactions(checkin_id);
+CREATE INDEX IF NOT EXISTS idx_reactions_user_id ON reactions(user_id);

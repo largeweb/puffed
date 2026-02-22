@@ -6,6 +6,7 @@ import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart,
 import Link from "next/link";
 import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
+import QuickReactions from "@/components/QuickReactions";
 import { FLAVOR_TAGS } from "@/lib/flavors";
 import { CATEGORIES, getCategory } from "@/lib/categories";
 
@@ -233,8 +234,13 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
         return null;
       })()}
 
+      {/* Quick Reactions */}
+      <div className="mt-3 pt-3 border-t border-white/5">
+        <QuickReactions checkinId={checkin.id} compact />
+      </div>
+
       {/* Like & Comment buttons */}
-      <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-2">
+      <div className="mt-2 flex items-center gap-2">
         <button
           onClick={handleLike}
           disabled={liking}
