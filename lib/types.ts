@@ -345,3 +345,32 @@ export interface WishlistResponse {
   count?: number;
   error?: string;
 }
+
+// Daily Prompt
+export interface DailyPrompt {
+  id: string;
+  prompt: string;
+  emoji: string;
+  category?: 'question' | 'challenge' | 'recommendation' | 'memory';
+}
+
+export interface PromptResponse {
+  id: string;
+  brand: string;
+  product: string | null;
+  rating: number | null;
+  review: string | null;
+  image_url: string | null;
+  created_at: number;
+  user_id: string;
+  username: string;
+}
+
+export interface DailyPromptResponse {
+  prompt: DailyPrompt;
+  responses?: PromptResponse[];
+  responseCount: number;
+  hasResponded: boolean;
+  todayDate: string;
+  error?: string;
+}

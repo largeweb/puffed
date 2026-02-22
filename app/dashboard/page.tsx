@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse } from "@/lib/types";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
@@ -281,6 +281,9 @@ export default function DashboardPage() {
   const [followingFeed, setFollowingFeed] = useState<Checkin[]>([]);
   const [followStats, setFollowStats] = useState({ following: 0, followers: 0 });
   const [communityActivity, setCommunityActivity] = useState<Activity[]>([]);
+  const [dailyPrompt, setDailyPrompt] = useState<DailyPrompt | null>(null);
+  const [promptResponses, setPromptResponses] = useState<PromptResponse[]>([]);
+  const [hasRespondedToPrompt, setHasRespondedToPrompt] = useState(false);
   const router = useRouter();
 
   // Form state
@@ -374,6 +377,15 @@ export default function DashboardPage() {
           // Filter out user's own activity
           const otherActivity = (activityData.activities || []).filter(a => a.user_id !== authData.user?.id);
           setCommunityActivity(otherActivity);
+        }
+
+        // Load daily prompt
+        const promptRes = await fetch("/api/daily-prompt");
+        if (promptRes.ok) {
+          const promptData: DailyPromptResponse = await promptRes.json();
+          setDailyPrompt(promptData.prompt);
+          setPromptResponses(promptData.responses || []);
+          setHasRespondedToPrompt(promptData.hasResponded);
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -741,6 +753,74 @@ export default function DashboardPage() {
                     </div>
                   );
                 })()}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Daily Prompt Section */}
+        {dailyPrompt && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.055 }}
+            className="glass rounded-2xl p-5 mb-6 border border-purple-500/20"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{dailyPrompt.emoji}</span>
+                <div>
+                  <h2 className="text-sm font-medium text-purple-400">Today's Prompt</h2>
+                  <p className="text-xs text-gray-500">
+                    {dailyPrompt.category === 'challenge' ? 'Daily Challenge' :
+                     dailyPrompt.category === 'recommendation' ? 'Share a Pick' :
+                     dailyPrompt.category === 'memory' ? 'Share a Memory' : 'Question of the Day'}
+                  </p>
+                </div>
+              </div>
+              {hasRespondedToPrompt && (
+                <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs">
+                  ✓ Answered
+                </span>
+              )}
+            </div>
+            
+            <p className="text-lg font-medium mb-4">{dailyPrompt.prompt}</p>
+            
+            {/* Response button */}
+            {!hasRespondedToPrompt && (
+              <button
+                onClick={() => setShowForm(true)}
+                className="w-full py-3 rounded-xl bg-purple-500/20 text-purple-400 font-medium hover:bg-purple-500/30 transition-all flex items-center justify-center gap-2"
+              >
+                <FiPlus size={16} />
+                Log a smoke and answer
+              </button>
+            )}
+            
+            {/* Show recent responses */}
+            {promptResponses.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-white/5">
+                <p className="text-xs text-gray-500 mb-3">
+                  💬 {promptResponses.length} {promptResponses.length === 1 ? 'response' : 'responses'} today
+                </p>
+                <div className="space-y-2">
+                  {promptResponses.slice(0, 3).map((response) => (
+                    <Link
+                      key={response.id}
+                      href={`/checkin/${response.id}`}
+                      className="block p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all"
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="text-purple-400 font-medium text-sm">@{response.username}</span>
+                        <span className="text-gray-400 text-sm">on {response.brand}</span>
+                      </div>
+                      {response.review && (
+                        <p className="text-sm text-gray-300 mt-1 line-clamp-2">"{response.review}"</p>
+                      )}
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
           </motion.div>
