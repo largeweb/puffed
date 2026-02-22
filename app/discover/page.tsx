@@ -441,7 +441,7 @@ export default function DiscoverPage() {
         method: "POST",
       });
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json() as { message: string; followedCount: number };
         setFollowAllMessage(data.message);
         // Mark all suggested users as followed
         if (data.followedCount > 0) {
