@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse } from "@/lib/types";
+import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
@@ -281,6 +282,7 @@ export default function DashboardPage() {
   const [followingFeed, setFollowingFeed] = useState<Checkin[]>([]);
   const [followStats, setFollowStats] = useState({ following: 0, followers: 0 });
   const [communityActivity, setCommunityActivity] = useState<Activity[]>([]);
+  const [recentBrands, setRecentBrands] = useState<RecentBrand[]>([]);
   const [dailyPrompt, setDailyPrompt] = useState<DailyPrompt | null>(null);
   const [promptResponses, setPromptResponses] = useState<PromptResponse[]>([]);
   const [hasRespondedToPrompt, setHasRespondedToPrompt] = useState(false);
@@ -386,6 +388,13 @@ export default function DashboardPage() {
           setDailyPrompt(promptData.prompt);
           setPromptResponses(promptData.responses || []);
           setHasRespondedToPrompt(promptData.hasResponded);
+        }
+
+        // Load recent brands for quick re-log
+        const recentBrandsRes = await fetch("/api/recent-brands?limit=5");
+        if (recentBrandsRes.ok) {
+          const recentBrandsData: RecentBrandsResponse = await recentBrandsRes.json();
+          setRecentBrands(recentBrandsData.brands || []);
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -699,6 +708,64 @@ export default function DashboardPage() {
             </motion.div>
           )}
         </motion.div>
+
+        {/* Quick Re-Log Section */}
+        {recentBrands.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.03 }}
+            className="glass rounded-2xl p-5 mb-6"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm text-gray-400 flex items-center gap-2">
+                <FiRepeat className="text-amber-500" size={14} />
+                Smoke Again
+              </h2>
+              <span className="text-xs text-gray-500">Quick log</span>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+              {recentBrands.map((rb) => (
+                <button
+                  key={rb.brand}
+                  onClick={() => {
+                    setBrand(rb.brand);
+                    if (rb.product) setProduct(rb.product);
+                    setShowForm(true);
+                  }}
+                  className="flex-shrink-0 group relative"
+                >
+                  <div className="w-20 h-20 rounded-xl bg-white/5 border border-white/10 group-hover:border-amber-500/50 transition-all overflow-hidden flex items-center justify-center">
+                    {rb.last_image ? (
+                      <img 
+                        src={rb.last_image} 
+                        alt={rb.brand}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-2xl">🚬</span>
+                    )}
+                  </div>
+                  <div className="mt-1.5 text-center">
+                    <p className="text-xs font-medium truncate w-20">{rb.brand}</p>
+                    <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500">
+                      {rb.last_rating && (
+                        <span className="flex items-center gap-0.5">
+                          <FiStar size={8} className="text-amber-500" fill="currentColor" />
+                          {rb.last_rating}
+                        </span>
+                      )}
+                      <span>×{rb.times_smoked}</span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-3 text-center">
+              Tap to log with brand pre-filled
+            </p>
+          </motion.div>
+        )}
 
         {/* Badges Section */}
         {badges.length > 0 && (

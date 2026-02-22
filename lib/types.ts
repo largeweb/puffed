@@ -374,3 +374,18 @@ export interface DailyPromptResponse {
   todayDate: string;
   error?: string;
 }
+
+export interface RecentBrand {
+  brand: string;
+  product: string | null;
+  last_smoked: number;
+  times_smoked: number;
+  last_rating: number | null;
+  last_image: string | null;
+}
+
+export interface RecentBrandsResponse {
+  brands: RecentBrand[];
+  count: number;
+  error?: string;
+}
