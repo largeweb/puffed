@@ -36,6 +36,31 @@ function getDailyHash(dateStr: string): number {
   return Math.abs(hash);
 }
 
+// Create a notification for the featured check-in user (once per day)
+async function createFeaturedNotification(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: any,
+  userId: string,
+  checkinId: string,
+  today: string
+): Promise<void> {
+  // Use deterministic ID based on date to prevent duplicates
+  const notificationId = `featured-${today}-${userId}`;
+  
+  try {
+    await db
+      .prepare(`
+        INSERT OR IGNORE INTO notifications (id, user_id, type, from_user_id, checkin_id, created_at)
+        VALUES (?, ?, 'featured', ?, ?, unixepoch())
+      `)
+      .bind(notificationId, userId, userId, checkinId)
+      .run();
+  } catch (e) {
+    // Ignore errors - notification is best-effort
+    console.error("Failed to create featured notification:", e);
+  }
+}
+
 export async function GET(): Promise<Response> {
   try {
     const { env } = getRequestContext();
@@ -113,9 +138,13 @@ export async function GET(): Promise<Response> {
       // Use daily hash to pick one
       const hash = getDailyHash(today);
       const index = hash % fallbackCheckins.length;
+      const selected = fallbackCheckins[index];
+      
+      // Create notification for the featured user (best-effort, no await to not block)
+      createFeaturedNotification(db, selected.user_id, selected.id, today);
       
       return Response.json({
-        featured: fallbackCheckins[index],
+        featured: selected,
         date: today,
       } as FeaturedResponse);
     }
@@ -123,9 +152,13 @@ export async function GET(): Promise<Response> {
     // Use daily hash to pick one deterministically
     const hash = getDailyHash(today);
     const index = hash % checkins.length;
+    const selected = checkins[index];
+    
+    // Create notification for the featured user (best-effort, no await to not block)
+    createFeaturedNotification(db, selected.user_id, selected.id, today);
     
     return Response.json({
-      featured: checkins[index],
+      featured: selected,
       date: today,
     } as FeaturedResponse);
   } catch (error) {
