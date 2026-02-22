@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse } from "@/lib/types";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
@@ -278,6 +278,8 @@ export default function DashboardPage() {
   const [badgeStats, setBadgeStats] = useState({ earned: 0, total: 0 });
   const [streak, setStreak] = useState({ current: 0, best: 0, active: false });
   const [insights, setInsights] = useState<WeeklyInsights | null>(null);
+  const [followingFeed, setFollowingFeed] = useState<Checkin[]>([]);
+  const [followStats, setFollowStats] = useState({ following: 0, followers: 0 });
   const router = useRouter();
 
   // Form state
@@ -350,6 +352,18 @@ export default function DashboardPage() {
         if (insightsRes.ok) {
           const insightsData: WeeklyInsights = await insightsRes.json();
           setInsights(insightsData);
+        }
+
+        // Load following feed (check-ins from people you follow)
+        const feedRes = await fetch("/api/feed?limit=5");
+        if (feedRes.ok) {
+          const feedData: FeedResponse = await feedRes.json();
+          // Filter out user's own check-ins for the following feed
+          const followingOnly = (feedData.checkins || []).filter(c => c.user_id !== authData.user?.id);
+          setFollowingFeed(followingOnly);
+          if (feedData.stats) {
+            setFollowStats(feedData.stats);
+          }
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -765,6 +779,100 @@ export default function DashboardPage() {
                 </p>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* Following Feed - Show recent check-ins from people you follow */}
+        {followStats.following > 0 && followingFeed.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.07 }}
+            className="glass rounded-2xl p-5 mb-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">👥</span>
+                <h2 className="text-sm text-gray-400">From People You Follow</h2>
+              </div>
+              <Link
+                href="/discover"
+                className="text-xs text-amber-500 hover:text-amber-400 transition-colors"
+              >
+                See all →
+              </Link>
+            </div>
+            
+            <div className="space-y-3">
+              {followingFeed.slice(0, 3).map((checkin) => (
+                <Link
+                  key={checkin.id}
+                  href={`/checkin/${checkin.id}`}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all group"
+                >
+                  {checkin.image_url ? (
+                    <img
+                      src={checkin.image_url}
+                      alt={checkin.brand}
+                      className="w-12 h-12 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-500">
+                      🚬
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate group-hover:text-amber-500 transition-colors">
+                      @{checkin.username} smoked {checkin.brand}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      {checkin.rating && (
+                        <span className="flex items-center gap-0.5">
+                          <FiStar className="text-amber-500" fill="currentColor" size={10} />
+                          {checkin.rating}
+                        </span>
+                      )}
+                      <span>{getTimeAgo(new Date(checkin.created_at * 1000))}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            
+            {followingFeed.length > 3 && (
+              <Link
+                href="/discover"
+                className="block mt-3 pt-3 border-t border-white/5 text-center text-xs text-gray-500 hover:text-amber-500 transition-colors"
+              >
+                +{followingFeed.length - 3} more from your feed
+              </Link>
+            )}
+          </motion.div>
+        )}
+
+        {/* Prompt to follow people if not following anyone */}
+        {followStats.following === 0 && checkins.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.07 }}
+            className="glass rounded-2xl p-4 mb-6 border border-blue-500/20"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                <span className="text-xl">👥</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-400">Find people to follow</p>
+                <p className="text-xs text-gray-500">See what other smokers are enjoying</p>
+              </div>
+              <Link
+                href="/discover"
+                className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-400 text-xs font-medium hover:bg-blue-500/30 transition-colors"
+              >
+                Discover
+              </Link>
+            </div>
           </motion.div>
         )}
 
