@@ -51,6 +51,13 @@ interface CigarDetailData {
   products: { product: string; count: number; avg_rating: number | null }[];
 }
 
+interface AlsoEnjoyedBrand {
+  brand: string;
+  fan_count: number;
+  avg_rating: number | null;
+  total_checkins: number;
+}
+
 function getTimeAgo(timestamp: number): string {
   const seconds = Math.floor((Date.now() / 1000) - timestamp);
   if (seconds < 60) return "Just now";
@@ -201,6 +208,8 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
   const [inWishlist, setInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(true);
   const [wishlistUpdating, setWishlistUpdating] = useState(false);
+  const [alsoEnjoyed, setAlsoEnjoyed] = useState<AlsoEnjoyedBrand[]>([]);
+  const [alsoEnjoyedLoading, setAlsoEnjoyedLoading] = useState(true);
 
   // Check if this brand is in the user's wishlist
   useEffect(() => {
@@ -221,6 +230,24 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
       }
     }
     checkWishlist();
+  }, [brand]);
+
+  // Fetch "also enjoyed" recommendations
+  useEffect(() => {
+    async function fetchAlsoEnjoyed() {
+      try {
+        const res = await fetch(`/api/brand/${encodeURIComponent(brand)}/also-enjoyed`);
+        if (res.ok) {
+          const data: { alsoEnjoyed: AlsoEnjoyedBrand[] } = await res.json();
+          setAlsoEnjoyed(data.alsoEnjoyed || []);
+        }
+      } catch (error) {
+        console.error("Also enjoyed error:", error);
+      } finally {
+        setAlsoEnjoyedLoading(false);
+      }
+    }
+    fetchAlsoEnjoyed();
   }, [brand]);
 
   const toggleWishlist = async () => {
@@ -376,6 +403,56 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
                     </span>
                   </div>
                 </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Also Enjoyed By Fans */}
+        {!alsoEnjoyedLoading && alsoEnjoyed.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <h3 className="text-lg font-semibold text-amber-300 mb-3 flex items-center gap-2">
+              <FiHeart size={18} className="text-pink-400" />
+              Also Enjoyed by Fans
+            </h3>
+            <p className="text-sm text-amber-400/60 mb-3">
+              People who smoke {brand} also love these
+            </p>
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+              {alsoEnjoyed.map((item) => (
+                <Link
+                  key={item.brand}
+                  href={`/cigar/${encodeURIComponent(item.brand)}`}
+                  className="flex-shrink-0"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-36 bg-gradient-to-br from-pink-900/30 to-stone-800/40 rounded-xl p-3 border border-pink-800/30 hover:border-pink-600/50 transition-colors"
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-br from-pink-700/50 to-amber-900/50 rounded-lg flex items-center justify-center mb-2">
+                      <GiCigarette className="text-pink-300" size={20} />
+                    </div>
+                    <p className="text-amber-100 font-medium text-sm truncate mb-1">
+                      {item.brand}
+                    </p>
+                    <div className="flex items-center justify-between text-xs">
+                      {item.avg_rating && (
+                        <span className="flex items-center gap-0.5 text-amber-400">
+                          <FiStar size={10} className="fill-amber-400" />
+                          {item.avg_rating.toFixed(1)}
+                        </span>
+                      )}
+                      <span className="text-pink-400/70">
+                        {item.fan_count} fan{item.fan_count !== 1 ? 's' : ''} also
+                      </span>
+                    </div>
+                  </motion.div>
+                </Link>
               ))}
             </div>
           </motion.div>
