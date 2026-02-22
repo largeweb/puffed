@@ -612,6 +612,15 @@ export default function DiscoverPage() {
                 </div>
               </div>
             </Link>
+            {/* Prominent share CTA for featured check-in */}
+            <div className="mt-3 flex justify-center" onClick={(e) => e.stopPropagation()}>
+              <ShareMenu
+                url={typeof window !== "undefined" ? `${window.location.origin}/checkin/${featured.id}` : `/checkin/${featured.id}`}
+                text={`Check out today's featured smoke on Puffed! ${featured.brand}${featured.product ? ` ${featured.product}` : ''} 🚬 #Puffed`}
+                title={`${featured.brand} - Featured on Puffed`}
+                prominent
+              />
+            </div>
           </motion.div>
         )}
 
