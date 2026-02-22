@@ -690,6 +690,83 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
+        {/* Community Engagement Prompts - show when user hasn't engaged yet */}
+        {(() => {
+          // Find engagement-related badges to check progress
+          const firstLoveBadge = badges.find(b => b.id === 'first_love');
+          const socialiteBadge = badges.find(b => b.id === 'socialite');
+          const commentatorBadge = badges.find(b => b.id === 'commentator');
+          
+          const hasLiked = firstLoveBadge?.earned || false;
+          const hasFollowed = (socialiteBadge?.progress || 0) > 0 || socialiteBadge?.earned;
+          const hasCommented = (commentatorBadge?.progress || 0) > 0 || commentatorBadge?.earned;
+          
+          // Only show if user has check-ins but hasn't engaged
+          const showEngagementPrompts = checkins.length > 0 && (!hasLiked || !hasFollowed || !hasCommented);
+          
+          if (!showEngagementPrompts) return null;
+          
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 }}
+              className="glass rounded-2xl p-4 mb-6 border border-pink-500/20"
+            >
+              <h3 className="text-sm font-medium text-pink-400 mb-3 flex items-center gap-2">
+                <span>💫</span> Join the Community
+              </h3>
+              <p className="text-xs text-gray-400 mb-3">
+                Engage with other smokers to unlock badges and make friends!
+              </p>
+              <div className="space-y-2">
+                {!hasLiked && (
+                  <Link
+                    href="/discover"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-pink-500/10 transition-all group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center">
+                      <span className="text-lg">❤️</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium group-hover:text-pink-400 transition-colors">Like your first check-in</p>
+                      <p className="text-xs text-gray-500">Show some love on Discover → earn the First Love badge!</p>
+                    </div>
+                  </Link>
+                )}
+                {!hasFollowed && (
+                  <Link
+                    href="/discover"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-blue-500/10 transition-all group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                      <span className="text-lg">👥</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium group-hover:text-blue-400 transition-colors">Follow someone</p>
+                      <p className="text-xs text-gray-500">Find interesting smokers to follow on Discover</p>
+                    </div>
+                  </Link>
+                )}
+                {!hasCommented && (
+                  <Link
+                    href="/discover"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-green-500/10 transition-all group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+                      <span className="text-lg">💬</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium group-hover:text-green-400 transition-colors">Leave a comment</p>
+                      <p className="text-xs text-gray-500">Start a conversation about someone's smoke</p>
+                    </div>
+                  </Link>
+                )}
+              </div>
+            </motion.div>
+          );
+        })()}
+
         {/* Quick Actions / Tips for new users */}
         {checkins.length < 5 && (
           <motion.div
