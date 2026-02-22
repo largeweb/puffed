@@ -172,6 +172,37 @@ export async function POST(request: NextRequest) {
       )
       .run();
 
+    // Create "smoke buddy" notifications for users who have smoked the same brand
+    // This creates connection and drives engagement
+    try {
+      // Find other users who have logged this brand (limit to 10 to prevent spam)
+      const smokeBuddies = await db
+        .prepare(`
+          SELECT DISTINCT c.user_id 
+          FROM checkins c 
+          WHERE LOWER(c.brand) = LOWER(?) 
+            AND c.user_id != ?
+          LIMIT 10
+        `)
+        .bind(brand, session.user_id)
+        .all<{ user_id: string }>();
+
+      // Create notifications for each smoke buddy
+      for (const buddy of smokeBuddies.results || []) {
+        const notifId = generateId();
+        await db
+          .prepare(`
+            INSERT INTO notifications (id, user_id, type, from_user_id, checkin_id, created_at)
+            VALUES (?, ?, 'smoke_buddy', ?, ?, unixepoch())
+          `)
+          .bind(notifId, buddy.user_id, session.user_id, checkinId)
+          .run();
+      }
+    } catch (e) {
+      // Non-critical - don't fail the check-in if notifications fail
+      console.error("Failed to create smoke buddy notifications:", e);
+    }
+
     return NextResponse.json({ success: true, id: checkinId });
   } catch (error) {
     console.error("Create checkin error:", error);
