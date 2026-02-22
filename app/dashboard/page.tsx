@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights } from "@/lib/types";
+import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
 
@@ -276,6 +277,7 @@ export default function DashboardPage() {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [badgeStats, setBadgeStats] = useState({ earned: 0, total: 0 });
   const [streak, setStreak] = useState({ current: 0, best: 0, active: false });
+  const [insights, setInsights] = useState<WeeklyInsights | null>(null);
   const router = useRouter();
 
   // Form state
@@ -342,6 +344,13 @@ export default function DashboardPage() {
           best: streakData.bestStreak || 0,
           active: streakData.streakActive || false
         });
+
+        // Load weekly insights
+        const insightsRes = await fetch("/api/insights");
+        if (insightsRes.ok) {
+          const insightsData: WeeklyInsights = await insightsRes.json();
+          setInsights(insightsData);
+        }
       } catch (error) {
         console.error("Load error:", error);
         router.push("/login");
@@ -686,6 +695,74 @@ export default function DashboardPage() {
                     </div>
                   );
                 })()}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Weekly Insights Section */}
+        {insights && insights.thisWeek.checkins > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.06 }}
+            className="glass rounded-2xl p-5 mb-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📊</span>
+                <h2 className="text-sm text-gray-400">This Week</h2>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                {insights.trend === 'up' && (
+                  <>
+                    <FiTrendingUp className="text-green-400" />
+                    <span className="text-green-400">+{insights.thisWeek.checkins - insights.lastWeek.checkins} vs last week</span>
+                  </>
+                )}
+                {insights.trend === 'down' && (
+                  <>
+                    <FiTrendingDown className="text-red-400" />
+                    <span className="text-red-400">{insights.thisWeek.checkins - insights.lastWeek.checkins} vs last week</span>
+                  </>
+                )}
+                {insights.trend === 'same' && (
+                  <>
+                    <FiMinus className="text-gray-400" />
+                    <span className="text-gray-400">Same as last week</span>
+                  </>
+                )}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-amber-500">{insights.thisWeek.checkins}</p>
+                <p className="text-xs text-gray-500">Smokes</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-400">{insights.thisWeek.brands}</p>
+                <p className="text-xs text-gray-500">Brands</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-400">{insights.thisWeek.newBrands}</p>
+                <p className="text-xs text-gray-500">New</p>
+              </div>
+            </div>
+
+            {insights.thisWeek.topBrand && (
+              <div className="pt-3 border-t border-white/5">
+                <p className="text-xs text-gray-500">
+                  🏆 Top brand this week: <span className="text-amber-500 font-medium">{insights.thisWeek.topBrand}</span>
+                </p>
+              </div>
+            )}
+            
+            {insights.thisWeek.newBrands > 0 && (
+              <div className="mt-2">
+                <p className="text-xs text-green-400">
+                  🆕 You tried {insights.thisWeek.newBrands} new brand{insights.thisWeek.newBrands > 1 ? 's' : ''} this week!
+                </p>
               </div>
             )}
           </motion.div>

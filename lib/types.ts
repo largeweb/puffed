@@ -256,6 +256,31 @@ export interface StreakResponse {
   error?: string;
 }
 
+// Weekly Insights
+export interface WeeklyInsights {
+  thisWeek: {
+    checkins: number;
+    brands: number;
+    avgRating: number | null;
+    topBrand: string | null;
+    newBrands: number;
+  };
+  lastWeek: {
+    checkins: number;
+    brands: number;
+    avgRating: number | null;
+  };
+  allTime: {
+    totalCheckins: number;
+    uniqueBrands: number;
+    avgRating: number | null;
+    topBrand: string | null;
+    topBrandCount: number;
+  };
+  trend: 'up' | 'down' | 'same';
+  error?: string;
+}
+
 // Featured Checkin of the Day
 export interface FeaturedCheckin {
   id: string;
