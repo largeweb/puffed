@@ -28,6 +28,10 @@ function NotificationIcon({ type, emoji }: { type: string; emoji?: string }) {
       return <FiStar className="text-yellow-400" />;
     case 'reaction':
       return <span className="text-xl">{emoji || '🔥'}</span>;
+    case 'welcome':
+      return <span className="text-xl">🚬</span>;
+    case 'smoke_buddy':
+      return <span className="text-xl">🤝</span>;
     default:
       return <FiBell className="text-gray-400" />;
   }
@@ -92,6 +96,34 @@ function NotificationCard({ notification, onMarkRead }: { notification: Notifica
             {" to your check-in"}
             {notification.checkin_brand && (
               <span className="text-gray-400"> on {notification.checkin_brand}</span>
+            )}
+          </>
+        );
+      case 'welcome':
+        return (
+          <>
+            <span className="font-semibold text-amber-400">Welcome to Puffed!</span>
+            <p className="text-gray-400 text-sm mt-1">
+              🔥 Log your first smoke to get started. Check out the Discover page to see what others are enjoying, 
+              and don't forget to react to check-ins you like!
+            </p>
+          </>
+        );
+      case 'smoke_buddy':
+        return (
+          <>
+            <Link href={`/user/${notification.from_username}`} className="font-semibold hover:text-amber-500">
+              @{notification.from_username}
+            </Link>
+            {" just smoked "}
+            {notification.checkin_brand && (
+              <span className="font-medium text-amber-400">{notification.checkin_brand}</span>
+            )}
+            {" — you've had this one too! "}
+            {notification.checkin_id && (
+              <Link href={`/checkin/${notification.checkin_id}`} className="text-amber-500 hover:underline">
+                Check it out →
+              </Link>
             )}
           </>
         );

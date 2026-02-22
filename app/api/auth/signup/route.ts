@@ -55,6 +55,13 @@ export async function POST(request: NextRequest) {
       .bind(userId, username.toLowerCase(), passwordHash)
       .run();
 
+    // Create welcome notification
+    const notificationId = generateId();
+    await db
+      .prepare("INSERT INTO notifications (id, user_id, type, from_user_id) VALUES (?, ?, 'welcome', ?)")
+      .bind(notificationId, userId, userId)
+      .run();
+
     // Create session
     const sessionId = generateId();
     const expiresAt = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60; // 7 days
