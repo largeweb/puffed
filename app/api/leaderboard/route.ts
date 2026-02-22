@@ -1,7 +1,59 @@
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import type { LeaderboardResponse } from "@/lib/types";
+import type { LeaderboardResponse, StreakLeaderEntry } from "@/lib/types";
 
 export const runtime = "edge";
+
+// Calculate streak for a user given their check-in dates (sorted descending)
+function calculateUserStreak(dates: string[]): { current: number; best: number; active: boolean } {
+  if (dates.length === 0) {
+    return { current: 0, best: 0, active: false };
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const yesterday = (() => {
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    return y.toISOString().split('T')[0];
+  })();
+  
+  const lastDate = dates[0];
+  const streakActive = lastDate === today || lastDate === yesterday;
+  
+  let currentStreak = 0;
+  
+  if (streakActive) {
+    let expectedDate = lastDate;
+    for (const date of dates) {
+      if (date === expectedDate) {
+        currentStreak++;
+        const dateObj = new Date(expectedDate + 'T12:00:00Z');
+        dateObj.setUTCDate(dateObj.getUTCDate() - 1);
+        expectedDate = dateObj.toISOString().split('T')[0];
+      } else if (date < expectedDate) {
+        break;
+      }
+    }
+  }
+  
+  let bestStreak = dates.length > 0 ? 1 : 0;
+  let tempStreak = 1;
+  
+  for (let i = 1; i < dates.length; i++) {
+    const prevDateObj = new Date(dates[i - 1] + 'T12:00:00Z');
+    prevDateObj.setUTCDate(prevDateObj.getUTCDate() - 1);
+    const expectedPrev = prevDateObj.toISOString().split('T')[0];
+    
+    if (expectedPrev === dates[i]) {
+      tempStreak++;
+      bestStreak = Math.max(bestStreak, tempStreak);
+    } else {
+      tempStreak = 1;
+    }
+  }
+  bestStreak = Math.max(bestStreak, currentStreak);
+  
+  return { current: currentStreak, best: bestStreak, active: streakActive };
+}
 
 export async function GET() {
   try {
@@ -76,12 +128,45 @@ export async function GET() {
       LIMIT 20
     `;
 
-    const [allTimeResult, weekResult, monthResult] = await Promise.all([
+    // Streak leaderboard - get all users with their check-in dates
+    const streakQuery = `
+      SELECT 
+        u.id as user_id,
+        u.username,
+        GROUP_CONCAT(DISTINCT date(c.created_at, 'unixepoch')) as dates
+      FROM users u
+      INNER JOIN checkins c ON u.id = c.user_id
+      GROUP BY u.id, u.username
+    `;
+
+    const [allTimeResult, weekResult, monthResult, streakResult] = await Promise.all([
       db.prepare(allTimeQuery).all(),
       db.prepare(weekQuery).bind(oneWeekAgo).all(),
       db.prepare(monthQuery).bind(oneMonthAgo).all(),
+      db.prepare(streakQuery).all(),
     ]);
 
+    // Calculate streaks for each user
+    const streakEntries: StreakLeaderEntry[] = [];
+    for (const row of (streakResult.results || []) as { user_id: string; username: string; dates: string }[]) {
+      if (!row.dates) continue;
+      const dates = row.dates.split(',').sort((a, b) => b.localeCompare(a)); // Sort descending
+      const { current, best, active } = calculateUserStreak(dates);
+      
+      // Only include users with active streaks
+      if (active && current > 0) {
+        streakEntries.push({
+          username: row.username,
+          currentStreak: current,
+          bestStreak: best,
+          rank: 0, // Will be set below
+        });
+      }
+    }
+    
+    // Sort by current streak descending, then by best streak
+    streakEntries.sort((a, b) => b.currentStreak - a.currentStreak || b.bestStreak - a.bestStreak);
+    
     // Add ranks
     const addRanks = (entries: any[]) => 
       entries.map((entry, index) => ({ ...entry, rank: index + 1 }));
@@ -90,6 +175,7 @@ export async function GET() {
       allTime: addRanks(allTimeResult.results || []),
       thisWeek: addRanks(weekResult.results || []),
       thisMonth: addRanks(monthResult.results || []),
+      streaks: addRanks(streakEntries),
     };
 
     return Response.json(response);

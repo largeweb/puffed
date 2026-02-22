@@ -208,10 +208,18 @@ export interface LeaderboardEntry {
   rank: number;
 }
 
+export interface StreakLeaderEntry {
+  username: string;
+  currentStreak: number;
+  bestStreak: number;
+  rank: number;
+}
+
 export interface LeaderboardResponse {
   allTime?: LeaderboardEntry[];
   thisWeek?: LeaderboardEntry[];
   thisMonth?: LeaderboardEntry[];
+  streaks?: StreakLeaderEntry[];
   error?: string;
 }
 

@@ -2,11 +2,11 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiAward, FiHome, FiTrendingUp, FiCalendar, FiHeart, FiStar } from "react-icons/fi";
+import { FiAward, FiHome, FiTrendingUp, FiCalendar, FiHeart, FiStar, FiZap } from "react-icons/fi";
 import Link from "next/link";
-import type { LeaderboardEntry, LeaderboardResponse } from "@/lib/types";
+import type { LeaderboardEntry, LeaderboardResponse, StreakLeaderEntry } from "@/lib/types";
 
-type TimeFrame = "allTime" | "thisMonth" | "thisWeek";
+type TimeFrame = "allTime" | "thisMonth" | "thisWeek" | "streaks";
 
 const RANK_EMOJIS = ["🥇", "🥈", "🥉"];
 const RANK_COLORS = [
@@ -14,6 +14,55 @@ const RANK_COLORS = [
   "from-gray-300 to-gray-400", 
   "from-amber-600 to-orange-700"
 ];
+
+function StreakCard({ entry, index }: { entry: StreakLeaderEntry; index: number }) {
+  const isTopThree = index < 3;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className={`glass rounded-xl p-4 ${isTopThree ? "border border-orange-500/30" : ""}`}
+    >
+      <div className="flex items-center gap-4">
+        {/* Rank */}
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${
+          isTopThree 
+            ? `bg-gradient-to-br ${RANK_COLORS[index]} text-white`
+            : "bg-white/5 text-gray-400"
+        }`}>
+          {isTopThree ? RANK_EMOJIS[index] : entry.rank}
+        </div>
+
+        {/* User info */}
+        <div className="flex-1 min-w-0">
+          <Link 
+            href={`/user/${entry.username}`}
+            className="font-semibold hover:text-amber-500 transition-colors truncate block"
+          >
+            @{entry.username}
+          </Link>
+          <div className="flex flex-wrap gap-3 text-xs text-gray-400 mt-1">
+            <span className="flex items-center gap-1 text-orange-400 font-medium">
+              🔥 {entry.currentStreak} day{entry.currentStreak === 1 ? "" : "s"}
+            </span>
+            {entry.bestStreak > entry.currentStreak && (
+              <span className="flex items-center gap-1 text-gray-500">
+                Best: {entry.bestStreak} days
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Streak flame */}
+        <div className="text-3xl">
+          {entry.currentStreak >= 7 ? "🔥" : entry.currentStreak >= 3 ? "🔥" : "🌟"}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 function LeaderboardCard({ entry, index }: { entry: LeaderboardEntry; index: number }) {
   const isTopThree = index < 3;
@@ -91,7 +140,8 @@ export default function LeaderboardPage() {
     }
   }
 
-  const entries = data?.[timeFrame] || [];
+  const entries = timeFrame === "streaks" ? (data?.streaks || []) : (data?.[timeFrame] || []);
+  const isStreakMode = timeFrame === "streaks";
 
   if (loading) {
     return (
@@ -129,39 +179,50 @@ export default function LeaderboardPage() {
           </div>
 
           {/* Time frame selector */}
-          <div className="flex gap-2 p-1 bg-white/5 rounded-xl">
+          <div className="flex gap-1 p-1 bg-white/5 rounded-xl">
             <button
               onClick={() => setTimeFrame("allTime")}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${
                 timeFrame === "allTime" 
                   ? "bg-amber-500 text-black" 
                   : "text-gray-400 hover:text-white"
               }`}
             >
-              <FiTrendingUp size={16} />
-              All Time
+              <FiTrendingUp size={14} />
+              All
             </button>
             <button
               onClick={() => setTimeFrame("thisMonth")}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${
                 timeFrame === "thisMonth" 
                   ? "bg-amber-500 text-black" 
                   : "text-gray-400 hover:text-white"
               }`}
             >
-              <FiCalendar size={16} />
-              This Month
+              <FiCalendar size={14} />
+              Month
             </button>
             <button
               onClick={() => setTimeFrame("thisWeek")}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${
                 timeFrame === "thisWeek" 
                   ? "bg-amber-500 text-black" 
                   : "text-gray-400 hover:text-white"
               }`}
             >
+              📅
+              Week
+            </button>
+            <button
+              onClick={() => setTimeFrame("streaks")}
+              className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                timeFrame === "streaks" 
+                  ? "bg-orange-500 text-black" 
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
               🔥
-              This Week
+              Streaks
             </button>
           </div>
         </div>
@@ -178,9 +239,21 @@ export default function LeaderboardPage() {
               exit={{ opacity: 0 }}
               className="text-center py-12 text-gray-400"
             >
-              <p className="text-4xl mb-3">🏆</p>
-              <p>No activity yet {timeFrame === "thisWeek" ? "this week" : timeFrame === "thisMonth" ? "this month" : ""}</p>
-              <p className="text-sm mt-2">Be the first to claim the top spot!</p>
+              <p className="text-4xl mb-3">{isStreakMode ? "🔥" : "🏆"}</p>
+              <p>
+                {isStreakMode 
+                  ? "No active streaks yet" 
+                  : timeFrame === "thisWeek" 
+                    ? "No activity this week" 
+                    : timeFrame === "thisMonth" 
+                      ? "No activity this month" 
+                      : "No activity yet"}
+              </p>
+              <p className="text-sm mt-2">
+                {isStreakMode 
+                  ? "Log a smoke daily to build your streak!" 
+                  : "Be the first to claim the top spot!"}
+              </p>
             </motion.div>
           ) : (
             <motion.div
@@ -190,9 +263,24 @@ export default function LeaderboardPage() {
               exit={{ opacity: 0 }}
               className="space-y-3"
             >
-              {entries.map((entry, index) => (
-                <LeaderboardCard key={entry.username} entry={entry} index={index} />
-              ))}
+              {isStreakMode ? (
+                <>
+                  {/* Streak info banner */}
+                  <div className="glass rounded-xl p-4 mb-4 border border-orange-500/20">
+                    <div className="flex items-center gap-2 text-orange-400 text-sm">
+                      <span className="text-xl">🔥</span>
+                      <span>Log a smoke every day to build your streak!</span>
+                    </div>
+                  </div>
+                  {(entries as StreakLeaderEntry[]).map((entry, index) => (
+                    <StreakCard key={entry.username} entry={entry} index={index} />
+                  ))}
+                </>
+              ) : (
+                (entries as LeaderboardEntry[]).map((entry, index) => (
+                  <LeaderboardCard key={entry.username} entry={entry} index={index} />
+                ))
+              )}
             </motion.div>
           )}
         </AnimatePresence>
