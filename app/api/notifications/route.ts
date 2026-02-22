@@ -51,6 +51,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<Notificati
       c.brand as checkin_brand,
       n.comment_id,
       cm.text as comment_text,
+      n.message,
       n.read,
       n.created_at,
       (SELECT emoji FROM reactions r 
@@ -73,6 +74,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<Notificati
     checkin_brand: string | null;
     comment_id: string | null;
     comment_text: string | null;
+    message: string | null;
     read: number;
     created_at: number;
     reaction_emoji: string | null;
@@ -87,6 +89,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<Notificati
       ...n,
       read: n.read === 1,
       reaction_emoji: n.reaction_emoji || undefined,
+      message: n.message || undefined,
     })) || [],
     unread_count: unreadResult?.count || 0,
   });
