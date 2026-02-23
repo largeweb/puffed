@@ -6,6 +6,8 @@ export interface StreakResponse {
   bestStreak: number;
   lastCheckinDate: string | null;
   streakActive: boolean; // true if user logged today or yesterday
+  freezeAvailable: boolean; // true if user hasn't used freeze this week
+  freezeUsedToday: boolean; // true if today is covered by a freeze
   error?: string;
 }
 
@@ -84,6 +86,16 @@ function calculateStreak(dates: string[]): { current: number; best: number; acti
   return { current: currentStreak, best: bestStreak, active: streakActive };
 }
 
+// Get start of current week (Sunday)
+function getWeekStart(): number {
+  const now = new Date();
+  const dayOfWeek = now.getUTCDay(); // 0 = Sunday
+  const weekStart = new Date(now);
+  weekStart.setUTCDate(weekStart.getUTCDate() - dayOfWeek);
+  weekStart.setUTCHours(0, 0, 0, 0);
+  return Math.floor(weekStart.getTime() / 1000);
+}
+
 export async function GET(): Promise<Response> {
   try {
     const cookieStore = await cookies();
@@ -107,6 +119,8 @@ export async function GET(): Promise<Response> {
     }
 
     const userId = session.user_id;
+    const today = getTodayString();
+    const weekStart = getWeekStart();
 
     // Get all unique check-in dates for this user, sorted descending
     const result = await db
@@ -119,14 +133,51 @@ export async function GET(): Promise<Response> {
       .bind(userId)
       .all<{ checkin_date: string }>();
 
-    const dates = result.results?.map(r => r.checkin_date) || [];
-    const { current, best, active } = calculateStreak(dates);
+    // Get streak freeze dates (count as activity for streak purposes)
+    let freezeDates: string[] = [];
+    let freezeAvailable = true;
+    let freezeUsedToday = false;
+    
+    try {
+      const freezeResult = await db
+        .prepare(`
+          SELECT DISTINCT date(created_at, 'unixepoch') as freeze_date
+          FROM streak_freezes
+          WHERE user_id = ?
+          ORDER BY freeze_date DESC
+        `)
+        .bind(userId)
+        .all<{ freeze_date: string }>();
+      
+      freezeDates = freezeResult.results?.map(r => r.freeze_date) || [];
+      
+      // Check if freeze used today
+      freezeUsedToday = freezeDates.includes(today);
+      
+      // Check if freeze used this week
+      const freezeThisWeek = await db
+        .prepare(`SELECT 1 FROM streak_freezes WHERE user_id = ? AND created_at >= ?`)
+        .bind(userId, weekStart)
+        .first();
+      freezeAvailable = !freezeThisWeek;
+    } catch {
+      // streak_freezes table may not exist yet
+      freezeDates = [];
+    }
+
+    // Merge check-in dates and freeze dates
+    const checkinDates = result.results?.map(r => r.checkin_date) || [];
+    const allDates = [...new Set([...checkinDates, ...freezeDates])].sort((a, b) => b.localeCompare(a));
+
+    const { current, best, active } = calculateStreak(allDates);
 
     return Response.json({
       currentStreak: current,
       bestStreak: best,
-      lastCheckinDate: dates[0] || null,
+      lastCheckinDate: checkinDates[0] || null,
       streakActive: active,
+      freezeAvailable,
+      freezeUsedToday,
     } as StreakResponse);
   } catch (error) {
     console.error("Streak error:", error);

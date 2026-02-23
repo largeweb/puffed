@@ -342,7 +342,8 @@ export default function DashboardPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [badgeStats, setBadgeStats] = useState({ earned: 0, total: 0 });
-  const [streak, setStreak] = useState({ current: 0, best: 0, active: false });
+  const [streak, setStreak] = useState({ current: 0, best: 0, active: false, freezeAvailable: true, freezeUsedToday: false });
+  const [freezing, setFreezing] = useState(false);
   const [insights, setInsights] = useState<WeeklyInsights | null>(null);
   const [followingFeed, setFollowingFeed] = useState<Checkin[]>([]);
   const [followStats, setFollowStats] = useState({ following: 0, followers: 0 });
@@ -398,7 +399,9 @@ export default function DashboardPage() {
           setStreak({ 
             current: streakData.currentStreak || 0, 
             best: streakData.bestStreak || 0, 
-            active: streakData.streakActive || false 
+            active: streakData.streakActive || false,
+            freezeAvailable: streakData.freezeAvailable ?? true,
+            freezeUsedToday: streakData.freezeUsedToday ?? false
           });
         }
         // Clear success message after 3 seconds
@@ -475,7 +478,9 @@ export default function DashboardPage() {
         setStreak({ 
           current: streakData.currentStreak || 0, 
           best: streakData.bestStreak || 0,
-          active: streakData.streakActive || false
+          active: streakData.streakActive || false,
+          freezeAvailable: streakData.freezeAvailable ?? true,
+          freezeUsedToday: streakData.freezeUsedToday ?? false
         });
 
         // Load weekly insights

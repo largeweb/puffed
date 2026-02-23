@@ -5,6 +5,7 @@ import { useState } from "react";
 import { FiArrowLeft, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHeart, FiUserPlus, FiUserCheck, FiShare2, FiBookmark } from "react-icons/fi";
 import Link from "next/link";
 import type { FollowResponse, Badge } from "@/lib/types";
+import SmokeHeatmap from "@/components/SmokeHeatmap";
 
 interface CheckinWithLikes {
   id: string;
@@ -318,6 +319,9 @@ export default function UserProfileClient({ initialData }: { initialData: UserPr
             </div>
           )}
         </motion.div>
+
+        {/* Smoke Heatmap Calendar */}
+        <SmokeHeatmap username={user.username} />
 
         {/* Taste Match Score Card */}
         {initialData.tasteMatch && !isOwnProfile && (
