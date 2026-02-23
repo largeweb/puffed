@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -320,6 +320,7 @@ export default function DashboardPage() {
   const [weeklyRecap, setWeeklyRecap] = useState<WeeklyRecap | null>(null);
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
   const [goalsCompleted, setGoalsCompleted] = useState(0);
+  const [brandOfWeek, setBrandOfWeek] = useState<BrandOfWeek | null>(null);
   const router = useRouter();
 
   // Form state
@@ -452,6 +453,13 @@ export default function DashboardPage() {
           const goalsData: WeeklyGoalsResponse = await goalsRes.json();
           setWeeklyGoals(goalsData.goals || []);
           setGoalsCompleted(goalsData.totalCompleted || 0);
+        }
+
+        // Load brand of the week challenge
+        const bowRes = await fetch("/api/brand-of-week");
+        if (bowRes.ok) {
+          const bowData: BrandOfWeek = await bowRes.json();
+          setBrandOfWeek(bowData);
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -1383,6 +1391,113 @@ export default function DashboardPage() {
                 <p className="text-xs text-green-400">🎉 All goals complete! You crushed it this week!</p>
               )}
             </div>
+          </motion.div>
+        )}
+
+        {/* Brand of the Week Challenge */}
+        {brandOfWeek && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.068 }}
+            className="glass rounded-2xl p-5 mb-6 border border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-red-500/5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🏆</span>
+                <div>
+                  <h2 className="text-sm font-medium text-orange-400">Brand of the Week</h2>
+                  <p className="text-xs text-gray-500">{brandOfWeek.daysRemaining} day{brandOfWeek.daysRemaining !== 1 ? 's' : ''} left</p>
+                </div>
+              </div>
+              {brandOfWeek.userTriedThisWeek && (
+                <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium flex items-center gap-1">
+                  ✓ Participated
+                </span>
+              )}
+            </div>
+
+            {/* Featured Brand */}
+            <Link
+              href={`/cigar/${encodeURIComponent(brandOfWeek.brand)}`}
+              className="block p-4 rounded-xl bg-gradient-to-br from-orange-500/10 to-amber-500/10 border border-orange-500/30 hover:border-orange-500/50 transition-all mb-4"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xl font-bold text-orange-400">{brandOfWeek.brand}</p>
+                  <p className="text-xs text-gray-500 mt-1">This week&apos;s community challenge</p>
+                </div>
+                <div className="text-4xl">🚬</div>
+              </div>
+              
+              {/* Platform stats */}
+              {brandOfWeek.platformStats.totalCheckins > 0 && (
+                <div className="flex gap-4 mt-3 pt-3 border-t border-white/5">
+                  <div>
+                    <p className="text-lg font-bold text-gray-300">{brandOfWeek.platformStats.totalCheckins}</p>
+                    <p className="text-xs text-gray-500">Check-ins</p>
+                  </div>
+                  {brandOfWeek.platformStats.avgRating && (
+                    <div>
+                      <div className="flex items-center gap-1">
+                        <FiStar className="text-amber-500" fill="currentColor" size={14} />
+                        <p className="text-lg font-bold text-gray-300">{brandOfWeek.platformStats.avgRating}</p>
+                      </div>
+                      <p className="text-xs text-gray-500">Avg Rating</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-lg font-bold text-gray-300">{brandOfWeek.platformStats.uniqueSmokers}</p>
+                    <p className="text-xs text-gray-500">Smokers</p>
+                  </div>
+                </div>
+              )}
+            </Link>
+
+            {/* This week's participants */}
+            {brandOfWeek.participants.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs text-gray-500 mb-2">🔥 This week&apos;s participants:</p>
+                <div className="flex flex-wrap gap-2">
+                  {brandOfWeek.participants.map((p, idx) => (
+                    <Link
+                      key={`${p.username}-${idx}`}
+                      href={`/user/${p.username}`}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <span className="text-xs text-gray-300">@{p.username}</span>
+                      {p.rating && (
+                        <span className="flex items-center gap-0.5 text-amber-500 text-xs">
+                          <FiStar size={10} fill="currentColor" />
+                          {p.rating}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* CTA */}
+            {!brandOfWeek.userTriedThisWeek && (
+              <button
+                onClick={() => {
+                  setBrand(brandOfWeek.brand);
+                  setShowForm(true);
+                }}
+                className="w-full py-3 rounded-xl bg-orange-500/20 text-orange-400 font-medium hover:bg-orange-500/30 transition-all flex items-center justify-center gap-2"
+              >
+                <FiPlus size={16} />
+                {brandOfWeek.userHasTried ? 'Log this week\'s smoke' : 'Try it this week!'}
+              </button>
+            )}
+
+            {/* Encouragement for participants */}
+            {brandOfWeek.userTriedThisWeek && (
+              <div className="text-center pt-2">
+                <p className="text-xs text-green-400">🎉 You&apos;re part of this week&apos;s challenge!</p>
+              </div>
+            )}
           </motion.div>
         )}
 

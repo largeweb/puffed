@@ -488,3 +488,29 @@ export interface WeeklyGoalsResponse {
   totalCompleted?: number;
   error?: string;
 }
+
+// Brand of the Week Challenge
+export interface BrandOfWeekParticipant {
+  username: string;
+  rating: number | null;
+  checkedInAt: number;
+}
+
+export interface BrandOfWeek {
+  brand: string;
+  weekNumber: number;
+  year: number;
+  platformStats: {
+    totalCheckins: number;
+    avgRating: number | null;
+    uniqueSmokers: number;
+  };
+  userHasTried: boolean;
+  userTriedThisWeek: boolean;
+  participants: BrandOfWeekParticipant[];
+  daysRemaining: number;
+}
+
+export interface BrandOfWeekResponse extends BrandOfWeek {
+  error?: string;
+}
