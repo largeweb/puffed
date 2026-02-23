@@ -21,7 +21,7 @@ function JoinContent() {
     // Look up who referred them
     if (refCode) {
       fetch(`/api/referral-check?code=${refCode}`)
-        .then(res => res.json())
+        .then(res => res.json() as Promise<{ username?: string }>)
         .then(data => {
           if (data.username) {
             setReferrer(data.username);

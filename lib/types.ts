@@ -175,7 +175,7 @@ export interface CommentResponse {
 export interface Notification {
   id: string;
   user_id: string;
-  type: 'like' | 'follow' | 'comment' | 'featured' | 'reaction' | 'welcome' | 'smoke_buddy' | 'digest' | 'nudge' | 'milestone' | 'streak_alert';
+  type: 'like' | 'follow' | 'comment' | 'featured' | 'reaction' | 'welcome' | 'smoke_buddy' | 'digest' | 'nudge' | 'milestone' | 'streak_alert' | 'first-smoke-nudge';
   from_user_id: string;
   from_username: string;
   checkin_id?: string;

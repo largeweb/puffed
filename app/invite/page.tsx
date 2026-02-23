@@ -27,7 +27,7 @@ export default function InvitePage() {
     fetch("/api/invite")
       .then(res => {
         if (!res.ok) throw new Error("Not logged in");
-        return res.json();
+        return res.json() as Promise<InviteData>;
       })
       .then(setData)
       .catch(err => setError(err.message))
