@@ -1,302 +1,333 @@
-import { NextRequest } from "next/server";
+import { ImageResponse } from "@vercel/og";
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-// Share card generation - creates a beautiful image for social sharing
-// Supports: weekly stats, profile stats, achievement unlocks
+// OG Image dimensions
+const WIDTH = 1200;
+const HEIGHT = 630;
 
-export async function GET(request: NextRequest) {
+interface UserStats {
+  username: string;
+  avatar_url: string | null;
+  bio: string | null;
+  weekSmokes: number;
+  totalSmokes: number;
+  favoriteBrand: string | null;
+  avgRating: number;
+  streak: number;
+  badges: number;
+  followers: number;
+  following: number;
+}
+
+export async function GET(request: Request): Promise<Response> {
   try {
     const { searchParams } = new URL(request.url);
-    const username = searchParams.get("u") || searchParams.get("username");
-    const type = searchParams.get("type") || "weekly"; // weekly, profile, badge
-    
+    const username = searchParams.get("u");
+
     if (!username) {
-      return new Response("Username required", { status: 400 });
+      return new Response("Missing username parameter", { status: 400 });
     }
 
     const { env } = getRequestContext();
     const db = env.DB;
 
-    // Get user info
-    const user = await db.prepare(
-      "SELECT id, username, bio FROM users WHERE username = ?"
-    ).bind(username).first<{ id: string; username: string; bio: string | null }>();
+    // Get user
+    const user = await db
+      .prepare("SELECT id, username, avatar_url, bio FROM users WHERE username = ?")
+      .bind(username)
+      .first<{ id: string; username: string; avatar_url: string | null; bio: string | null }>();
 
     if (!user) {
       return new Response("User not found", { status: 404 });
     }
 
-    // Calculate time ranges
-    const now = Math.floor(Date.now() / 1000);
-    const oneWeekAgo = now - 7 * 86400;
-
     // Get stats
-    const [weeklyStats, allTimeStats, streak] = await Promise.all([
+    const weekAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
+
+    const [weekSmokes, totalSmokes, avgRating, favoriteBrand, streak, badges, social] = await Promise.all([
+      db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ? AND created_at > ?")
+        .bind(user.id, weekAgo)
+        .first<{ count: number }>(),
+      db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ?")
+        .bind(user.id)
+        .first<{ count: number }>(),
+      db.prepare("SELECT AVG(rating) as avg FROM checkins WHERE user_id = ? AND rating IS NOT NULL")
+        .bind(user.id)
+        .first<{ avg: number | null }>(),
+      db.prepare(`
+        SELECT brand, COUNT(*) as cnt 
+        FROM checkins 
+        WHERE user_id = ? 
+        GROUP BY brand 
+        ORDER BY cnt DESC 
+        LIMIT 1
+      `).bind(user.id).first<{ brand: string; cnt: number }>(),
+      db.prepare(`
+        SELECT current_streak as streak FROM (
+          SELECT user_id,
+            CASE 
+              WHEN MAX(date(created_at, 'unixepoch')) = date('now') OR 
+                   MAX(date(created_at, 'unixepoch')) = date('now', '-1 day')
+              THEN (
+                SELECT COUNT(DISTINCT date(created_at, 'unixepoch'))
+                FROM checkins c2
+                WHERE c2.user_id = checkins.user_id
+                  AND date(c2.created_at, 'unixepoch') >= date('now', '-' || (
+                    SELECT COUNT(DISTINCT date(created_at, 'unixepoch'))
+                    FROM checkins c3
+                    WHERE c3.user_id = checkins.user_id
+                  ) || ' days')
+              )
+              ELSE 0
+            END as current_streak
+          FROM checkins
+          WHERE user_id = ?
+          GROUP BY user_id
+        )
+      `).bind(user.id).first<{ streak: number }>(),
+      db.prepare("SELECT COUNT(*) as count FROM user_badges WHERE user_id = ?")
+        .bind(user.id)
+        .first<{ count: number }>(),
       db.prepare(`
         SELECT 
-          COUNT(*) as smokes,
-          COUNT(DISTINCT brand) as brands,
-          ROUND(AVG(rating), 1) as avg_rating,
-          MAX(rating) as best_rating
-        FROM checkins 
-        WHERE user_id = ? AND created_at >= ?
-      `).bind(user.id, oneWeekAgo).first<{
-        smokes: number;
-        brands: number;
-        avg_rating: number;
-        best_rating: number;
-      }>(),
-      
-      db.prepare(`
-        SELECT 
-          COUNT(*) as total_smokes,
-          COUNT(DISTINCT brand) as total_brands
-        FROM checkins 
-        WHERE user_id = ?
-      `).bind(user.id).first<{
-        total_smokes: number;
-        total_brands: number;
-      }>(),
-      
-      db.prepare(`
-        SELECT 
-          GROUP_CONCAT(DISTINCT date(created_at, 'unixepoch')) as dates
-        FROM checkins 
-        WHERE user_id = ?
-        ORDER BY created_at DESC
-      `).bind(user.id).first<{ dates: string | null }>(),
+          (SELECT COUNT(*) FROM follows WHERE following_id = ?) as followers,
+          (SELECT COUNT(*) FROM follows WHERE follower_id = ?) as following
+      `).bind(user.id, user.id).first<{ followers: number; following: number }>(),
     ]);
 
-    // Calculate current streak
-    let currentStreak = 0;
-    if (streak?.dates) {
-      const dates = streak.dates.split(',').sort((a, b) => b.localeCompare(a));
-      const today = new Date().toISOString().split('T')[0];
-      const yesterday = (() => {
-        const y = new Date();
-        y.setDate(y.getDate() - 1);
-        return y.toISOString().split('T')[0];
-      })();
-      
-      if (dates[0] === today || dates[0] === yesterday) {
-        let expectedDate = dates[0];
-        for (const date of dates) {
-          if (date === expectedDate) {
-            currentStreak++;
-            const dateObj = new Date(expectedDate + 'T12:00:00Z');
-            dateObj.setUTCDate(dateObj.getUTCDate() - 1);
-            expectedDate = dateObj.toISOString().split('T')[0];
-          } else if (date < expectedDate) {
-            break;
-          }
-        }
-      }
-    }
-
-    const weekNum = getWeekNumber(new Date());
+    const stats: UserStats = {
+      username: user.username,
+      avatar_url: user.avatar_url,
+      bio: user.bio,
+      weekSmokes: weekSmokes?.count || 0,
+      totalSmokes: totalSmokes?.count || 0,
+      favoriteBrand: favoriteBrand?.brand || null,
+      avgRating: avgRating?.avg ? Math.round(avgRating.avg * 10) / 10 : 0,
+      streak: streak?.streak || 0,
+      badges: badges?.count || 0,
+      followers: social?.followers || 0,
+      following: social?.following || 0,
+    };
 
     // Generate the image
     return new ImageResponse(
       (
         <div
           style={{
-            height: '100%',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%)',
-            fontFamily: 'system-ui, sans-serif',
-            padding: '40px',
+            width: WIDTH,
+            height: HEIGHT,
+            display: "flex",
+            flexDirection: "column",
+            background: "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #1a1a1a 100%)",
+            fontFamily: "system-ui, sans-serif",
+            position: "relative",
+            overflow: "hidden",
           }}
         >
-          {/* Header */}
+          {/* Background pattern */}
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              marginBottom: '24px',
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundImage: "radial-gradient(circle at 25% 25%, rgba(245, 158, 11, 0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(245, 158, 11, 0.05) 0%, transparent 50%)",
+              display: "flex",
+            }}
+          />
+
+          {/* Main content */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              padding: "48px",
+              flex: 1,
+              position: "relative",
             }}
           >
-            <div
-              style={{
-                fontSize: '48px',
-              }}
-            >
-              🚬
+            {/* Header with avatar and username */}
+            <div style={{ display: "flex", alignItems: "center", gap: "24px", marginBottom: "40px" }}>
+              {/* Avatar */}
+              <div
+                style={{
+                  width: "120px",
+                  height: "120px",
+                  borderRadius: "60px",
+                  background: stats.avatar_url 
+                    ? `url(${stats.avatar_url})` 
+                    : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "4px solid #f59e0b",
+                  fontSize: "48px",
+                  color: "white",
+                }}
+              >
+                {!stats.avatar_url && stats.username[0].toUpperCase()}
+              </div>
+              
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ fontSize: "48px", fontWeight: "bold", color: "white", marginBottom: "4px" }}>
+                  @{stats.username}
+                </div>
+                <div style={{ fontSize: "24px", color: "#9ca3af", display: "flex", gap: "16px" }}>
+                  <span>{stats.followers} followers</span>
+                  <span>•</span>
+                  <span>{stats.following} following</span>
+                </div>
+              </div>
             </div>
-            <div
-              style={{
-                color: '#f59e0b',
-                fontSize: '32px',
-                fontWeight: 'bold',
-              }}
-            >
-              PUFFED
+
+            {/* Stats grid */}
+            <div style={{ display: "flex", gap: "24px", marginBottom: "40px" }}>
+              {/* This Week */}
+              <div
+                style={{
+                  flex: 1,
+                  background: "rgba(245, 158, 11, 0.1)",
+                  borderRadius: "24px",
+                  padding: "32px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  border: "2px solid rgba(245, 158, 11, 0.3)",
+                }}
+              >
+                <div style={{ fontSize: "64px", fontWeight: "bold", color: "#f59e0b" }}>
+                  {stats.weekSmokes}
+                </div>
+                <div style={{ fontSize: "20px", color: "#9ca3af", marginTop: "8px" }}>
+                  smokes this week
+                </div>
+              </div>
+
+              {/* Total */}
+              <div
+                style={{
+                  flex: 1,
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "24px",
+                  padding: "32px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  border: "2px solid rgba(255, 255, 255, 0.1)",
+                }}
+              >
+                <div style={{ fontSize: "64px", fontWeight: "bold", color: "white" }}>
+                  {stats.totalSmokes}
+                </div>
+                <div style={{ fontSize: "20px", color: "#9ca3af", marginTop: "8px" }}>
+                  total smokes
+                </div>
+              </div>
+
+              {/* Streak */}
+              <div
+                style={{
+                  flex: 1,
+                  background: "rgba(239, 68, 68, 0.1)",
+                  borderRadius: "24px",
+                  padding: "32px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  border: "2px solid rgba(239, 68, 68, 0.3)",
+                }}
+              >
+                <div style={{ fontSize: "64px", fontWeight: "bold", color: "#ef4444", display: "flex", alignItems: "center", gap: "8px" }}>
+                  🔥 {stats.streak}
+                </div>
+                <div style={{ fontSize: "20px", color: "#9ca3af", marginTop: "8px" }}>
+                  day streak
+                </div>
+              </div>
+
+              {/* Rating */}
+              <div
+                style={{
+                  flex: 1,
+                  background: "rgba(234, 179, 8, 0.1)",
+                  borderRadius: "24px",
+                  padding: "32px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  border: "2px solid rgba(234, 179, 8, 0.3)",
+                }}
+              >
+                <div style={{ fontSize: "64px", fontWeight: "bold", color: "#eab308", display: "flex", alignItems: "center", gap: "8px" }}>
+                  ⭐ {stats.avgRating}
+                </div>
+                <div style={{ fontSize: "20px", color: "#9ca3af", marginTop: "8px" }}>
+                  avg rating
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom row */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              {/* Favorite brand */}
+              {stats.favoriteBrand && (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ fontSize: "16px", color: "#6b7280", marginBottom: "8px" }}>
+                    FAVORITE BRAND
+                  </div>
+                  <div style={{ fontSize: "32px", fontWeight: "bold", color: "white" }}>
+                    🚬 {stats.favoriteBrand}
+                  </div>
+                </div>
+              )}
+
+              {/* Badges */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                <div style={{ fontSize: "16px", color: "#6b7280", marginBottom: "8px" }}>
+                  BADGES EARNED
+                </div>
+                <div style={{ fontSize: "32px", fontWeight: "bold", color: "#f59e0b" }}>
+                  🏅 {stats.badges}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Title */}
+          {/* Footer */}
           <div
             style={{
-              color: 'white',
-              fontSize: '28px',
-              fontWeight: 'bold',
-              marginBottom: '8px',
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "24px 48px",
+              background: "rgba(0, 0, 0, 0.3)",
+              borderTop: "1px solid rgba(255, 255, 255, 0.1)",
             }}
           >
-            @{user.username}&apos;s Week {weekNum}
-          </div>
-          <div
-            style={{
-              color: '#9ca3af',
-              fontSize: '18px',
-              marginBottom: '32px',
-            }}
-          >
-            My Smoke Journey This Week
-          </div>
-
-          {/* Stats Grid */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '24px',
-              marginBottom: '32px',
-            }}
-          >
-            {/* Smokes */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                background: 'rgba(245, 158, 11, 0.1)',
-                border: '2px solid rgba(245, 158, 11, 0.3)',
-                borderRadius: '16px',
-                padding: '24px 32px',
-              }}
-            >
-              <div style={{ fontSize: '48px', color: '#f59e0b', fontWeight: 'bold' }}>
-                {weeklyStats?.smokes || 0}
-              </div>
-              <div style={{ color: '#9ca3af', fontSize: '16px', marginTop: '4px' }}>
-                Smokes
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ fontSize: "32px" }}>🚬</div>
+              <div style={{ fontSize: "28px", fontWeight: "bold", color: "#f59e0b" }}>
+                Puffed
               </div>
             </div>
-
-            {/* Brands */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                background: 'rgba(236, 72, 153, 0.1)',
-                border: '2px solid rgba(236, 72, 153, 0.3)',
-                borderRadius: '16px',
-                padding: '24px 32px',
-              }}
-            >
-              <div style={{ fontSize: '48px', color: '#ec4899', fontWeight: 'bold' }}>
-                {weeklyStats?.brands || 0}
-              </div>
-              <div style={{ color: '#9ca3af', fontSize: '16px', marginTop: '4px' }}>
-                Brands
-              </div>
+            <div style={{ fontSize: "20px", color: "#6b7280" }}>
+              puffed.pages.dev
             </div>
-
-            {/* Rating */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                background: 'rgba(34, 197, 94, 0.1)',
-                border: '2px solid rgba(34, 197, 94, 0.3)',
-                borderRadius: '16px',
-                padding: '24px 32px',
-              }}
-            >
-              <div style={{ fontSize: '48px', color: '#22c55e', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {weeklyStats?.avg_rating || '-'}
-                <span style={{ fontSize: '24px' }}>⭐</span>
-              </div>
-              <div style={{ color: '#9ca3af', fontSize: '16px', marginTop: '4px' }}>
-                Avg Rating
-              </div>
-            </div>
-
-            {/* Streak */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                background: 'rgba(249, 115, 22, 0.1)',
-                border: '2px solid rgba(249, 115, 22, 0.3)',
-                borderRadius: '16px',
-                padding: '24px 32px',
-              }}
-            >
-              <div style={{ fontSize: '48px', color: '#f97316', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {currentStreak}
-                <span style={{ fontSize: '24px' }}>🔥</span>
-              </div>
-              <div style={{ color: '#9ca3af', fontSize: '16px', marginTop: '4px' }}>
-                Day Streak
-              </div>
-            </div>
-          </div>
-
-          {/* All-time stats */}
-          <div
-            style={{
-              color: '#6b7280',
-              fontSize: '16px',
-              marginBottom: '24px',
-            }}
-          >
-            {allTimeStats?.total_smokes || 0} total smokes • {allTimeStats?.total_brands || 0} brands discovered
-          </div>
-
-          {/* CTA */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'linear-gradient(90deg, #f59e0b, #ea580c)',
-              color: 'white',
-              padding: '12px 24px',
-              borderRadius: '9999px',
-              fontSize: '18px',
-              fontWeight: 'bold',
-            }}
-          >
-            Join me on puffed.pages.dev
           </div>
         </div>
       ),
       {
-        width: 1200,
-        height: 630,
+        width: WIDTH,
+        height: HEIGHT,
       }
     );
   } catch (error) {
     console.error("Share card error:", error);
-    return new Response(`Error: ${error instanceof Error ? error.message : 'Unknown'}`, { status: 500 });
+    return new Response(`Error generating share card: ${error}`, { status: 500 });
   }
-}
-
-function getWeekNumber(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
