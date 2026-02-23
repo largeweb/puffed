@@ -10,6 +10,7 @@ import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
+import { InstallBanner } from "@/components/InstallBanner";
 
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   return (
@@ -2652,6 +2653,9 @@ export default function DashboardPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* PWA Install Banner */}
+      <InstallBanner />
     </main>
   );
 }
