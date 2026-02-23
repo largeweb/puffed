@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateId, hashPassword, createSessionCookie } from "@/lib/auth";
 import { getRequestContext } from "@cloudflare/next-on-pages";
 import type { SignupRequest } from "@/lib/types";
+import { nanoid } from "nanoid";
 
 export const runtime = "edge";
 
+interface SignupRequestWithRef extends SignupRequest {
+  referralCode?: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = (await request.json()) as SignupRequest;
+    const { username, password, referralCode } = (await request.json()) as SignupRequestWithRef;
 
     if (!username || !password) {
       return NextResponse.json(
@@ -49,11 +54,33 @@ export async function POST(request: NextRequest) {
     // Create user
     const userId = generateId();
     const passwordHash = await hashPassword(password);
+    const newReferralCode = nanoid(8);
+
+    // Look up referrer if code provided
+    let referredBy: string | null = null;
+    if (referralCode) {
+      const referrer = await db
+        .prepare("SELECT id FROM users WHERE referral_code = ?")
+        .bind(referralCode)
+        .first<{ id: string }>();
+      if (referrer) {
+        referredBy = referrer.id;
+      }
+    }
 
     await db
-      .prepare("INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)")
-      .bind(userId, username.toLowerCase(), passwordHash)
+      .prepare("INSERT INTO users (id, username, password_hash, referral_code, referred_by) VALUES (?, ?, ?, ?, ?)")
+      .bind(userId, username.toLowerCase(), passwordHash, newReferralCode, referredBy)
       .run();
+
+    // If referred, notify the referrer
+    if (referredBy) {
+      const referralNotifId = generateId();
+      await db
+        .prepare("INSERT INTO notifications (id, user_id, type, from_user_id, message) VALUES (?, ?, 'referral', ?, ?)")
+        .bind(referralNotifId, referredBy, userId, `🎉 @${username.toLowerCase()} joined using your invite link!`)
+        .run();
+    }
 
     // Create welcome notification
     const notificationId = generateId();

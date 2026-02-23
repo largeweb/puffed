@@ -693,6 +693,13 @@ export default function DashboardPage() {
               <FiCamera size={20} />
             </Link>
             <Link
+              href="/invite"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-green-400 transition-all"
+              title="Invite Friends"
+            >
+              <FiShare2 size={20} />
+            </Link>
+            <Link
               href="/notifications"
               className="relative p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
             >
