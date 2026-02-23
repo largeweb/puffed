@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -321,6 +321,8 @@ export default function DashboardPage() {
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
   const [goalsCompleted, setGoalsCompleted] = useState(0);
   const [brandOfWeek, setBrandOfWeek] = useState<BrandOfWeek | null>(null);
+  const [flavorRecs, setFlavorRecs] = useState<FlavorRecommendation[]>([]);
+  const [userTopFlavors, setUserTopFlavors] = useState<string[]>([]);
   const [quickSmoking, setQuickSmoking] = useState<string | null>(null); // brand being quick-smoked
   const [quickSmokeSuccess, setQuickSmokeSuccess] = useState<string | null>(null);
   const router = useRouter();
@@ -508,6 +510,14 @@ export default function DashboardPage() {
         if (bowRes.ok) {
           const bowData: BrandOfWeek = await bowRes.json();
           setBrandOfWeek(bowData);
+        }
+
+        // Load flavor-based recommendations
+        const flavorRes = await fetch("/api/flavor-recs");
+        if (flavorRes.ok) {
+          const flavorData: FlavorRecsResponse = await flavorRes.json();
+          setFlavorRecs(flavorData.recommendations || []);
+          setUserTopFlavors(flavorData.userTopFlavors || []);
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -1590,6 +1600,100 @@ export default function DashboardPage() {
                 <p className="text-xs text-green-400">🎉 You&apos;re part of this week&apos;s challenge!</p>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* Flavor-Based Recommendations */}
+        {flavorRecs.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.069 }}
+            className="glass rounded-2xl p-5 mb-6 border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🎨</span>
+                <div>
+                  <h2 className="text-sm font-medium text-purple-400">Flavor Picks For You</h2>
+                  <p className="text-xs text-gray-500">Based on your taste profile</p>
+                </div>
+              </div>
+            </div>
+
+            {/* User's top flavors */}
+            {userTopFlavors.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                <span className="text-xs text-gray-500">Your flavors:</span>
+                {userTopFlavors.map((flavor) => {
+                  const flavorTag = getFlavorTag(flavor);
+                  return (
+                    <span
+                      key={flavor}
+                      className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-xs"
+                    >
+                      {flavorTag?.emoji || ''} {flavor}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Recommendations horizontal scroll */}
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+              {flavorRecs.map((rec, idx) => (
+                <Link
+                  key={rec.brand}
+                  href={`/cigar/${encodeURIComponent(rec.brand)}`}
+                  className="flex-shrink-0 group"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="w-40 p-3 rounded-xl bg-white/5 border border-purple-500/30 group-hover:border-purple-500 transition-all"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-xs font-medium">
+                        {rec.matchScore}% match
+                      </span>
+                      <div className="flex items-center gap-0.5 text-amber-500">
+                        <FiStar size={12} fill="currentColor" />
+                        <span className="text-xs">{rec.avgRating}</span>
+                      </div>
+                    </div>
+                    <p className="font-medium text-sm text-gray-200 truncate group-hover:text-purple-400 transition-colors">
+                      {rec.brand}
+                    </p>
+                    {rec.topProduct && (
+                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                        Try: {rec.topProduct}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {rec.matchingFlavors.slice(0, 2).map((f) => {
+                        const ft = getFlavorTag(f);
+                        return (
+                          <span key={f} className="text-xs text-purple-400">
+                            {ft?.emoji || ''}{f}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {rec.checkinCount} check-in{rec.checkinCount !== 1 ? 's' : ''}
+                    </p>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <div className="mt-4 pt-3 border-t border-white/5 text-center">
+              <p className="text-xs text-gray-500">
+                💡 Log more smokes with flavor tags to improve recommendations!
+              </p>
+            </div>
           </motion.div>
         )}
 

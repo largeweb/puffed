@@ -514,3 +514,20 @@ export interface BrandOfWeek {
 export interface BrandOfWeekResponse extends BrandOfWeek {
   error?: string;
 }
+
+// Flavor-based Recommendations
+export interface FlavorRecommendation {
+  brand: string;
+  matchScore: number;
+  matchingFlavors: string[];
+  avgRating: number;
+  checkinCount: number;
+  topProduct: string | null;
+}
+
+export interface FlavorRecsResponse {
+  userTopFlavors: string[];
+  recommendations: FlavorRecommendation[];
+  message: string;
+  error?: string;
+}
