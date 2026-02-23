@@ -90,6 +90,7 @@ async function getCheckin(id: string): Promise<CheckinWithMeta | null> {
     like_count: likeCount,
     liked_by_me: likedByMe,
     comment_count: commentCount,
+    is_owner: currentUserId === checkin.user_id,
   };
 }
 
