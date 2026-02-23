@@ -113,18 +113,27 @@ export default function MyStatsPage() {
               <p className="text-xs text-gray-400">Your smoking journey</p>
             </div>
           </div>
-          <button
-            onClick={handleShare}
-            className="relative flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 transition-all text-sm"
-          >
-            <FiShare2 size={16} />
-            Share
-            {shareStatus && (
-              <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs bg-green-500 text-black px-2 py-1 rounded whitespace-nowrap">
-                {shareStatus}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/calendar"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-all text-sm"
+            >
+              <FiCalendar size={16} />
+              Calendar
+            </Link>
+            <button
+              onClick={handleShare}
+              className="relative flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 transition-all text-sm"
+            >
+              <FiShare2 size={16} />
+              Share
+              {shareStatus && (
+                <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs bg-green-500 text-black px-2 py-1 rounded whitespace-nowrap">
+                  {shareStatus}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
