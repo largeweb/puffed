@@ -135,6 +135,9 @@ export async function generateMetadata({
       ? `"${checkin.review.slice(0, 150)}${checkin.review.length > 150 ? '...' : ''}"${ratingText} - @${checkin.username} on Puffed`
       : `${title}${ratingText} - Logged by @${checkin.username} on Puffed`;
 
+    // Use the generated share card for OG images
+    const cardUrl = `/api/checkin/${id}/card`;
+    
     const metadata: Metadata = {
       title: `${title} - Puffed`,
       description,
@@ -143,26 +146,22 @@ export async function generateMetadata({
         description,
         type: "article",
         siteName: "Puffed",
+        images: [
+          {
+            url: cardUrl,
+            width: 1200,
+            height: 630,
+            alt: title,
+          },
+        ],
       },
       twitter: {
-        card: checkin.image_url ? "summary_large_image" : "summary",
+        card: "summary_large_image",
         title: `${title} 🚬`,
         description,
+        images: [cardUrl],
       },
     };
-
-    // Add image if available
-    if (checkin.image_url) {
-      metadata.openGraph!.images = [
-        {
-          url: checkin.image_url,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ];
-      metadata.twitter!.images = [checkin.image_url];
-    }
 
     return metadata;
   } catch (error) {
