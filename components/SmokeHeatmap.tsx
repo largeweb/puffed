@@ -43,7 +43,7 @@ export default function SmokeHeatmap({ username }: SmokeHeatmapProps) {
       try {
         const res = await fetch(`/api/user/${encodeURIComponent(username)}/heatmap`);
         if (res.ok) {
-          const result = await res.json();
+          const result: HeatmapData = await res.json();
           setData(result);
         }
       } catch (err) {
