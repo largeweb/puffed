@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck } from "react-icons/fi";
+import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck, FiCamera } from "react-icons/fi";
 import Link from "next/link";
 import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
@@ -526,6 +526,13 @@ export default function DiscoverPage() {
                 title="Leaderboard"
               >
                 <FiAward size={20} />
+              </Link>
+              <Link 
+                href="/gallery"
+                className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
+                title="Photo Gallery"
+              >
+                <FiCamera size={20} />
               </Link>
               <Link 
                 href="/dashboard"

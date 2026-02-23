@@ -607,6 +607,13 @@ export default function DashboardPage() {
               <FiAward size={20} />
             </Link>
             <Link
+              href="/gallery"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
+              title="Photo Gallery"
+            >
+              <FiCamera size={20} />
+            </Link>
+            <Link
               href="/notifications"
               className="relative p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
             >
