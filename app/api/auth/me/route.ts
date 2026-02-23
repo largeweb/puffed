@@ -31,10 +31,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ user: null });
     }
 
+    // Get the user's last smoke time
+    const lastSmoke = await db
+      .prepare(`
+        SELECT created_at 
+        FROM checkins 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC 
+        LIMIT 1
+      `)
+      .bind(session.user_id)
+      .first<{ created_at: number }>();
+
     return NextResponse.json({
       user: {
         id: session.user_id,
         username: session.username,
+        last_smoke_at: lastSmoke?.created_at || null,
       },
     });
   } catch (error) {

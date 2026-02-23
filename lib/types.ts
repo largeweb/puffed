@@ -45,6 +45,7 @@ export interface AuthResponse {
 export interface User {
   id: string;
   username: string;
+  last_smoke_at?: number | null;
 }
 
 export interface Checkin {

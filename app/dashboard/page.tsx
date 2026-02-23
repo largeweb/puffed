@@ -268,6 +268,35 @@ function getTimeAgo(date: Date): string {
   return date.toLocaleDateString();
 }
 
+function getTimeSinceLastSmoke(timestamp: number | null | undefined): { text: string; emoji: string; urgency: 'fresh' | 'normal' | 'overdue' } {
+  if (!timestamp) return { text: "No smokes yet", emoji: "🆕", urgency: 'normal' };
+  
+  const seconds = Math.floor(Date.now() / 1000) - timestamp;
+  const hours = Math.floor(seconds / 3600);
+  const days = Math.floor(hours / 24);
+  
+  if (seconds < 3600) { // Less than 1 hour
+    const mins = Math.floor(seconds / 60);
+    return { text: mins <= 1 ? "Just now" : `${mins}m ago`, emoji: "🔥", urgency: 'fresh' };
+  }
+  if (hours < 6) {
+    return { text: `${hours}h ago`, emoji: "🚬", urgency: 'fresh' };
+  }
+  if (hours < 24) {
+    return { text: `${hours}h ago`, emoji: "⏰", urgency: 'normal' };
+  }
+  if (days === 1) {
+    return { text: "Yesterday", emoji: "📅", urgency: 'normal' };
+  }
+  if (days < 3) {
+    return { text: `${days} days ago`, emoji: "💭", urgency: 'normal' };
+  }
+  if (days < 7) {
+    return { text: `${days} days ago`, emoji: "🤔", urgency: 'overdue' };
+  }
+  return { text: `${days} days ago`, emoji: "😶", urgency: 'overdue' };
+}
+
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [checkins, setCheckins] = useState<Checkin[]>([]);
@@ -710,6 +739,39 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
+          {/* Time Since Last Smoke */}
+          {(() => {
+            const lastSmoke = getTimeSinceLastSmoke(user?.last_smoke_at);
+            return (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="mt-3 pt-3 border-t border-white/5"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{lastSmoke.emoji}</span>
+                    <div>
+                      <p className="text-sm text-gray-300">Last smoke: <span className={`font-medium ${
+                        lastSmoke.urgency === 'fresh' ? 'text-green-400' :
+                        lastSmoke.urgency === 'overdue' ? 'text-amber-500' :
+                        'text-gray-400'
+                      }`}>{lastSmoke.text}</span></p>
+                    </div>
+                  </div>
+                  {lastSmoke.urgency === 'overdue' && (
+                    <button
+                      onClick={() => setShowForm(true)}
+                      className="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-500 text-xs font-medium hover:bg-amber-500/30 transition-all"
+                    >
+                      Log one now
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })()}
           {/* Streak encouragement */}
           {streak.current > 0 && streak.active && (
             <motion.div
