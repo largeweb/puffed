@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -318,6 +318,8 @@ export default function DashboardPage() {
   const [activeSmokers, setActiveSmokers] = useState<ActiveSmoker[]>([]);
   const [activeSmokersStats, setActiveSmokersStats] = useState({ activeNow: 0, smokersToday: 0, checkinsToday: 0 });
   const [weeklyRecap, setWeeklyRecap] = useState<WeeklyRecap | null>(null);
+  const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
+  const [goalsCompleted, setGoalsCompleted] = useState(0);
   const router = useRouter();
 
   // Form state
@@ -442,6 +444,14 @@ export default function DashboardPage() {
         if (recapRes.ok) {
           const recapData: WeeklyRecap = await recapRes.json();
           setWeeklyRecap(recapData);
+        }
+
+        // Load weekly goals (Monday motivation!)
+        const goalsRes = await fetch("/api/weekly-goals");
+        if (goalsRes.ok) {
+          const goalsData: WeeklyGoalsResponse = await goalsRes.json();
+          setWeeklyGoals(goalsData.goals || []);
+          setGoalsCompleted(goalsData.totalCompleted || 0);
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -1293,6 +1303,86 @@ export default function DashboardPage() {
                 </p>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* Weekly Goals Section - Monday Motivation! */}
+        {weeklyGoals.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.065 }}
+            className="glass rounded-2xl p-5 mb-6 border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-blue-500/5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🎯</span>
+                <div>
+                  <h2 className="text-sm font-medium text-cyan-400">Weekly Goals</h2>
+                  <p className="text-xs text-gray-500">Reset every Monday</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-right">
+                  <p className="text-lg font-bold text-cyan-400">{goalsCompleted}/{weeklyGoals.length}</p>
+                  <p className="text-xs text-gray-500">Completed</p>
+                </div>
+                {goalsCompleted === weeklyGoals.length && (
+                  <span className="text-2xl">🏆</span>
+                )}
+              </div>
+            </div>
+
+            {/* Goals Progress */}
+            <div className="space-y-3">
+              {weeklyGoals.map((goal) => (
+                <div key={goal.id} className="flex items-center gap-3">
+                  <span className="text-lg w-8 text-center flex-shrink-0">{goal.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-sm font-medium ${goal.completed ? 'text-green-400 line-through' : 'text-gray-300'}`}>
+                        {goal.title}
+                      </span>
+                      <span className={`text-xs ${goal.completed ? 'text-green-400' : 'text-gray-500'}`}>
+                        {goal.current}/{goal.target}
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(100, (goal.current / goal.target) * 100)}%` }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                        className={`h-full rounded-full ${
+                          goal.completed 
+                            ? 'bg-green-500' 
+                            : goal.category === 'smoke' 
+                              ? 'bg-amber-500' 
+                              : goal.category === 'social' 
+                                ? 'bg-pink-500' 
+                                : 'bg-cyan-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  {goal.completed && (
+                    <span className="text-green-400 flex-shrink-0">✓</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Encouragement */}
+            <div className="mt-4 pt-3 border-t border-white/5 text-center">
+              {goalsCompleted === 0 && (
+                <p className="text-xs text-gray-500">🌟 Start your week strong! Complete a goal to get momentum.</p>
+              )}
+              {goalsCompleted > 0 && goalsCompleted < weeklyGoals.length && (
+                <p className="text-xs text-gray-500">💪 {weeklyGoals.length - goalsCompleted} more to go! You&apos;ve got this.</p>
+              )}
+              {goalsCompleted === weeklyGoals.length && (
+                <p className="text-xs text-green-400">🎉 All goals complete! You crushed it this week!</p>
+              )}
+            </div>
           </motion.div>
         )}
 

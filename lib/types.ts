@@ -468,3 +468,23 @@ export interface WeeklyRecap {
 export interface WeeklyRecapResponse extends WeeklyRecap {
   error?: string;
 }
+
+// Weekly Goals (Monday motivation)
+export interface WeeklyGoal {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  current: number;
+  target: number;
+  completed: boolean;
+  category: 'smoke' | 'social' | 'explore';
+}
+
+export interface WeeklyGoalsResponse {
+  goals?: WeeklyGoal[];
+  weekStart?: number;
+  weekEnd?: number;
+  totalCompleted?: number;
+  error?: string;
+}
