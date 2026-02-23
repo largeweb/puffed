@@ -172,14 +172,19 @@ export async function GET(): Promise<Response> {
     // Platform vibe
     const avgRatingResult = await db.prepare(`SELECT AVG(rating) as avg FROM checkins WHERE rating IS NOT NULL`).first<{ avg: number }>();
     
-    // Top flavor
-    const topFlavorResult = await db.prepare(`
-      SELECT flavor_id, COUNT(*) as c 
-      FROM checkin_flavors 
-      GROUP BY flavor_id 
-      ORDER BY c DESC 
-      LIMIT 1
-    `).first<{ flavor_id: string; c: number }>();
+    // Top flavor - wrapped in try-catch since checkin_flavors table may not exist
+    let topFlavorResult: { flavor_id: string; c: number } | null = null;
+    try {
+      topFlavorResult = await db.prepare(`
+        SELECT flavor_id, COUNT(*) as c 
+        FROM checkin_flavors 
+        GROUP BY flavor_id 
+        ORDER BY c DESC 
+        LIMIT 1
+      `).first<{ flavor_id: string; c: number }>();
+    } catch {
+      // checkin_flavors table doesn't exist yet, that's ok
+    }
     
     // Most active hour
     const mostActiveHourResult = await db.prepare(`
