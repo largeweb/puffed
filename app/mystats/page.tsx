@@ -205,6 +205,122 @@ export default function MyStatsPage() {
           </motion.div>
         )}
 
+        {/* Smoke Time Patterns */}
+        {stats.timePatterns && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.07 }}
+            className="glass rounded-2xl p-5"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">⏰</span>
+              <h2 className="font-semibold">When You Smoke</h2>
+            </div>
+
+            {/* Peak Hour Highlight */}
+            {stats.timePatterns.peakHourLabel && stats.timePatterns.favoriteTime && (
+              <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-indigo-400 mb-1">⭐ Your Prime Time</p>
+                    <p className="text-lg font-bold capitalize">
+                      {stats.timePatterns.favoriteTime === 'morning' && '🌅 Morning Smoker'}
+                      {stats.timePatterns.favoriteTime === 'afternoon' && '☀️ Afternoon Smoker'}
+                      {stats.timePatterns.favoriteTime === 'evening' && '🌆 Evening Smoker'}
+                      {stats.timePatterns.favoriteTime === 'night' && '🌙 Night Owl'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-indigo-400">{stats.timePatterns.peakHourLabel}</p>
+                    <p className="text-xs text-gray-400">peak hour</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Time of Day Distribution */}
+            <div className="mb-6">
+              <p className="text-xs text-gray-500 mb-3">Time of Day</p>
+              <div className="space-y-2">
+                {[
+                  { key: 'morning' as const, label: 'Morning', emoji: '🌅', time: '5am-12pm', color: 'from-yellow-500 to-orange-400' },
+                  { key: 'afternoon' as const, label: 'Afternoon', emoji: '☀️', time: '12pm-5pm', color: 'from-orange-500 to-amber-400' },
+                  { key: 'evening' as const, label: 'Evening', emoji: '🌆', time: '5pm-9pm', color: 'from-purple-500 to-pink-400' },
+                  { key: 'night' as const, label: 'Night', emoji: '🌙', time: '9pm-5am', color: 'from-indigo-500 to-blue-400' },
+                ].map((period) => {
+                  const count = stats.timePatterns?.timeOfDay[period.key] || 0;
+                  const total = Object.values(stats.timePatterns?.timeOfDay || {}).reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? (count / total) * 100 : 0;
+                  const isFavorite = stats.timePatterns?.favoriteTime === period.key;
+                  
+                  return (
+                    <div key={period.key} className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 w-24">
+                        <span className="text-sm">{period.emoji}</span>
+                        <span className={`text-xs ${isFavorite ? 'text-white font-medium' : 'text-gray-400'}`}>
+                          {period.label}
+                        </span>
+                      </div>
+                      <div className="flex-1 h-5 bg-white/5 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${percentage}%` }}
+                          transition={{ delay: 0.3, duration: 0.6 }}
+                          className={`h-full rounded-full bg-gradient-to-r ${period.color}`}
+                        />
+                      </div>
+                      <span className={`text-xs w-8 text-right ${isFavorite ? 'text-white font-medium' : 'text-gray-500'}`}>
+                        {count}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Day of Week Distribution */}
+            <div>
+              <p className="text-xs text-gray-500 mb-3">Day of Week</p>
+              <div className="flex justify-between gap-1">
+                {stats.timePatterns.dayOfWeek.map((day) => {
+                  const maxCount = Math.max(...(stats.timePatterns?.dayOfWeek.map(d => d.count) || [1]));
+                  const heightPct = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
+                  const isToday = new Date().toLocaleDateString('en-US', { weekday: 'short' }) === day.day;
+                  const isMax = day.count === maxCount && day.count > 0;
+                  
+                  return (
+                    <div key={day.day} className="flex flex-col items-center flex-1">
+                      <div className="h-16 w-full flex items-end justify-center mb-1">
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: `${Math.max(heightPct, day.count > 0 ? 10 : 0)}%` }}
+                          transition={{ delay: 0.4, duration: 0.5 }}
+                          className={`w-full max-w-[20px] rounded-t-md ${
+                            isMax ? 'bg-gradient-to-t from-amber-600 to-amber-400' :
+                            day.count > 0 ? 'bg-amber-500/50' : 'bg-white/10'
+                          }`}
+                        />
+                      </div>
+                      <span className={`text-[10px] ${isToday ? 'text-amber-400 font-bold' : 'text-gray-500'}`}>
+                        {day.day}
+                      </span>
+                      {day.count > 0 && (
+                        <span className="text-[9px] text-gray-600">{day.count}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {stats.mostActiveDay && (
+                <p className="text-xs text-gray-500 mt-3 text-center">
+                  📅 You smoke most on <span className="text-amber-400 font-medium">{stats.mostActiveDay}s</span>
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {/* Rating Distribution */}
         {stats.ratingDistribution.length > 0 && (
           <motion.div

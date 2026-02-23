@@ -46,6 +46,28 @@ export interface MyStatsResponse {
   mostActiveDay: string | null; // Day of week
   mostActiveMonth: string | null;
   
+  // Smoke Time Patterns (NEW)
+  timePatterns: {
+    // Time of day distribution
+    timeOfDay: {
+      morning: number;   // 5am-12pm
+      afternoon: number; // 12pm-5pm
+      evening: number;   // 5pm-9pm
+      night: number;     // 9pm-5am
+    };
+    // Day of week distribution
+    dayOfWeek: {
+      day: string;
+      count: number;
+    }[];
+    // Peak hour (0-23)
+    peakHour: number | null;
+    // Peak hour label
+    peakHourLabel: string | null;
+    // Favorite time period
+    favoriteTime: 'morning' | 'afternoon' | 'evening' | 'night' | null;
+  } | null;
+  
   error?: string;
 }
 
@@ -252,6 +274,108 @@ export async function GET(): Promise<Response> {
       .bind(userId)
       .first<{ day_name: string; count: number }>();
 
+    // ===== SMOKE TIME PATTERNS =====
+    
+    // Time of day distribution (hour-based, then categorized)
+    const hourDistribution = await db
+      .prepare(`
+        SELECT 
+          CAST(strftime('%H', created_at, 'unixepoch', 'localtime') AS INTEGER) as hour,
+          COUNT(*) as count
+        FROM checkins
+        WHERE user_id = ?
+        GROUP BY hour
+        ORDER BY count DESC
+      `)
+      .bind(userId)
+      .all<{ hour: number; count: number }>();
+
+    // Day of week distribution (all days, ordered Sun-Sat)
+    const dayOfWeekDistribution = await db
+      .prepare(`
+        SELECT 
+          strftime('%w', created_at, 'unixepoch') as day_num,
+          CASE strftime('%w', created_at, 'unixepoch')
+            WHEN '0' THEN 'Sun'
+            WHEN '1' THEN 'Mon'
+            WHEN '2' THEN 'Tue'
+            WHEN '3' THEN 'Wed'
+            WHEN '4' THEN 'Thu'
+            WHEN '5' THEN 'Fri'
+            WHEN '6' THEN 'Sat'
+          END as day,
+          COUNT(*) as count
+        FROM checkins
+        WHERE user_id = ?
+        GROUP BY day_num
+        ORDER BY CAST(day_num AS INTEGER)
+      `)
+      .bind(userId)
+      .all<{ day_num: string; day: string; count: number }>();
+
+    // Calculate time patterns
+    let timePatterns: MyStatsResponse['timePatterns'] = null;
+    
+    if ((hourDistribution.results?.length || 0) > 0) {
+      const hours = hourDistribution.results || [];
+      
+      // Categorize into time periods
+      const timeOfDay = { morning: 0, afternoon: 0, evening: 0, night: 0 };
+      
+      for (const h of hours) {
+        const hour = h.hour;
+        if (hour >= 5 && hour < 12) {
+          timeOfDay.morning += h.count;
+        } else if (hour >= 12 && hour < 17) {
+          timeOfDay.afternoon += h.count;
+        } else if (hour >= 17 && hour < 21) {
+          timeOfDay.evening += h.count;
+        } else {
+          timeOfDay.night += h.count;
+        }
+      }
+
+      // Find peak hour
+      const peakHourData = hours[0]; // Already sorted by count DESC
+      const peakHour = peakHourData?.hour ?? null;
+      
+      // Format peak hour label
+      let peakHourLabel: string | null = null;
+      if (peakHour !== null) {
+        const hour12 = peakHour % 12 || 12;
+        const ampm = peakHour >= 12 ? 'PM' : 'AM';
+        peakHourLabel = `${hour12}${ampm}`;
+      }
+
+      // Find favorite time period
+      const periods = [
+        { name: 'morning' as const, count: timeOfDay.morning },
+        { name: 'afternoon' as const, count: timeOfDay.afternoon },
+        { name: 'evening' as const, count: timeOfDay.evening },
+        { name: 'night' as const, count: timeOfDay.night },
+      ];
+      const topPeriod = periods.sort((a, b) => b.count - a.count)[0];
+      const favoriteTime = topPeriod.count > 0 ? topPeriod.name : null;
+
+      // Day of week array (ensure all 7 days are represented)
+      const dayMap: Record<string, number> = {};
+      for (const d of (dayOfWeekDistribution.results || [])) {
+        dayMap[d.day] = d.count;
+      }
+      const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => ({
+        day,
+        count: dayMap[day] || 0
+      }));
+
+      timePatterns = {
+        timeOfDay,
+        dayOfWeek,
+        peakHour,
+        peakHourLabel,
+        favoriteTime,
+      };
+    }
+
     // Calculate days since first smoke
     let daysSinceFirstSmoke = 0;
     let firstCheckinDate: string | null = null;
@@ -290,6 +414,7 @@ export async function GET(): Promise<Response> {
       firstCheckinDate,
       mostActiveDay: mostActiveDay?.day_name || null,
       mostActiveMonth: null, // Could add this later
+      timePatterns,
     };
 
     return Response.json(response);
