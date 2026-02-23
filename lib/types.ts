@@ -433,3 +433,38 @@ export interface TrendingWeekResponse {
   };
   error?: string;
 }
+
+// Weekly Recap (Sunday feature)
+export interface WeeklyRecap {
+  weekStats: {
+    checkins: number;
+    uniqueBrands: number;
+    avgRating: number | null;
+    totalSmokeTime: number;
+    topBrand: string | null;
+    topBrandCount: number;
+    newBrands: string[];
+  };
+  engagement: {
+    likesReceived: number;
+    reactionsReceived: number;
+    commentsReceived: number;
+    newFollowers: number;
+  };
+  topCheckin: {
+    id: string;
+    brand: string;
+    rating: number | null;
+    imageUrl: string | null;
+    likes: number;
+    reactions: number;
+    comments: number;
+  } | null;
+  highlights: string[];
+  shareText: string;
+  isSunday: boolean;
+}
+
+export interface WeeklyRecapResponse extends WeeklyRecap {
+  error?: string;
+}

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -317,6 +317,7 @@ export default function DashboardPage() {
   const [hasRespondedToPrompt, setHasRespondedToPrompt] = useState(false);
   const [activeSmokers, setActiveSmokers] = useState<ActiveSmoker[]>([]);
   const [activeSmokersStats, setActiveSmokersStats] = useState({ activeNow: 0, smokersToday: 0, checkinsToday: 0 });
+  const [weeklyRecap, setWeeklyRecap] = useState<WeeklyRecap | null>(null);
   const router = useRouter();
 
   // Form state
@@ -434,6 +435,13 @@ export default function DashboardPage() {
           const activeSmokersData: ActiveSmokersResponse = await activeSmokersRes.json();
           setActiveSmokers(activeSmokersData.smokers || []);
           setActiveSmokersStats(activeSmokersData.stats || { activeNow: 0, smokersToday: 0, checkinsToday: 0 });
+        }
+
+        // Load weekly recap (shows on weekends)
+        const recapRes = await fetch("/api/weekly-recap");
+        if (recapRes.ok) {
+          const recapData: WeeklyRecap = await recapRes.json();
+          setWeeklyRecap(recapData);
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -857,6 +865,150 @@ export default function DashboardPage() {
             <p className="text-xs text-gray-500 mt-3 text-center">
               Tap to log with brand pre-filled
             </p>
+          </motion.div>
+        )}
+
+        {/* Weekly Recap Section (shows on weekends) */}
+        {weeklyRecap && weeklyRecap.isSunday && weeklyRecap.weekStats.checkins > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.045 }}
+            className="glass rounded-2xl p-5 mb-6 border border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-indigo-500/5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🎉</span>
+                <div>
+                  <h2 className="text-sm font-medium text-purple-400">Your Week in Smoke</h2>
+                  <p className="text-xs text-gray-500">Weekly recap</p>
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  const shareText = weeklyRecap.shareText;
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({ text: shareText });
+                    } catch (err) {
+                      if ((err as Error).name !== "AbortError") {
+                        await navigator.clipboard.writeText(shareText);
+                      }
+                    }
+                  } else {
+                    await navigator.clipboard.writeText(shareText);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-xs font-medium hover:bg-purple-500/30 transition-all flex items-center gap-1.5"
+              >
+                <FiShare2 size={12} />
+                Share
+              </button>
+            </div>
+
+            {/* Week Stats Grid */}
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-purple-400">{weeklyRecap.weekStats.checkins}</p>
+                <p className="text-xs text-gray-500">Smokes</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-indigo-400">{weeklyRecap.weekStats.uniqueBrands}</p>
+                <p className="text-xs text-gray-500">Brands</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-pink-400">
+                  {weeklyRecap.weekStats.avgRating ? weeklyRecap.weekStats.avgRating.toFixed(1) : '-'}
+                </p>
+                <p className="text-xs text-gray-500">Avg ⭐</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-amber-400">
+                  {weeklyRecap.engagement.likesReceived + weeklyRecap.engagement.reactionsReceived + weeklyRecap.engagement.commentsReceived}
+                </p>
+                <p className="text-xs text-gray-500">Engaged</p>
+              </div>
+            </div>
+
+            {/* Highlights */}
+            {weeklyRecap.highlights.length > 0 && (
+              <div className="space-y-1.5 mb-4">
+                {weeklyRecap.highlights.map((highlight, idx) => (
+                  <p key={idx} className="text-xs text-gray-400">{highlight}</p>
+                ))}
+              </div>
+            )}
+
+            {/* Top Brand */}
+            {weeklyRecap.weekStats.topBrand && (
+              <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">👑</span>
+                  <span className="text-sm text-gray-300">Fave this week:</span>
+                </div>
+                <Link
+                  href={`/brand/${encodeURIComponent(weeklyRecap.weekStats.topBrand)}`}
+                  className="text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  {weeklyRecap.weekStats.topBrand} ({weeklyRecap.weekStats.topBrandCount}×)
+                </Link>
+              </div>
+            )}
+
+            {/* New Brands Tried */}
+            {weeklyRecap.weekStats.newBrands.length > 0 && (
+              <div className="pt-3 mt-3 border-t border-white/5">
+                <p className="text-xs text-gray-500 mb-2">✨ New brands explored:</p>
+                <div className="flex flex-wrap gap-2">
+                  {weeklyRecap.weekStats.newBrands.map((brand, idx) => (
+                    <Link
+                      key={idx}
+                      href={`/brand/${encodeURIComponent(brand)}`}
+                      className="px-2 py-1 rounded-full bg-white/5 text-xs text-gray-300 hover:bg-white/10 transition-colors"
+                    >
+                      {brand}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Top Check-in */}
+            {weeklyRecap.topCheckin && (weeklyRecap.topCheckin.likes > 0 || weeklyRecap.topCheckin.reactions > 0 || weeklyRecap.topCheckin.comments > 0) && (
+              <div className="pt-3 mt-3 border-t border-white/5">
+                <p className="text-xs text-gray-500 mb-2">🔥 Your top post:</p>
+                <Link
+                  href={`/checkin/${weeklyRecap.topCheckin.id}`}
+                  className="flex items-center gap-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
+                >
+                  {weeklyRecap.topCheckin.imageUrl ? (
+                    <img 
+                      src={weeklyRecap.topCheckin.imageUrl} 
+                      alt={weeklyRecap.topCheckin.brand}
+                      className="w-12 h-12 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center text-xl">
+                      🚬
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-200">{weeklyRecap.topCheckin.brand}</p>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      {weeklyRecap.topCheckin.rating && (
+                        <span className="flex items-center gap-0.5">
+                          <FiStar size={10} className="text-amber-500" fill="currentColor" />
+                          {weeklyRecap.topCheckin.rating}
+                        </span>
+                      )}
+                      <span>❤️ {weeklyRecap.topCheckin.likes}</span>
+                      <span>⚡ {weeklyRecap.topCheckin.reactions}</span>
+                      <span>💬 {weeklyRecap.topCheckin.comments}</span>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            )}
           </motion.div>
         )}
 
