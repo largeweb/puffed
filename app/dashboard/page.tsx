@@ -321,7 +321,55 @@ export default function DashboardPage() {
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
   const [goalsCompleted, setGoalsCompleted] = useState(0);
   const [brandOfWeek, setBrandOfWeek] = useState<BrandOfWeek | null>(null);
+  const [quickSmoking, setQuickSmoking] = useState<string | null>(null); // brand being quick-smoked
+  const [quickSmokeSuccess, setQuickSmokeSuccess] = useState<string | null>(null);
   const router = useRouter();
+
+  // Quick Smoke handler - one-tap to log your go-to brand
+  const handleQuickSmoke = async (brandName: string, productName?: string | null) => {
+    if (quickSmoking) return; // Prevent double-tap
+    
+    setQuickSmoking(brandName);
+    try {
+      const res = await fetch("/api/quick-smoke", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          brand: brandName, 
+          product: productName || undefined 
+        }),
+      });
+      
+      if (res.ok) {
+        const data: { message?: string } = await res.json();
+        setQuickSmokeSuccess(data.message || `⚡ Logged ${brandName}!`);
+        // Refresh checkins
+        const checkinsRes = await fetch("/api/checkins");
+        if (checkinsRes.ok) {
+          const checkinsData: CheckinsResponse = await checkinsRes.json();
+          setCheckins(checkinsData.checkins || []);
+        }
+        // Update streak
+        const streakRes = await fetch("/api/streak");
+        if (streakRes.ok) {
+          const streakData: StreakResponse = await streakRes.json();
+          setStreak({ 
+            current: streakData.currentStreak || 0, 
+            best: streakData.bestStreak || 0, 
+            active: streakData.streakActive || false 
+          });
+        }
+        // Clear success message after 3 seconds
+        setTimeout(() => setQuickSmokeSuccess(null), 3000);
+      } else {
+        console.error("Quick smoke failed");
+      }
+    } catch (error) {
+      console.error("Quick smoke error:", error);
+    } finally {
+      setQuickSmoking(null);
+    }
+  };
 
   // Form state
   const [category, setCategory] = useState<'cigar' | 'cannabis' | 'hookah' | 'vape'>('cigar');
@@ -842,34 +890,51 @@ export default function DashboardPage() {
           )}
         </motion.div>
 
-        {/* Quick Re-Log Section */}
+        {/* Quick Smoke Success Toast */}
+        <AnimatePresence>
+          {quickSmokeSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.9 }}
+              className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg"
+            >
+              {quickSmokeSuccess}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Quick Smoke Section ⚡ */}
         {recentBrands.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.03 }}
-            className="glass rounded-2xl p-5 mb-6"
+            className="glass rounded-2xl p-5 mb-6 border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-orange-500/5"
           >
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm text-gray-400 flex items-center gap-2">
-                <FiRepeat className="text-amber-500" size={14} />
-                Smoke Again
+              <h2 className="text-sm font-medium text-amber-400 flex items-center gap-2">
+                <FiZap className="text-amber-500" size={14} />
+                Quick Smoke
               </h2>
-              <span className="text-xs text-gray-500">Quick log</span>
+              <span className="text-xs text-amber-500/70">One-tap log</span>
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
               {recentBrands.map((rb) => (
-                <button
-                  key={rb.brand}
-                  onClick={() => {
-                    setBrand(rb.brand);
-                    if (rb.product) setProduct(rb.product);
-                    setShowForm(true);
-                  }}
-                  className="flex-shrink-0 group relative"
-                >
-                  <div className="w-20 h-20 rounded-xl bg-white/5 border border-white/10 group-hover:border-amber-500/50 transition-all overflow-hidden flex items-center justify-center">
-                    {rb.last_image ? (
+                <div key={rb.brand} className="flex-shrink-0 group relative">
+                  {/* Quick smoke button - one tap to log */}
+                  <button
+                    onClick={() => handleQuickSmoke(rb.brand, rb.product)}
+                    disabled={quickSmoking === rb.brand}
+                    className={`w-20 h-20 rounded-xl border transition-all overflow-hidden flex items-center justify-center ${
+                      quickSmoking === rb.brand 
+                        ? 'bg-amber-500/20 border-amber-500/50 animate-pulse' 
+                        : 'bg-white/5 border-white/10 group-hover:border-amber-500/50 group-hover:bg-amber-500/10'
+                    }`}
+                  >
+                    {quickSmoking === rb.brand ? (
+                      <span className="text-2xl animate-bounce">⚡</span>
+                    ) : rb.last_image ? (
                       <img 
                         src={rb.last_image} 
                         alt={rb.brand}
@@ -878,7 +943,7 @@ export default function DashboardPage() {
                     ) : (
                       <span className="text-2xl">🚬</span>
                     )}
-                  </div>
+                  </button>
                   <div className="mt-1.5 text-center">
                     <p className="text-xs font-medium truncate w-20">{rb.brand}</p>
                     <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500">
@@ -891,11 +956,24 @@ export default function DashboardPage() {
                       <span>×{rb.times_smoked}</span>
                     </div>
                   </div>
-                </button>
+                  {/* Long-press hint on hover */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setBrand(rb.brand);
+                      if (rb.product) setProduct(rb.product);
+                      setShowForm(true);
+                    }}
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-stone-700 border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] hover:bg-amber-500 hover:text-black"
+                    title="Add details"
+                  >
+                    +
+                  </button>
+                </div>
               ))}
             </div>
-            <p className="text-xs text-gray-500 mt-3 text-center">
-              Tap to log with brand pre-filled
+            <p className="text-xs text-amber-500/50 mt-3 text-center">
+              ⚡ Tap to instantly log • Hover + tap <span className="bg-stone-700 px-1 rounded">+</span> for details
             </p>
           </motion.div>
         )}
