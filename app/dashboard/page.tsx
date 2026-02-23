@@ -9,6 +9,8 @@ import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, Notif
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
+import { MOOD_TAGS } from "@/lib/moods";
+import type { SmokeMood } from "@/lib/types";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
 import { InstallBanner } from "@/components/InstallBanner";
 
@@ -160,6 +162,19 @@ function CheckinCard({ checkin, onDelete }: { checkin: Checkin; onDelete?: (id: 
       {checkin.review && (
         <p className="text-gray-300 text-sm mb-3">{checkin.review}</p>
       )}
+
+      {/* Mood badge */}
+      {checkin.mood && (() => {
+        const moodTag = MOOD_TAGS.find(m => m.id === checkin.mood);
+        if (!moodTag) return null;
+        return (
+          <div className="mb-2">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${moodTag.color}`}>
+              {moodTag.emoji} {moodTag.label}
+            </span>
+          </div>
+        );
+      })()}
 
       {/* Category badge */}
       {checkin.category && checkin.category !== 'cigar' && (
@@ -433,6 +448,8 @@ export default function DashboardPage() {
   const [strainType, setStrainType] = useState<'indica' | 'sativa' | 'hybrid' | ''>('');
   const [effects, setEffects] = useState("");
   const [thcPercent, setThcPercent] = useState("");
+  // Mood (all categories)
+  const [selectedMood, setSelectedMood] = useState<SmokeMood | ''>('');
   // Image
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -659,6 +676,7 @@ export default function DashboardPage() {
           rating: rating || undefined,
           review: review || undefined,
           imageUrl,
+          mood: selectedMood || undefined,
           // Cigar fields
           flavorNotes: category === 'cigar' && selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : undefined,
           drawRating: category === 'cigar' ? (drawRating || undefined) : undefined,
@@ -708,6 +726,8 @@ export default function DashboardPage() {
         setStrainType('');
         setEffects("");
         setThcPercent("");
+        // Mood
+        setSelectedMood('');
         // Image
         setImageFile(null);
         setImagePreview(null);
@@ -2528,6 +2548,28 @@ export default function DashboardPage() {
                     placeholder="e.g., 45"
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-all"
                   />
+                </div>
+
+                {/* Mood Selector - All categories */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">How are you feeling? 🎭</label>
+                  <div className="flex flex-wrap gap-2">
+                    {MOOD_TAGS.map(mood => (
+                      <button
+                        key={mood.id}
+                        type="button"
+                        onClick={() => setSelectedMood(selectedMood === mood.id ? '' : mood.id as SmokeMood)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                          selectedMood === mood.id
+                            ? mood.color.replace('/20', '/40') + ' font-medium ring-2 ring-white/20'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                        }`}
+                      >
+                        <span>{mood.emoji}</span>
+                        <span>{mood.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div>

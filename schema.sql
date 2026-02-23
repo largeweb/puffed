@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS checkins (
   strain_type TEXT,
   effects TEXT,
   thc_percent REAL,
+  -- Mood tracking
+  mood TEXT,
   created_at INTEGER DEFAULT (unixepoch()),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

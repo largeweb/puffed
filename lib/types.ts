@@ -13,6 +13,8 @@ export interface SignupRequest {
 export type CheckinCategory = 'cigar' | 'cannabis' | 'hookah' | 'vape';
 export type StrainType = 'indica' | 'sativa' | 'hybrid';
 
+export type SmokeMood = 'relaxed' | 'social' | 'celebratory' | 'thoughtful' | 'stressed' | 'creative' | 'tired' | 'focused' | 'bored' | 'adventurous';
+
 export interface CheckinRequest {
   category?: CheckinCategory;
   // Common fields
@@ -21,6 +23,7 @@ export interface CheckinRequest {
   rating?: number;
   review?: string;
   imageUrl?: string;
+  mood?: SmokeMood;
   // Cigar-specific
   flavorNotes?: string;
   drawRating?: number;
@@ -59,6 +62,7 @@ export interface Checkin {
   rating?: number;
   review?: string;
   image_url?: string;
+  mood?: SmokeMood;
   created_at: number;
   // Cigar-specific
   flavor_notes?: string;
