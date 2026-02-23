@@ -800,6 +800,13 @@ export default function DashboardPage() {
               <FiShare2 size={20} />
             </Link>
             <Link
+              href="/share"
+              className="p-2 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-400 transition-all"
+              title="Share Your Week"
+            >
+              📸
+            </Link>
+            <Link
               href="/notifications"
               className="relative p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
             >
@@ -1061,26 +1068,12 @@ export default function DashboardPage() {
                   <p className="text-xs text-gray-500">Weekly recap</p>
                 </div>
               </div>
-              <button
-                onClick={async () => {
-                  const shareText = weeklyRecap.shareText;
-                  if (navigator.share) {
-                    try {
-                      await navigator.share({ text: shareText });
-                    } catch (err) {
-                      if ((err as Error).name !== "AbortError") {
-                        await navigator.clipboard.writeText(shareText);
-                      }
-                    }
-                  } else {
-                    await navigator.clipboard.writeText(shareText);
-                  }
-                }}
-                className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-xs font-medium hover:bg-purple-500/30 transition-all flex items-center gap-1.5"
+              <Link
+                href="/share"
+                className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold hover:opacity-90 transition-all flex items-center gap-1.5"
               >
-                <FiShare2 size={12} />
-                Share
-              </button>
+                📸 Share Card
+              </Link>
             </div>
 
             {/* Week Stats Grid */}
