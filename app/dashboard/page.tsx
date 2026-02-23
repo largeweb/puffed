@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -360,6 +360,9 @@ export default function DashboardPage() {
   const [userTopFlavors, setUserTopFlavors] = useState<string[]>([]);
   const [quickSmoking, setQuickSmoking] = useState<string | null>(null); // brand being quick-smoked
   const [quickSmokeSuccess, setQuickSmokeSuccess] = useState<string | null>(null);
+  const [onboardingTasks, setOnboardingTasks] = useState<OnboardingTask[]>([]);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingProgress, setOnboardingProgress] = useState({ completed: 0, total: 0 });
   const router = useRouter();
 
   // Quick Smoke handler - one-tap to log your go-to brand
@@ -553,6 +556,18 @@ export default function DashboardPage() {
           const flavorData: FlavorRecsResponse = await flavorRes.json();
           setFlavorRecs(flavorData.recommendations || []);
           setUserTopFlavors(flavorData.userTopFlavors || []);
+        }
+
+        // Load onboarding tasks (for new users)
+        const onboardingRes = await fetch("/api/onboarding");
+        if (onboardingRes.ok) {
+          const onboardingData: OnboardingResponse = await onboardingRes.json();
+          setOnboardingTasks(onboardingData.tasks || []);
+          setShowOnboarding(onboardingData.showOnboarding || false);
+          setOnboardingProgress({
+            completed: onboardingData.completedCount || 0,
+            total: onboardingData.totalCount || 0,
+          });
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -854,6 +869,84 @@ export default function DashboardPage() {
                 </div>
               );
             })()}
+          </motion.div>
+        )}
+
+        {/* Getting Started Checklist - Shows for new users */}
+        {showOnboarding && onboardingTasks.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.02 }}
+            className="glass rounded-2xl p-5 mb-6 border border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-teal-500/5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🚀</span>
+                <div>
+                  <h2 className="text-sm font-medium text-emerald-400">Getting Started</h2>
+                  <p className="text-xs text-gray-500">{onboardingProgress.completed}/{onboardingProgress.total} complete</p>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(onboardingProgress.completed / onboardingProgress.total) * 100}%` }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {onboardingTasks.map((task, idx) => (
+                <motion.div
+                  key={task.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 + idx * 0.05 }}
+                  className={`flex items-center gap-3 p-2 rounded-lg transition-all ${
+                    task.completed 
+                      ? 'bg-emerald-500/10' 
+                      : 'bg-white/5 hover:bg-white/10 cursor-pointer'
+                  }`}
+                  onClick={() => {
+                    if (!task.completed && task.action) {
+                      if (task.action === 'log_smoke') {
+                        setShowForm(true);
+                      } else {
+                        router.push(task.action);
+                      }
+                    }
+                  }}
+                >
+                  <span className={`text-lg ${task.completed ? '' : 'grayscale opacity-50'}`}>
+                    {task.emoji}
+                  </span>
+                  <span className={`flex-1 text-sm ${
+                    task.completed ? 'text-emerald-400 line-through opacity-70' : 'text-gray-300'
+                  }`}>
+                    {task.label}
+                  </span>
+                  {task.completed ? (
+                    <span className="text-emerald-500 text-xs font-medium">✓ Done</span>
+                  ) : (
+                    <span className="text-xs text-gray-500">→</span>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+
+            {onboardingProgress.completed >= 3 && onboardingProgress.completed < onboardingProgress.total && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-xs text-emerald-400/70 mt-3 text-center"
+              >
+                🎉 Almost there! Just {onboardingProgress.total - onboardingProgress.completed} more to go!
+              </motion.p>
+            )}
           </motion.div>
         )}
 

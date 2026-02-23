@@ -531,3 +531,21 @@ export interface FlavorRecsResponse {
   message: string;
   error?: string;
 }
+
+// Onboarding (Getting Started Checklist)
+export interface OnboardingTask {
+  id: string;
+  label: string;
+  emoji: string;
+  completed: boolean;
+  action?: string;
+}
+
+export interface OnboardingResponse {
+  tasks?: OnboardingTask[];
+  completedCount?: number;
+  totalCount?: number;
+  allComplete?: boolean;
+  showOnboarding?: boolean;
+  error?: string;
+}
