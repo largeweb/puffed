@@ -28,6 +28,13 @@ jobs:
       - name: Build with next-on-pages
         run: npx @cloudflare/next-on-pages
 
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: .vercel/output/static
+          retention-days: 7
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
