@@ -789,6 +789,13 @@ export default function DashboardPage() {
               <FiZap size={20} />
             </Link>
             <Link
+              href="/roulette"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-fuchsia-400 transition-all"
+              title="Smoke Roulette"
+            >
+              🎰
+            </Link>
+            <Link
               href="/mystats"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-cyan-400 transition-all"
               title="My Stats"
