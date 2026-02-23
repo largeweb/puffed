@@ -15,7 +15,8 @@ import {
   FiTrendingUp,
   FiBookmark,
   FiCheck,
-  FiLayers
+  FiLayers,
+  FiAward
 } from "react-icons/fi";
 import { GiCigarette } from "react-icons/gi";
 import type { LikeResponse, WishlistResponse } from "@/lib/types";
@@ -57,6 +58,15 @@ interface AlsoEnjoyedBrand {
   fan_count: number;
   avg_rating: number | null;
   total_checkins: number;
+}
+
+interface TopFan {
+  user_id: string;
+  username: string;
+  checkin_count: number;
+  avg_rating: number | null;
+  first_smoke: number;
+  latest_smoke: number;
 }
 
 function getTimeAgo(timestamp: number): string {
@@ -211,6 +221,8 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
   const [wishlistUpdating, setWishlistUpdating] = useState(false);
   const [alsoEnjoyed, setAlsoEnjoyed] = useState<AlsoEnjoyedBrand[]>([]);
   const [alsoEnjoyedLoading, setAlsoEnjoyedLoading] = useState(true);
+  const [topFans, setTopFans] = useState<TopFan[]>([]);
+  const [topFansLoading, setTopFansLoading] = useState(true);
 
   // Check if this brand is in the user's wishlist
   useEffect(() => {
@@ -249,6 +261,24 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
       }
     }
     fetchAlsoEnjoyed();
+  }, [brand]);
+
+  // Fetch top fans for this brand
+  useEffect(() => {
+    async function fetchTopFans() {
+      try {
+        const res = await fetch(`/api/brand/${encodeURIComponent(brand)}/top-fans`);
+        if (res.ok) {
+          const data: { topFans: TopFan[] } = await res.json();
+          setTopFans(data.topFans || []);
+        }
+      } catch (error) {
+        console.error("Top fans error:", error);
+      } finally {
+        setTopFansLoading(false);
+      }
+    }
+    fetchTopFans();
   }, [brand]);
 
   const toggleWishlist = async () => {
@@ -411,6 +441,79 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
                     </span>
                   </div>
                 </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Top Fans / Brand Loyalists */}
+        {!topFansLoading && topFans.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12 }}
+          >
+            <h3 className="text-lg font-semibold text-amber-300 mb-3 flex items-center gap-2">
+              <FiAward size={18} className="text-yellow-400" />
+              Brand Loyalists
+            </h3>
+            <p className="text-sm text-amber-400/60 mb-3">
+              The biggest fans of {brand}
+            </p>
+            <div className="space-y-2">
+              {topFans.slice(0, 5).map((fan, idx) => (
+                <Link
+                  key={fan.user_id}
+                  href={`/user/${fan.username}`}
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-900/20 to-stone-800/40 rounded-xl border border-yellow-800/20 hover:border-yellow-600/40 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Rank badge */}
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        idx === 0 
+                          ? "bg-gradient-to-br from-yellow-500 to-yellow-700" 
+                          : idx === 1 
+                            ? "bg-gradient-to-br from-gray-300 to-gray-500"
+                            : idx === 2
+                              ? "bg-gradient-to-br from-amber-600 to-amber-800"
+                              : "bg-stone-700/50"
+                      }`}>
+                        {idx < 3 ? (
+                          <span className="text-lg">{idx === 0 ? "👑" : idx === 1 ? "🥈" : "🥉"}</span>
+                        ) : (
+                          <span className="text-amber-400 text-sm font-bold">#{idx + 1}</span>
+                        )}
+                      </div>
+                      {/* User avatar */}
+                      <div className="w-10 h-10 bg-gradient-to-br from-amber-700 to-amber-900 rounded-full flex items-center justify-center">
+                        <span className="text-amber-100 font-bold">
+                          {fan.username.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-amber-100 font-medium">@{fan.username}</span>
+                        <p className="text-xs text-amber-400/50">
+                          Fan since {new Date(fan.first_smoke * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-100 font-bold">{fan.checkin_count}</span>
+                        <span className="text-amber-400/60 text-sm">smoke{fan.checkin_count !== 1 ? 's' : ''}</span>
+                      </div>
+                      {fan.avg_rating && (
+                        <div className="flex items-center gap-1 justify-end text-xs text-amber-400/60">
+                          <FiStar size={10} className="fill-amber-400 text-amber-400" />
+                          <span>{fan.avg_rating.toFixed(1)} avg</span>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                </Link>
               ))}
             </div>
           </motion.div>
