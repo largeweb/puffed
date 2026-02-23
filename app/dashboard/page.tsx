@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap } from "react-icons/fi";
+import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers } from "react-icons/fi";
 import Link from "next/link";
 import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
@@ -577,6 +577,13 @@ export default function DashboardPage() {
               title="Search"
             >
               <FiSearch size={20} />
+            </Link>
+            <Link
+              href="/compare"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-green-400 transition-all"
+              title="Compare Brands"
+            >
+              <FiLayers size={20} />
             </Link>
             <Link
               href="/wishlist"

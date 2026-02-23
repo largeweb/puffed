@@ -14,7 +14,8 @@ import {
   FiClock,
   FiTrendingUp,
   FiBookmark,
-  FiCheck
+  FiCheck,
+  FiLayers
 } from "react-icons/fi";
 import { GiCigarette } from "react-icons/gi";
 import type { LikeResponse, WishlistResponse } from "@/lib/types";
@@ -291,6 +292,13 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-amber-100 truncate">{brand}</h1>
           </div>
+          <Link 
+            href={`/compare?a=${encodeURIComponent(brand)}`} 
+            className="text-amber-400 hover:text-green-400 transition-colors"
+            title="Compare this brand"
+          >
+            <FiLayers size={22} />
+          </Link>
           <Link href="/dashboard" className="text-amber-400 hover:text-amber-300">
             <FiHome size={22} />
           </Link>
