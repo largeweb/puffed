@@ -1,6 +1,8 @@
 import { getRequestContext } from "@cloudflare/next-on-pages";
 import { cookies } from "next/headers";
 
+export const runtime = "edge";
+
 interface WeeklyGoal {
   id: string;
   title: string;
