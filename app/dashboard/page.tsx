@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -363,6 +363,7 @@ export default function DashboardPage() {
   const [onboardingTasks, setOnboardingTasks] = useState<OnboardingTask[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingProgress, setOnboardingProgress] = useState({ completed: 0, total: 0 });
+  const [communityMilestones, setCommunityMilestones] = useState<CommunityMilestonesResponse | null>(null);
   const router = useRouter();
 
   // Quick Smoke handler - one-tap to log your go-to brand
@@ -568,6 +569,13 @@ export default function DashboardPage() {
             completed: onboardingData.completedCount || 0,
             total: onboardingData.totalCount || 0,
           });
+        }
+
+        // Load community milestones
+        const milestonesRes = await fetch("/api/community-milestones");
+        if (milestonesRes.ok) {
+          const milestonesData: CommunityMilestonesResponse = await milestonesRes.json();
+          setCommunityMilestones(milestonesData);
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -947,6 +955,120 @@ export default function DashboardPage() {
                 🎉 Almost there! Just {onboardingProgress.total - onboardingProgress.completed} more to go!
               </motion.p>
             )}
+          </motion.div>
+        )}
+
+        {/* Community Milestones 🏆 */}
+        {communityMilestones && communityMilestones.platform.currentMilestone && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.025 }}
+            className={`glass rounded-2xl p-5 mb-6 border ${
+              communityMilestones.platform.justAchieved 
+                ? 'border-amber-500/50 bg-gradient-to-br from-amber-500/10 to-orange-500/10' 
+                : 'border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-blue-500/5'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{communityMilestones.platform.currentMilestone.emoji}</span>
+                <div>
+                  <h2 className={`text-sm font-medium ${
+                    communityMilestones.platform.justAchieved ? 'text-amber-400' : 'text-cyan-400'
+                  }`}>
+                    {communityMilestones.platform.justAchieved ? '🎉 Milestone Reached!' : 'Community Progress'}
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    {communityMilestones.platform.currentMilestone.title}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className={`text-2xl font-bold ${
+                  communityMilestones.platform.justAchieved ? 'text-amber-400' : 'text-cyan-400'
+                }`}>
+                  {communityMilestones.platform.totalCheckins}
+                </p>
+                <p className="text-xs text-gray-500">total smokes</p>
+              </div>
+            </div>
+
+            {/* Celebration message for just achieved */}
+            {communityMilestones.platform.justAchieved && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-amber-500/20 rounded-lg p-3 mb-3 text-center"
+              >
+                <p className="text-sm text-amber-300">
+                  {communityMilestones.platform.currentMilestone.message}
+                </p>
+                <p className="text-xs text-amber-400/70 mt-1">
+                  🙌 Thanks for being part of this!
+                </p>
+              </motion.div>
+            )}
+
+            {/* Progress to next milestone */}
+            {communityMilestones.platform.nextMilestone && (
+              <div className="mb-3">
+                <div className="flex justify-between text-xs text-gray-500 mb-1">
+                  <span>Next: {communityMilestones.platform.nextMilestone.title}</span>
+                  <span>{communityMilestones.platform.totalCheckins}/{communityMilestones.platform.nextMilestone.count}</span>
+                </div>
+                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${communityMilestones.platform.progress}%` }}
+                    transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                    className={`h-full rounded-full ${
+                      communityMilestones.platform.justAchieved 
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-400' 
+                        : 'bg-gradient-to-r from-cyan-500 to-blue-400'
+                    }`}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Top Contributors */}
+            {communityMilestones.platform.topContributors.length > 0 && (
+              <div className="pt-3 border-t border-white/5">
+                <p className="text-xs text-gray-500 mb-2">🏆 Top Contributors</p>
+                <div className="flex gap-3">
+                  {communityMilestones.platform.topContributors.map((contributor, idx) => (
+                    <Link
+                      key={contributor.username}
+                      href={`/user/${contributor.username}`}
+                      className="flex items-center gap-1.5 text-sm hover:text-amber-400 transition-colors"
+                    >
+                      <span className="text-base">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>
+                      <span className="text-gray-300">@{contributor.username}</span>
+                      <span className="text-gray-500 text-xs">({contributor.count})</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Platform stats row */}
+            <div className="pt-3 mt-3 border-t border-white/5 flex justify-around text-center">
+              <div>
+                <p className="text-lg font-bold text-gray-300">{communityMilestones.platform.totalUsers}</p>
+                <p className="text-xs text-gray-500">Smokers</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-gray-300">{communityMilestones.platform.totalBrands}</p>
+                <p className="text-xs text-gray-500">Brands</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-gray-300">
+                  {(communityMilestones.platform.totalCheckins / Math.max(communityMilestones.platform.totalUsers, 1)).toFixed(1)}
+                </p>
+                <p className="text-xs text-gray-500">Per User</p>
+              </div>
+            </div>
           </motion.div>
         )}
 

@@ -549,3 +549,37 @@ export interface OnboardingResponse {
   showOnboarding?: boolean;
   error?: string;
 }
+
+// Community Milestones
+export interface Milestone {
+  count: number;
+  emoji: string;
+  title: string;
+  message: string;
+}
+
+export interface MilestoneContributor {
+  username: string;
+  count: number;
+}
+
+export interface CommunityMilestonesResponse {
+  platform: {
+    totalCheckins: number;
+    totalUsers: number;
+    totalBrands: number;
+    currentMilestone: Milestone | null;
+    nextMilestone: Milestone | null;
+    progress: number;
+    justAchieved: boolean;
+    topContributors: MilestoneContributor[];
+  };
+  user: {
+    totalCheckins: number;
+    currentMilestone: Milestone | null;
+    nextMilestone: Milestone | null;
+    progress: number;
+    justAchieved: boolean;
+  };
+  error?: string;
+}
