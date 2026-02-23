@@ -262,6 +262,9 @@ export interface StreakResponse {
   bestStreak: number;
   lastCheckinDate: string | null;
   streakActive: boolean;
+  freezeAvailable?: boolean;
+  freezeUsedToday?: boolean;
+  freezesRemaining?: number;
   error?: string;
 }
 
