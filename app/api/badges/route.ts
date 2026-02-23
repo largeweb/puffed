@@ -13,6 +13,30 @@ const BADGE_DEFINITIONS = [
     progress: (stats: UserStats) => ({ current: stats.checkins, target: 1 }),
   },
   {
+    id: "early_bird",
+    name: "Early Bird",
+    description: "Log a smoke before 6 AM",
+    emoji: "🌅",
+    check: (stats: UserStats) => stats.earlyMorningSmokes >= 1,
+    progress: (stats: UserStats) => ({ current: stats.earlyMorningSmokes, target: 1 }),
+  },
+  {
+    id: "night_owl",
+    name: "Night Owl",
+    description: "Log a smoke between midnight and 4 AM",
+    emoji: "🦉",
+    check: (stats: UserStats) => stats.lateNightSmokes >= 1,
+    progress: (stats: UserStats) => ({ current: stats.lateNightSmokes, target: 1 }),
+  },
+  {
+    id: "weekend_warrior",
+    name: "Weekend Warrior",
+    description: "Log smokes on 3 different weekends",
+    emoji: "🎉",
+    check: (stats: UserStats) => stats.weekendSmokes >= 3,
+    progress: (stats: UserStats) => ({ current: stats.weekendSmokes, target: 3 }),
+  },
+  {
     id: "three_day_streak",
     name: "Hot Streak",
     description: "Achieve a 3-day streak",
@@ -136,6 +160,9 @@ interface UserStats {
   following: number;
   commentsGiven: number;
   bestStreak: number;
+  earlyMorningSmokes: number;
+  lateNightSmokes: number;
+  weekendSmokes: number;
 }
 
 export const runtime = "edge";
@@ -175,6 +202,9 @@ export async function GET(): Promise<Response> {
       followingResult,
       commentsResult,
       datesResult,
+      earlyMorningResult,
+      lateNightResult,
+      weekendResult,
     ] = await Promise.all([
       db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ?").bind(userId).first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ? AND rating IS NOT NULL").bind(userId).first<{ count: number }>(),
@@ -190,6 +220,22 @@ export async function GET(): Promise<Response> {
         WHERE user_id = ?
         ORDER BY checkin_date DESC
       `).bind(userId).all<{ checkin_date: string }>(),
+      // Early bird: check-ins between 4 AM and 6 AM (hour 4-5)
+      db.prepare(`
+        SELECT COUNT(*) as count FROM checkins 
+        WHERE user_id = ? AND CAST(strftime('%H', created_at, 'unixepoch') AS INTEGER) BETWEEN 4 AND 5
+      `).bind(userId).first<{ count: number }>(),
+      // Night owl: check-ins between midnight and 4 AM (hour 0-3)
+      db.prepare(`
+        SELECT COUNT(*) as count FROM checkins 
+        WHERE user_id = ? AND CAST(strftime('%H', created_at, 'unixepoch') AS INTEGER) BETWEEN 0 AND 3
+      `).bind(userId).first<{ count: number }>(),
+      // Weekend warrior: count distinct weekends (year-week combo on Sat/Sun)
+      db.prepare(`
+        SELECT COUNT(DISTINCT strftime('%Y-%W', created_at, 'unixepoch')) as count 
+        FROM checkins 
+        WHERE user_id = ? AND CAST(strftime('%w', created_at, 'unixepoch') AS INTEGER) IN (0, 6)
+      `).bind(userId).first<{ count: number }>(),
     ]);
 
     // Calculate best streak from dates
@@ -220,6 +266,9 @@ export async function GET(): Promise<Response> {
       following: followingResult?.count || 0,
       commentsGiven: commentsResult?.count || 0,
       bestStreak,
+      earlyMorningSmokes: earlyMorningResult?.count || 0,
+      lateNightSmokes: lateNightResult?.count || 0,
+      weekendSmokes: weekendResult?.count || 0,
     };
 
     // Calculate badges
