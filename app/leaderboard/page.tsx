@@ -228,6 +228,26 @@ export default function LeaderboardPage() {
         </div>
       </header>
 
+      {/* Brand Leaderboard Link */}
+      <div className="max-w-2xl mx-auto px-4 pt-4">
+        <Link href="/leaderboard/brands">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass rounded-xl p-4 border border-yellow-500/30 hover:bg-white/5 transition-all flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">👑</span>
+              <div>
+                <div className="font-semibold text-yellow-400">Brand Champions</div>
+                <div className="text-xs text-gray-400">See who owns each brand</div>
+              </div>
+            </div>
+            <FiTrendingUp className="text-yellow-500" />
+          </motion.div>
+        </Link>
+      </div>
+
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-6">
         <AnimatePresence mode="wait">
