@@ -412,3 +412,23 @@ export interface ActiveSmokersResponse {
   };
   error?: string;
 }
+
+// Trending Week (momentum tracking)
+export interface TrendingWeekBrand {
+  brand: string;
+  thisWeekCount: number;
+  lastWeekCount: number;
+  change: number;
+  direction: 'up' | 'down' | 'new' | 'same';
+  avgRating: number | null;
+  uniqueSmokers: number;
+}
+
+export interface TrendingWeekResponse {
+  trending: TrendingWeekBrand[];
+  period: {
+    thisWeekStart: string;
+    lastWeekStart: string;
+  };
+  error?: string;
+}

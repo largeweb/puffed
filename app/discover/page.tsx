@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck, FiCamera } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse } from "@/lib/types";
+import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -345,6 +345,7 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
 export default function DiscoverPage() {
   const [checkins, setCheckins] = useState<CheckinWithLikes[]>([]);
   const [trending, setTrending] = useState<TrendingBrand[]>([]);
+  const [momentum, setMomentum] = useState<TrendingWeekBrand[]>([]);
   const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [featured, setFeatured] = useState<FeaturedCheckin | null>(null);
   const [loading, setLoading] = useState(true);
@@ -358,6 +359,7 @@ export default function DiscoverPage() {
   useEffect(() => {
     loadFeed();
     loadTrending();
+    loadMomentum();
     loadSuggestedUsers();
     loadFeatured();
   }, []);
@@ -389,6 +391,18 @@ export default function DiscoverPage() {
       setTrending(data.trending || []);
     } catch (error) {
       console.error("Trending error:", error);
+    }
+  }
+
+  async function loadMomentum() {
+    try {
+      const res = await fetch("/api/trending-week?limit=6");
+      const data: TrendingWeekResponse = await res.json();
+      // Only show brands that are UP or NEW
+      const upOrNew = (data.trending || []).filter(b => b.direction === 'up' || b.direction === 'new');
+      setMomentum(upOrNew);
+    } catch (error) {
+      console.error("Momentum error:", error);
     }
   }
 
@@ -738,6 +752,57 @@ export default function DiscoverPage() {
                       </p>
                     </div>
                   </div>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Gaining Momentum Section - Brands trending up vs last week */}
+        {momentum.length > 0 && !searchQuery && activeCategory === "all" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-green-400">📈</span>
+              <h2 className="font-semibold">Gaining Momentum</h2>
+              <span className="text-xs text-gray-500 ml-auto">vs last week</span>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+              {momentum.map((brand) => (
+                <Link
+                  key={brand.brand}
+                  href={`/cigar/${encodeURIComponent(brand.brand)}`}
+                  className="flex-shrink-0 glass px-4 py-3 rounded-xl hover:border-green-500/50 border border-green-500/20 transition-all min-w-[140px]"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <p className="font-medium text-sm truncate">{brand.brand}</p>
+                    {brand.direction === 'new' ? (
+                      <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400">
+                        NEW
+                      </span>
+                    ) : (
+                      <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-500/20 text-green-400">
+                        ↑{brand.change}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                    <span>{brand.thisWeekCount} smoke{brand.thisWeekCount !== 1 ? 's' : ''}</span>
+                    {brand.avgRating && (
+                      <span className="flex items-center gap-0.5">
+                        <FiStar size={10} className="text-amber-500" fill="currentColor" />
+                        {brand.avgRating}
+                      </span>
+                    )}
+                  </div>
+                  {brand.direction !== 'new' && brand.lastWeekCount > 0 && (
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      was {brand.lastWeekCount} last week
+                    </p>
+                  )}
                 </Link>
               ))}
             </div>
