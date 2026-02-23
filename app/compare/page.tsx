@@ -89,7 +89,7 @@ function CompareContent() {
     try {
       const res = await fetch(`/api/brands?q=${encodeURIComponent(query)}&limit=5`);
       if (res.ok) {
-        const data = await res.json();
+        const data: { brands?: BrandSuggestion[] } = await res.json();
         setSuggestions(data.brands || []);
       }
     } catch {
@@ -122,11 +122,11 @@ function CompareContent() {
     try {
       const res = await fetch(`/api/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
       if (!res.ok) {
-        const data = await res.json();
+        const data: { error?: string } = await res.json();
         setError(data.error || "Comparison failed");
         setComparison(null);
       } else {
-        const data = await res.json();
+        const data: ComparisonData = await res.json();
         setComparison(data);
       }
     } catch {
@@ -333,12 +333,14 @@ function CompareContent() {
     );
   };
 
-  const isWinnerA = (category: keyof ComparisonData["winners"]) => {
-    return comparison?.brandA && comparison.winners[category] === comparison.brandA.brand;
+  const isWinnerA = (category: string): boolean => {
+    const key = category as keyof ComparisonData["winners"];
+    return !!(comparison?.brandA && comparison.winners[key] === comparison.brandA.brand);
   };
 
-  const isWinnerB = (category: keyof ComparisonData["winners"]) => {
-    return comparison?.brandB && comparison.winners[category] === comparison.brandB.brand;
+  const isWinnerB = (category: string): boolean => {
+    const key = category as keyof ComparisonData["winners"];
+    return !!(comparison?.brandB && comparison.winners[key] === comparison.brandB.brand);
   };
 
   return (
