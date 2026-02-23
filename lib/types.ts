@@ -389,3 +389,26 @@ export interface RecentBrandsResponse {
   count: number;
   error?: string;
 }
+
+// Active Smokers (Smoking Now feature)
+export interface ActiveSmoker {
+  user_id: string;
+  username: string;
+  brand: string;
+  product: string | null;
+  image_url: string | null;
+  rating: number | null;
+  minutes_ago: number;
+  checkin_id: string;
+}
+
+export interface ActiveSmokersResponse {
+  smokers: ActiveSmoker[];
+  count: number;
+  stats: {
+    activeNow: number;
+    smokersToday: number;
+    checkinsToday: number;
+  };
+  error?: string;
+}

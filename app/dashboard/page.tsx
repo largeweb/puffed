@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -286,6 +286,8 @@ export default function DashboardPage() {
   const [dailyPrompt, setDailyPrompt] = useState<DailyPrompt | null>(null);
   const [promptResponses, setPromptResponses] = useState<PromptResponse[]>([]);
   const [hasRespondedToPrompt, setHasRespondedToPrompt] = useState(false);
+  const [activeSmokers, setActiveSmokers] = useState<ActiveSmoker[]>([]);
+  const [activeSmokersStats, setActiveSmokersStats] = useState({ activeNow: 0, smokersToday: 0, checkinsToday: 0 });
   const router = useRouter();
 
   // Form state
@@ -395,6 +397,14 @@ export default function DashboardPage() {
         if (recentBrandsRes.ok) {
           const recentBrandsData: RecentBrandsResponse = await recentBrandsRes.json();
           setRecentBrands(recentBrandsData.brands || []);
+        }
+
+        // Load active smokers (who's smoking now)
+        const activeSmokersRes = await fetch("/api/active-smokers?hours=2&limit=8");
+        if (activeSmokersRes.ok) {
+          const activeSmokersData: ActiveSmokersResponse = await activeSmokersRes.json();
+          setActiveSmokers(activeSmokersData.smokers || []);
+          setActiveSmokersStats(activeSmokersData.stats || { activeNow: 0, smokersToday: 0, checkinsToday: 0 });
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -849,6 +859,89 @@ export default function DashboardPage() {
                   );
                 })()}
               </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Smoking Now Section - Who's active */}
+        {activeSmokers.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.052 }}
+            className="glass rounded-2xl p-5 mb-6 border border-green-500/20"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="relative">
+                  <span className="text-lg">🟢</span>
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                </span>
+                <div>
+                  <h2 className="text-sm font-medium text-green-400">Smoking Now</h2>
+                  <p className="text-xs text-gray-500">
+                    {activeSmokersStats.smokersToday} smoker{activeSmokersStats.smokersToday !== 1 ? 's' : ''} today • {activeSmokersStats.checkinsToday} check-in{activeSmokersStats.checkinsToday !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs text-green-400 animate-pulse flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                Live
+              </span>
+            </div>
+
+            {/* Active smokers horizontal scroll */}
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+              {activeSmokers.map((smoker, idx) => (
+                <Link
+                  key={`${smoker.user_id}-${smoker.checkin_id}`}
+                  href={`/checkin/${smoker.checkin_id}`}
+                  className="flex-shrink-0 group"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="relative w-24 h-24 rounded-xl bg-white/5 border border-green-500/30 group-hover:border-green-500 transition-all overflow-hidden"
+                  >
+                    {smoker.image_url ? (
+                      <img 
+                        src={smoker.image_url} 
+                        alt={smoker.brand}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-3xl">
+                        🚬
+                      </div>
+                    )}
+                    {/* Smoke animation overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    {/* Time badge */}
+                    <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-green-500/80 text-black text-[10px] font-medium">
+                      {smoker.minutes_ago < 1 ? 'now' : `${smoker.minutes_ago}m`}
+                    </div>
+                    {/* Rating if available */}
+                    {smoker.rating && (
+                      <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/80 text-black text-[10px] font-medium">
+                        <FiStar size={8} fill="currentColor" />
+                        {smoker.rating}
+                      </div>
+                    )}
+                    {/* User info */}
+                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                      <p className="text-xs font-medium text-white truncate">@{smoker.username}</p>
+                      <p className="text-[10px] text-gray-300 truncate">{smoker.brand}</p>
+                    </div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+
+            {activeSmokers.length > 0 && (
+              <p className="text-xs text-gray-500 mt-3 text-center">
+                🤝 Join them! Log a smoke to show up here
+              </p>
             )}
           </motion.div>
         )}
