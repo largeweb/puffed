@@ -297,6 +297,41 @@ function getTimeSinceLastSmoke(timestamp: number | null | undefined): { text: st
   return { text: `${days} days ago`, emoji: "😶", urgency: 'overdue' };
 }
 
+function getGreeting(username?: string): { message: string; emoji: string; subtext: string } {
+  const hour = new Date().getHours();
+  const day = new Date().getDay();
+  const name = username ? `, ${username}` : '';
+  
+  // Weekend vibes
+  if (day === 0 || day === 6) {
+    if (hour < 12) {
+      return { message: `Weekend morning${name}`, emoji: "☀️", subtext: "Perfect time for a leisurely smoke" };
+    }
+    return { message: `Happy weekend${name}`, emoji: "🎉", subtext: "Enjoying some downtime?" };
+  }
+  
+  // Weekday greetings by time
+  if (hour < 5) {
+    return { message: `Night owl${name}?`, emoji: "🦉", subtext: "Late night smoke session" };
+  }
+  if (hour < 9) {
+    return { message: `Good morning${name}`, emoji: "🌅", subtext: "Rise and shine! Ready for that first smoke?" };
+  }
+  if (hour < 12) {
+    return { message: `Morning${name}`, emoji: "☕", subtext: "Mid-morning break time" };
+  }
+  if (hour < 14) {
+    return { message: `Hey${name}`, emoji: "🌤️", subtext: "Lunchtime smoke?" };
+  }
+  if (hour < 17) {
+    return { message: `Good afternoon${name}`, emoji: "😎", subtext: "Afternoon smoke break" };
+  }
+  if (hour < 20) {
+    return { message: `Good evening${name}`, emoji: "🌆", subtext: "Winding down with a smoke?" };
+  }
+  return { message: `Night${name}`, emoji: "🌙", subtext: "One more before bed?" };
+}
+
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [checkins, setCheckins] = useState<Checkin[]>([]);
@@ -793,6 +828,28 @@ export default function DashboardPage() {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Personalized Greeting */}
+        {user && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4"
+          >
+            {(() => {
+              const greeting = getGreeting(user.username);
+              return (
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{greeting.emoji}</span>
+                  <div>
+                    <h2 className="text-lg font-semibold text-white">{greeting.message}</h2>
+                    <p className="text-xs text-gray-400">{greeting.subtext}</p>
+                  </div>
+                </div>
+              );
+            })()}
+          </motion.div>
+        )}
+
         {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
