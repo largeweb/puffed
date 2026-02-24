@@ -83,13 +83,13 @@ export default function PersonalityPage() {
         ? `/api/smoke-personality?username=${encodeURIComponent(targetUsername)}`
         : '/api/smoke-personality';
       const res = await fetch(url);
-      const data = await res.json();
+      const data = await res.json() as PersonalityData | ErrorData;
       
-      if (data.error === 'not_enough_data') {
-        setError(data);
+      if ('error' in data && data.error === 'not_enough_data') {
+        setError(data as ErrorData);
         setPersonality(null);
-      } else if (data.error) {
-        setError(data);
+      } else if ('error' in data) {
+        setError(data as ErrorData);
         setPersonality(null);
       } else {
         setPersonality(data);
