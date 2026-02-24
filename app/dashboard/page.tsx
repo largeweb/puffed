@@ -458,6 +458,7 @@ export default function DashboardPage() {
   // Success state for post-checkin celebration
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastCheckin, setLastCheckin] = useState<Checkin | null>(null);
+  const [newlyEarnedBadges, setNewlyEarnedBadges] = useState<Badge[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -644,6 +645,9 @@ export default function DashboardPage() {
     if (!brand.trim()) return;
 
     setSubmitting(true);
+    
+    // Capture earned badges before check-in for comparison
+    const earnedBadgeIdsBefore = new Set(badges.filter(b => b.earned).map(b => b.id));
 
     try {
       let imageUrl: string | undefined;
@@ -708,6 +712,17 @@ export default function DashboardPage() {
           rating: rating || undefined,
           created_at: Math.floor(Date.now() / 1000)
         });
+        
+        // Check for newly earned badges
+        const badgesRes = await fetch("/api/badges");
+        const badgesData: BadgesResponse = await badgesRes.json();
+        if (badgesData.badges) {
+          setBadges(badgesData.badges);
+          setBadgeStats({ earned: badgesData.earned_count || 0, total: badgesData.total_count || 0 });
+          // Find badges that are now earned but weren't before
+          const newBadges = badgesData.badges.filter(b => b.earned && !earnedBadgeIdsBefore.has(b.id));
+          setNewlyEarnedBadges(newBadges);
+        }
         
         // Reset form fields
         setCategory('cigar');
@@ -2620,7 +2635,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-            onClick={() => setShowSuccess(false)}
+            onClick={() => { setShowSuccess(false); setNewlyEarnedBadges([]); }}
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -2653,11 +2668,55 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-gray-400 mb-6"
+                className="text-gray-400 mb-4"
               >
                 {lastCheckin.brand}{lastCheckin.product ? ` ${lastCheckin.product}` : ''}
                 {lastCheckin.rating ? ` • ${lastCheckin.rating}★` : ''}
               </motion.p>
+              
+              {/* Newly Earned Badges Celebration */}
+              {newlyEarnedBadges.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.35, type: "spring", damping: 15 }}
+                  className="mb-6"
+                >
+                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl p-4">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: [0, 1.2, 1] }}
+                      transition={{ delay: 0.4, duration: 0.5 }}
+                      className="text-3xl mb-2"
+                    >
+                      🏆
+                    </motion.div>
+                    <p className="text-amber-400 font-semibold text-sm mb-3">
+                      {newlyEarnedBadges.length === 1 ? 'Badge Unlocked!' : `${newlyEarnedBadges.length} Badges Unlocked!`}
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-3">
+                      {newlyEarnedBadges.map((badge, index) => (
+                        <motion.div
+                          key={badge.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.5 + index * 0.1 }}
+                          className="flex flex-col items-center gap-1"
+                        >
+                          <motion.span 
+                            className="text-3xl"
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ delay: 0.6 + index * 0.1, duration: 0.3 }}
+                          >
+                            {badge.emoji}
+                          </motion.span>
+                          <span className="text-xs text-gray-300 font-medium">{badge.name}</span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
               
               {/* Action buttons */}
               <motion.div
@@ -2695,7 +2754,7 @@ export default function DashboardPage() {
                 {/* Discover button */}
                 <Link
                   href="/discover"
-                  onClick={() => setShowSuccess(false)}
+                  onClick={() => { setShowSuccess(false); setNewlyEarnedBadges([]); }}
                   className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 font-medium transition-all active:scale-95"
                 >
                   <FiCompass size={18} />
@@ -2704,7 +2763,7 @@ export default function DashboardPage() {
                 
                 {/* Dismiss */}
                 <button
-                  onClick={() => setShowSuccess(false)}
+                  onClick={() => { setShowSuccess(false); setNewlyEarnedBadges([]); }}
                   className="w-full px-5 py-2 text-gray-500 hover:text-gray-300 text-sm transition-all"
                 >
                   Done
