@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { getUserFromRequest } from "@/lib/auth";
+import { parseSessionCookie } from "@/lib/auth";
 
 // Personality dimensions
 type TimingType = 'early_bird' | 'night_owl' | 'all_day';
@@ -257,31 +257,53 @@ export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const cookieHeader = request.headers.get("cookie");
+    const sessionId = parseSessionCookie(cookieHeader);
+
+    if (!sessionId) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const { env } = getRequestContext();
+    const db = env.DB;
+
+    // Get user from session
+    const now = Math.floor(Date.now() / 1000);
+    const session = await db
+      .prepare("SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?")
+      .bind(sessionId, now)
+      .first<{ user_id: string }>();
+
+    if (!session) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
+
+    // Get current user
+    const currentUser = await db.prepare(
+      "SELECT id, username FROM users WHERE id = ?"
+    ).bind(session.user_id).first<{ id: string; username: string }>();
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
     }
 
     // Check for username param (viewing someone else's personality)
     const { searchParams } = new URL(request.url);
     const targetUsername = searchParams.get('username');
 
-    const { env } = getRequestContext();
-    const db = env.DB;
+    let targetUserId = currentUser.id;
+    let targetUser = currentUser;
 
-    let targetUserId = user.id;
-    let targetUser = user;
-
-    if (targetUsername && targetUsername !== user.username) {
+    if (targetUsername && targetUsername !== currentUser.username) {
       const userRow = await db.prepare(
         "SELECT id, username FROM users WHERE username = ?"
-      ).bind(targetUsername).first();
+      ).bind(targetUsername).first<{ id: string; username: string }>();
       
       if (!userRow) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
-      targetUserId = userRow.id as string;
-      targetUser = userRow as { id: string; username: string };
+      targetUserId = userRow.id;
+      targetUser = userRow;
     }
 
     // Get user's check-ins
