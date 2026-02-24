@@ -462,6 +462,32 @@ export default function UserProfileClient({ initialData }: { initialData: UserPr
           </motion.div>
         )}
 
+        {/* Smoke Personality */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.04 }}
+          className="glass rounded-2xl p-4 mb-6 border border-purple-500/20 bg-gradient-to-br from-purple-900/20 to-indigo-900/20"
+        >
+          <Link 
+            href={isOwnProfile ? "/personality" : `/personality?user=${encodeURIComponent(user.username)}`}
+            className="flex items-center justify-between group"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🔮</span>
+              <div>
+                <p className="text-sm font-medium text-white group-hover:text-purple-300 transition-colors">
+                  {isOwnProfile ? "Your Smoke Personality" : `${user.username}'s Smoke Personality`}
+                </p>
+                <p className="text-xs text-gray-400">
+                  Discover {isOwnProfile ? "your" : "their"} smoking style →
+                </p>
+              </div>
+            </div>
+            <span className="text-purple-400 group-hover:text-purple-300 transition-colors">→</span>
+          </Link>
+        </motion.div>
+
         {/* Badges */}
         {badges.length > 0 && (
           <motion.div
