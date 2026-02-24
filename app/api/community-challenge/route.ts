@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
     }
     case "photos": {
       const result = await db
-        .prepare("SELECT COUNT(*) as count FROM checkins WHERE created_at >= ? AND created_at < ? AND image_key IS NOT NULL")
+        .prepare("SELECT COUNT(*) as count FROM checkins WHERE created_at >= ? AND created_at < ? AND image_url IS NOT NULL AND image_url != ''")
         .bind(weekStart, weekEnd)
         .first<{ count: number }>();
       current = result?.count || 0;
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
           SELECT u.username, COUNT(*) as contribution
           FROM checkins c
           JOIN users u ON c.user_id = u.id
-          WHERE c.created_at >= ? AND c.created_at < ? AND c.image_key IS NOT NULL
+          WHERE c.created_at >= ? AND c.created_at < ? AND c.image_url IS NOT NULL AND c.image_url != ''
           GROUP BY c.user_id
           ORDER BY contribution DESC
           LIMIT 5
@@ -255,7 +255,7 @@ export async function GET(request: NextRequest) {
         }
         case "photos": {
           const result = await db
-            .prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ? AND created_at >= ? AND created_at < ? AND image_key IS NOT NULL")
+            .prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ? AND created_at >= ? AND created_at < ? AND image_url IS NOT NULL AND image_url != ''")
             .bind(session.user_id, weekStart, weekEnd)
             .first<{ count: number }>();
           userContribution = result?.count || 0;
