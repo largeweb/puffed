@@ -89,3 +89,14 @@ body {
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
 }
+
+/* Mobile touch optimizations */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Prevent scroll bounce on modals */
+.modal-scroll {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}

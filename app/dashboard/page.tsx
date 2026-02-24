@@ -716,9 +716,16 @@ export default function DashboardPage() {
     );
   };
 
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!brand.trim()) return;
+    setSubmitError(null);
+    
+    if (!brand.trim()) {
+      setSubmitError("Please enter a brand name");
+      return;
+    }
 
     setSubmitting(true);
     
@@ -731,17 +738,31 @@ export default function DashboardPage() {
       // Upload image first if present
       if (imageFile) {
         setUploading(true);
-        const formData = new FormData();
-        formData.append("file", imageFile);
-        
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-        
-        if (uploadRes.ok) {
-          const uploadData: UploadResponse = await uploadRes.json();
-          imageUrl = uploadData.imageUrl;
+        try {
+          const formData = new FormData();
+          formData.append("file", imageFile);
+          
+          const uploadRes = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+          
+          if (uploadRes.ok) {
+            const uploadData: UploadResponse = await uploadRes.json();
+            imageUrl = uploadData.imageUrl;
+          } else {
+            const errData = await uploadRes.json().catch(() => ({}));
+            setSubmitError((errData as { error?: string }).error || "Failed to upload image");
+            setUploading(false);
+            setSubmitting(false);
+            return;
+          }
+        } catch (uploadErr) {
+          console.error("Upload error:", uploadErr);
+          setSubmitError("Network error uploading image");
+          setUploading(false);
+          setSubmitting(false);
+          return;
         }
         setUploading(false);
       }
@@ -826,9 +847,14 @@ export default function DashboardPage() {
         // Show success screen instead of just closing
         setShowForm(false);
         setShowSuccess(true);
+      } else {
+        // Handle API error response
+        const errData = await res.json().catch(() => ({}));
+        setSubmitError((errData as { error?: string }).error || "Failed to save check-in");
       }
     } catch (error) {
       console.error("Submit error:", error);
+      setSubmitError("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
       setUploading(false);
@@ -990,6 +1016,13 @@ export default function DashboardPage() {
               title="Photo Gallery"
             >
               <FiCamera size={20} />
+            </Link>
+            <Link
+              href="/flavor-dna"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Your Flavor DNA"
+            >
+              🧬
             </Link>
             <Link
               href="/invite"
@@ -2870,7 +2903,7 @@ export default function DashboardPage() {
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#1a1a1a] rounded-t-3xl sm:rounded-3xl p-6"
+              className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#1a1a1a] rounded-t-3xl sm:rounded-3xl p-6 modal-scroll"
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">Log a Smoke</h2>
@@ -3113,22 +3146,32 @@ export default function DashboardPage() {
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={submitting || uploading || !brand.trim()}
-                  className={`w-full px-5 py-4 rounded-xl text-white font-semibold btn-glow transition-all active:scale-95 disabled:opacity-50 ${
-                    category === 'cannabis' 
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
-                      : 'bg-gradient-to-r from-amber-500 to-orange-600'
-                  }`}
-                >
-                  {uploading ? "Uploading image..." : submitting ? "Logging..." : 
-                    category === 'cannabis' ? "Log Session 🌿" :
-                    category === 'hookah' ? "Log Session 💨" :
-                    category === 'vape' ? "Log Session 🌫️" :
-                    "Log Smoke 🚬"
-                  }
-                </button>
+                {/* Error display */}
+                {submitError && (
+                  <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm">
+                    {submitError}
+                  </div>
+                )}
+
+                {/* Submit button with extra bottom padding for mobile */}
+                <div className="pb-4">
+                  <button
+                    type="submit"
+                    disabled={submitting || uploading || !brand.trim()}
+                    className={`w-full px-5 py-4 rounded-xl text-white font-semibold btn-glow transition-all active:scale-95 disabled:opacity-50 touch-manipulation ${
+                      category === 'cannabis' 
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
+                        : 'bg-gradient-to-r from-amber-500 to-orange-600'
+                    }`}
+                  >
+                    {uploading ? "Uploading image..." : submitting ? "Logging..." : 
+                      category === 'cannabis' ? "Log Session 🌿" :
+                      category === 'hookah' ? "Log Session 💨" :
+                      category === 'vape' ? "Log Session 🌫️" :
+                      "Log Smoke 🚬"
+                    }
+                  </button>
+                </div>
               </form>
             </motion.div>
           </motion.div>

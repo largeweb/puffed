@@ -51,6 +51,7 @@ const navGroups = [
       { href: "/mystats", icon: <FiBarChart2 size={20} />, label: "My Stats", color: "text-cyan-400" },
       { href: "/records", icon: <span>🏆</span>, label: "Personal Records", color: "text-yellow-400" },
       { href: "/personality", icon: <span>🔮</span>, label: "Smoke Personality", color: "text-purple-400" },
+      { href: "/flavor-dna", icon: <span>🧬</span>, label: "Flavor DNA", color: "text-purple-400" },
       { href: "/calendar", icon: <FiCalendar size={20} />, label: "Smoke Calendar", color: "text-emerald-400" },
     ]
   },
