@@ -197,7 +197,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
 
-    const { vote } = await request.json();
+    const body = await request.json() as { vote?: string };
+    const { vote } = body;
     if (!vote) {
       return NextResponse.json({ error: "Vote required" }, { status: 400 });
     }
