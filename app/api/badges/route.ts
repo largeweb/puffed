@@ -173,6 +173,23 @@ const BADGE_DEFINITIONS = [
     check: (stats: UserStats) => stats.brandsDiscovered >= 10,
     progress: (stats: UserStats) => ({ current: stats.brandsDiscovered, target: 10 }),
   },
+  // Comeback badges - celebrate re-engagement!
+  {
+    id: "comeback_kid",
+    name: "Comeback Kid",
+    description: "Return and log after 7+ days away",
+    emoji: "🔄",
+    check: (stats: UserStats) => stats.comebackReturns >= 1,
+    progress: (stats: UserStats) => ({ current: stats.comebackReturns, target: 1 }),
+  },
+  {
+    id: "phoenix",
+    name: "Phoenix",
+    description: "Rise from the ashes 3 times (return after 7+ days, 3 times)",
+    emoji: "🔥",
+    check: (stats: UserStats) => stats.comebackReturns >= 3,
+    progress: (stats: UserStats) => ({ current: stats.comebackReturns, target: 3 }),
+  },
   // Referral badges - incentivize growth!
   {
     id: "friend_finder",
@@ -215,6 +232,7 @@ interface UserStats {
   weekendSmokes: number;
   referrals: number;
   brandsDiscovered: number;
+  comebackReturns: number;
 }
 
 export const runtime = "edge";
@@ -303,19 +321,29 @@ export async function GET(): Promise<Response> {
       `).bind(userId).first<{ count: number }>(),
     ]);
 
-    // Calculate best streak from dates
+    // Calculate best streak and comeback returns from dates
     const dates = datesResult.results?.map(r => r.checkin_date) || [];
     let bestStreak = 0;
+    let comebackReturns = 0;
     if (dates.length > 0) {
       let tempStreak = 1;
       for (let i = 1; i < dates.length; i++) {
-        const prevDate = new Date(dates[i - 1]);
-        prevDate.setDate(prevDate.getDate() - 1);
-        if (prevDate.toISOString().split('T')[0] === dates[i]) {
+        const currentDate = new Date(dates[i - 1]);
+        const prevDate = new Date(dates[i]);
+        const daysDiff = Math.floor((currentDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff === 1) {
+          // Consecutive day - continue streak
           tempStreak++;
         } else {
+          // Gap in activity
           bestStreak = Math.max(bestStreak, tempStreak);
           tempStreak = 1;
+          
+          // Check if this was a 7+ day comeback
+          if (daysDiff >= 7) {
+            comebackReturns++;
+          }
         }
       }
       bestStreak = Math.max(bestStreak, tempStreak);
@@ -336,6 +364,7 @@ export async function GET(): Promise<Response> {
       weekendSmokes: weekendResult?.count || 0,
       referrals: referralsResult?.count || 0,
       brandsDiscovered: brandsDiscoveredResult?.count || 0,
+      comebackReturns,
     };
 
     // Calculate badges
