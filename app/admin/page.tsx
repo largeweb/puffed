@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiUsers, FiActivity, FiHeart, FiMessageCircle, FiTrendingUp, FiAlertCircle, FiRefreshCw } from "react-icons/fi";
+import { FiUsers, FiActivity, FiHeart, FiTrendingUp, FiAlertCircle, FiRefreshCw, FiZap, FiSend, FiBell, FiUserPlus } from "react-icons/fi";
 
 interface PlatformStats {
   overview: {
@@ -38,11 +38,22 @@ interface PlatformStats {
   generated_at: string;
 }
 
+interface ActionResult {
+  action: string;
+  success: boolean;
+  message: string;
+  details?: string;
+}
+
+const ADMIN_KEY = "puffed-admin-2026";
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [actionResults, setActionResults] = useState<ActionResult[]>([]);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -57,6 +68,49 @@ export default function AdminDashboard() {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const runAction = async (action: string, endpoint: string) => {
+    setActionLoading(action);
+    try {
+      // First GET to preview
+      const previewRes = await fetch(`${endpoint}?key=${ADMIN_KEY}`);
+      const previewData = await previewRes.json();
+      
+      let result: ActionResult;
+      
+      if (previewData.eligibleCount === 0 || previewData.count === 0 || 
+          (Array.isArray(previewData.users) && previewData.users.length === 0) ||
+          (Array.isArray(previewData.at_risk_users) && previewData.at_risk_users.length === 0)) {
+        result = {
+          action,
+          success: true,
+          message: "No users need this notification",
+          details: "All caught up! ✨"
+        };
+      } else {
+        // Run the action
+        const postRes = await fetch(`${endpoint}?key=${ADMIN_KEY}`, { method: "POST" });
+        const postData = await postRes.json();
+        
+        result = {
+          action,
+          success: postData.success || postRes.ok,
+          message: postData.message || `Sent to ${postData.sent || postData.sent_count || 0} users`,
+          details: postData.users ? postData.users.map((u: { username: string }) => u.username).join(", ") : undefined
+        };
+      }
+      
+      setActionResults(prev => [result, ...prev.slice(0, 4)]);
+    } catch (err) {
+      setActionResults(prev => [{
+        action,
+        success: false,
+        message: err instanceof Error ? err.message : "Action failed"
+      }, ...prev.slice(0, 4)]);
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -140,6 +194,61 @@ export default function AdminDashboard() {
                 value={stats.overview.checkins_per_user}
                 color="purple"
               />
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-gradient-to-br from-violet-900/20 to-purple-900/20 rounded-xl p-6 mb-8 border border-violet-800/30">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <FiZap className="text-violet-400" />
+                Quick Actions
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <ActionButton
+                  icon={<FiSend />}
+                  label="Win Back"
+                  description="Re-engage inactive users"
+                  loading={actionLoading === "win-back"}
+                  onClick={() => runAction("win-back", "/api/admin/win-back")}
+                />
+                <ActionButton
+                  icon={<FiBell />}
+                  label="Streak Alert"
+                  description="Remind at-risk streaks"
+                  loading={actionLoading === "streak"}
+                  onClick={() => runAction("streak", "/api/admin/streak-reminder")}
+                />
+                <ActionButton
+                  icon={<FiUserPlus />}
+                  label="First Smoke"
+                  description="Nudge new signups"
+                  loading={actionLoading === "first-smoke"}
+                  onClick={() => runAction("first-smoke", "/api/admin/first-smoke-nudge")}
+                />
+                <ActionButton
+                  icon={<FiHeart />}
+                  label="Warm Up"
+                  description="Auto-engage content"
+                  loading={actionLoading === "warm-up"}
+                  onClick={() => runAction("warm-up", "/api/admin/warm-up")}
+                />
+              </div>
+              
+              {/* Action Results */}
+              {actionResults.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-violet-800/30 space-y-2">
+                  {actionResults.map((result, i) => (
+                    <div 
+                      key={i} 
+                      className={`text-sm p-2 rounded ${
+                        result.success ? 'bg-green-900/20 text-green-300' : 'bg-red-900/20 text-red-300'
+                      }`}
+                    >
+                      <span className="font-medium">{result.action}:</span> {result.message}
+                      {result.details && <span className="text-gray-400 ml-2">({result.details})</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Engagement Stats */}
@@ -257,6 +366,34 @@ export default function AdminDashboard() {
         </p>
       </div>
     </div>
+  );
+}
+
+function ActionButton({ 
+  icon, 
+  label, 
+  description, 
+  loading, 
+  onClick 
+}: { 
+  icon: React.ReactNode; 
+  label: string; 
+  description: string;
+  loading: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={loading}
+      className="p-4 bg-zinc-800/50 hover:bg-zinc-700/50 rounded-lg transition text-left disabled:opacity-50 group"
+    >
+      <div className="flex items-center gap-2 text-violet-400 mb-1 group-hover:text-violet-300">
+        {loading ? <FiRefreshCw className="animate-spin" /> : icon}
+        <span className="font-medium">{label}</span>
+      </div>
+      <p className="text-xs text-gray-500">{description}</p>
+    </button>
   );
 }
 
