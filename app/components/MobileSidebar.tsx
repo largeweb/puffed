@@ -1,0 +1,172 @@
+"use client";
+
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { 
+  FiX, FiCompass, FiSearch, FiUsers, FiRss, FiLayers, FiBookmark, 
+  FiZap, FiBarChart2, FiCalendar, FiAward, FiActivity, FiCamera,
+  FiShare2, FiBell, FiSettings, FiLogOut, FiHome
+} from "react-icons/fi";
+
+interface MobileSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  username?: string;
+  unreadCount?: number;
+  onLogout: () => void;
+}
+
+const navGroups = [
+  {
+    title: "Discover",
+    items: [
+      { href: "/dashboard", icon: <FiHome size={20} />, label: "Home", color: "text-amber-400" },
+      { href: "/discover", icon: <FiCompass size={20} />, label: "Discover Feed", color: "text-white" },
+      { href: "/search", icon: <FiSearch size={20} />, label: "Search", color: "text-white" },
+      { href: "/gallery", icon: <FiCamera size={20} />, label: "Photo Gallery", color: "text-pink-400" },
+    ]
+  },
+  {
+    title: "Social",
+    items: [
+      { href: "/people", icon: <FiUsers size={20} />, label: "Find People", color: "text-pink-400" },
+      { href: "/twins", icon: <span>👯</span>, label: "Smoke Time Twins", color: "text-cyan-400" },
+      { href: "/following", icon: <FiRss size={20} />, label: "Following Feed", color: "text-cyan-400" },
+      { href: "/leaderboard", icon: <FiAward size={20} />, label: "Leaderboard", color: "text-amber-500" },
+      { href: "/invite", icon: <FiShare2 size={20} />, label: "Invite Friends", color: "text-green-400" },
+    ]
+  },
+  {
+    title: "Tools",
+    items: [
+      { href: "/compare", icon: <FiLayers size={20} />, label: "Compare Brands", color: "text-green-400" },
+      { href: "/wishlist", icon: <FiBookmark size={20} />, label: "Want to Try", color: "text-pink-400" },
+      { href: "/suggest", icon: <FiZap size={20} />, label: "What to Smoke?", color: "text-purple-400" },
+      { href: "/roulette", icon: <span>🎰</span>, label: "Smoke Roulette", color: "text-fuchsia-400" },
+    ]
+  },
+  {
+    title: "Your Stats",
+    items: [
+      { href: "/mystats", icon: <FiBarChart2 size={20} />, label: "My Stats", color: "text-cyan-400" },
+      { href: "/records", icon: <span>🏆</span>, label: "Personal Records", color: "text-yellow-400" },
+      { href: "/personality", icon: <span>🔮</span>, label: "Smoke Personality", color: "text-purple-400" },
+      { href: "/calendar", icon: <FiCalendar size={20} />, label: "Smoke Calendar", color: "text-emerald-400" },
+    ]
+  },
+  {
+    title: "Community",
+    items: [
+      { href: "/pulse", icon: <FiActivity size={20} />, label: "Platform Pulse", color: "text-pink-500" },
+      { href: "/share", icon: <span>📸</span>, label: "Share Your Week", color: "text-amber-400" },
+    ]
+  },
+];
+
+export default function MobileSidebar({ isOpen, onClose, username, unreadCount = 0, onLogout }: MobileSidebarProps) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/60 z-50 md:hidden"
+          />
+          
+          {/* Sidebar */}
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed top-0 left-0 h-full w-72 bg-[#0d0d0d] border-r border-white/10 z-50 overflow-y-auto md:hidden"
+          >
+            {/* Header */}
+            <div className="sticky top-0 bg-[#0d0d0d] p-4 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                  <span className="text-lg">🚬</span>
+                </div>
+                <div>
+                  <h2 className="font-semibold">Puffed</h2>
+                  {username && <p className="text-xs text-gray-400">@{username}</p>}
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg hover:bg-white/5 text-gray-400"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            {/* Nav Groups */}
+            <div className="p-4 space-y-6">
+              {navGroups.map((group) => (
+                <div key={group.title}>
+                  <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                    {group.title}
+                  </h3>
+                  <div className="space-y-1">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={onClose}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-all ${item.color}`}
+                      >
+                        {item.icon}
+                        <span className="text-sm">{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {/* Settings & Account */}
+              <div>
+                <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                  Account
+                </h3>
+                <div className="space-y-1">
+                  <Link
+                    href="/notifications"
+                    onClick={onClose}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-all text-white"
+                  >
+                    <FiBell size={20} />
+                    <span className="text-sm">Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="ml-auto bg-amber-500 text-black text-xs font-bold px-2 py-0.5 rounded-full">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={onClose}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-all text-white"
+                  >
+                    <FiSettings size={20} />
+                    <span className="text-sm">Settings</span>
+                  </Link>
+                  <button
+                    onClick={() => { onLogout(); onClose(); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-500/10 transition-all text-red-400"
+                  >
+                    <FiLogOut size={20} />
+                    <span className="text-sm">Log Out</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}

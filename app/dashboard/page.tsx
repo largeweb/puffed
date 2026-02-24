@@ -7,7 +7,8 @@ import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompas
 import Link from "next/link";
 import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
-import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
+import { FiTrendingUp, FiTrendingDown, FiMinus, FiMenu } from "react-icons/fi";
+import MobileSidebar from "../components/MobileSidebar";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 import { MOOD_TAGS } from "@/lib/moods";
 import type { SmokeMood } from "@/lib/types";
@@ -353,6 +354,7 @@ export default function DashboardPage() {
   const [checkins, setCheckins] = useState<Checkin[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [badges, setBadges] = useState<Badge[]>([]);
@@ -847,10 +849,26 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen pb-24">
+      {/* Mobile Sidebar */}
+      <MobileSidebar
+        isOpen={showSidebar}
+        onClose={() => setShowSidebar(false)}
+        username={user?.username}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
+
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-white/5">
+      <header className="sticky top-0 z-40 glass border-b border-white/5">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setShowSidebar(true)}
+              className="p-2 -ml-2 rounded-lg hover:bg-white/5 text-gray-400 md:hidden"
+            >
+              <FiMenu size={22} />
+            </button>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
               <span className="text-lg">🚬</span>
             </div>
@@ -859,7 +877,8 @@ export default function DashboardPage() {
               <p className="text-xs text-gray-400">@{user?.username}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Desktop nav - hidden on mobile */}
+          <div className="hidden md:flex items-center gap-2">
             <Link
               href="/discover"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
@@ -1009,6 +1028,26 @@ export default function DashboardPage() {
             >
               <FiLogOut size={20} />
             </button>
+          </div>
+          {/* Mobile quick actions - only essential items */}
+          <div className="flex md:hidden items-center gap-2">
+            <Link
+              href="/notifications"
+              className="relative p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+            >
+              <FiBell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 min-w-[16px] h-[16px] bg-amber-500 text-black text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/discover"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+            >
+              <FiCompass size={20} />
+            </Link>
           </div>
         </div>
       </header>
