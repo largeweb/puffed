@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -382,6 +382,7 @@ export default function DashboardPage() {
   const [onboardingProgress, setOnboardingProgress] = useState({ completed: 0, total: 0 });
   const [communityMilestones, setCommunityMilestones] = useState<CommunityMilestonesResponse | null>(null);
   const [loungeData, setLoungeData] = useState<LoungeResponse | null>(null);
+  const [morningData, setMorningData] = useState<MorningCoffeeResponse | null>(null);
   const [nightThoughts, setNightThoughts] = useState<NightThought[]>([]);
   const [newThought, setNewThought] = useState("");
   const [submittingThought, setSubmittingThought] = useState(false);
@@ -600,6 +601,13 @@ export default function DashboardPage() {
               setNightThoughts(thoughtsData.thoughts || []);
             }
           }
+        }
+
+        // Load morning coffee (shows 5 AM - 10 AM)
+        const morningRes = await fetch("/api/morning-coffee");
+        if (morningRes.ok) {
+          const morningResData: MorningCoffeeResponse = await morningRes.json();
+          setMorningData(morningResData);
         }
 
         // Load weekly recap (shows on weekends)
@@ -1791,6 +1799,89 @@ export default function DashboardPage() {
                   View all thoughts →
                 </Link>
               </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Morning Coffee Section - Early Bird Lounge */}
+        {morningData?.loungeOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.054 }}
+            className="glass rounded-2xl p-5 mb-6 border border-amber-500/30 bg-gradient-to-br from-amber-900/20 to-orange-900/20"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="text-2xl">{morningData.vibes.emoji}</span>
+                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-medium text-amber-300">Morning Coffee ☕</h2>
+                  <p className="text-xs text-orange-400">{morningData.vibes.message}</p>
+                </div>
+              </div>
+              <span className="text-xs text-amber-400/60">5 AM - 10 AM</span>
+            </div>
+
+            {/* Morning stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-amber-300">{morningData.stats.yourMorningSmokes}</div>
+                <div className="text-[10px] text-gray-500">Your AM Smokes</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-orange-300">{morningData.stats.morningRisers}</div>
+                <div className="text-[10px] text-gray-500">Early Birds</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-yellow-300">{morningData.stats.earlyBirdPercentile}%</div>
+                <div className="text-[10px] text-gray-500">Percentile</div>
+              </div>
+            </div>
+
+            {/* Active early birds */}
+            {morningData.earlyBirds.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-500 mb-2">🌅 Fellow early risers:</p>
+                <div className="flex flex-wrap gap-2">
+                  {morningData.earlyBirds.slice(0, 6).map((bird) => (
+                    <Link
+                      key={bird.username}
+                      href={`/user/${bird.username}`}
+                      className={`px-3 py-1.5 rounded-full text-xs transition-all ${
+                        bird.isActive 
+                          ? "bg-amber-500/30 text-amber-300 border border-amber-500/50" 
+                          : "bg-white/5 text-gray-400 hover:bg-white/10"
+                      }`}
+                    >
+                      {bird.isActive && <span className="mr-1">☕</span>}
+                      @{bird.username}
+                      <span className="ml-1 text-gray-500">{bird.lastSmoke}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {morningData.earlyBirds.length === 0 && (
+              <p className="text-xs text-gray-500 text-center py-2">
+                ☕ Be the first early bird! Log a smoke to join the morning crew.
+              </p>
+            )}
+
+            {/* Morning motivation + link to full page */}
+            <div className="mt-4 pt-4 border-t border-white/10 text-center">
+              <p className="text-xs text-amber-400/80 italic mb-2">
+                &quot;The early bird catches the smoke&quot; 🌄
+              </p>
+              <Link 
+                href="/coffee"
+                className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                View Morning Coffee Lounge →
+              </Link>
             </div>
           </motion.div>
         )}

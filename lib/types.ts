@@ -463,6 +463,33 @@ export interface NightThoughtsResponse {
   error?: string;
 }
 
+// Morning Coffee (early bird tracking)
+export interface EarlyBirdUser {
+  username: string;
+  lastSmoke: string;
+  morningSmokes: number;
+  isActive: boolean;
+}
+
+export interface MorningCoffeeResponse {
+  isMorningTime: boolean;
+  currentHour: number;
+  loungeOpen: boolean;
+  earlyBirds: EarlyBirdUser[];
+  stats: {
+    totalMorningSmokes: number;
+    yourMorningSmokes: number;
+    earlyBirdPercentile: number;
+    mostActiveHour: number;
+    morningRisers: number;
+  };
+  vibes: {
+    message: string;
+    emoji: string;
+  };
+  error?: string;
+}
+
 // Trending Week (momentum tracking)
 export interface TrendingWeekBrand {
   brand: string;
