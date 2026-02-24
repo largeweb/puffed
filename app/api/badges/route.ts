@@ -148,6 +148,56 @@ const BADGE_DEFINITIONS = [
     check: (stats: UserStats) => stats.uniqueBrands >= 5,
     progress: (stats: UserStats) => ({ current: stats.uniqueBrands, target: 5 }),
   },
+  // Brand Pioneer badges - reward exploration!
+  {
+    id: "brand_pioneer",
+    name: "Brand Pioneer",
+    description: "Be the first to log a brand on Puffed",
+    emoji: "🏴‍☠️",
+    check: (stats: UserStats) => stats.brandsDiscovered >= 1,
+    progress: (stats: UserStats) => ({ current: stats.brandsDiscovered, target: 1 }),
+  },
+  {
+    id: "trailblazer",
+    name: "Trailblazer",
+    description: "Be the first to log 3 brands",
+    emoji: "🧭",
+    check: (stats: UserStats) => stats.brandsDiscovered >= 3,
+    progress: (stats: UserStats) => ({ current: stats.brandsDiscovered, target: 3 }),
+  },
+  {
+    id: "brand_columbus",
+    name: "Brand Columbus",
+    description: "Be the first to log 10 brands",
+    emoji: "🌎",
+    check: (stats: UserStats) => stats.brandsDiscovered >= 10,
+    progress: (stats: UserStats) => ({ current: stats.brandsDiscovered, target: 10 }),
+  },
+  // Referral badges - incentivize growth!
+  {
+    id: "friend_finder",
+    name: "Friend Finder",
+    description: "Invite a friend who joins",
+    emoji: "👯",
+    check: (stats: UserStats) => stats.referrals >= 1,
+    progress: (stats: UserStats) => ({ current: stats.referrals, target: 1 }),
+  },
+  {
+    id: "crew_builder",
+    name: "Crew Builder",
+    description: "Invite 3 friends who join",
+    emoji: "🏗️",
+    check: (stats: UserStats) => stats.referrals >= 3,
+    progress: (stats: UserStats) => ({ current: stats.referrals, target: 3 }),
+  },
+  {
+    id: "ambassador",
+    name: "Ambassador",
+    description: "Invite 10 friends who join",
+    emoji: "🌟",
+    check: (stats: UserStats) => stats.referrals >= 10,
+    progress: (stats: UserStats) => ({ current: stats.referrals, target: 10 }),
+  },
 ];
 
 interface UserStats {
@@ -163,6 +213,8 @@ interface UserStats {
   earlyMorningSmokes: number;
   lateNightSmokes: number;
   weekendSmokes: number;
+  referrals: number;
+  brandsDiscovered: number;
 }
 
 export const runtime = "edge";
@@ -205,6 +257,8 @@ export async function GET(): Promise<Response> {
       earlyMorningResult,
       lateNightResult,
       weekendResult,
+      referralsResult,
+      brandsDiscoveredResult,
     ] = await Promise.all([
       db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ?").bind(userId).first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ? AND rating IS NOT NULL").bind(userId).first<{ count: number }>(),
@@ -235,6 +289,17 @@ export async function GET(): Promise<Response> {
         SELECT COUNT(DISTINCT strftime('%Y-%W', created_at, 'unixepoch')) as count 
         FROM checkins 
         WHERE user_id = ? AND CAST(strftime('%w', created_at, 'unixepoch') AS INTEGER) IN (0, 6)
+      `).bind(userId).first<{ count: number }>(),
+      // Referrals: count users who were referred by this user
+      db.prepare("SELECT COUNT(*) as count FROM users WHERE referred_by = ?").bind(userId).first<{ count: number }>(),
+      // Brand pioneer: count brands where this user was the first to log
+      db.prepare(`
+        SELECT COUNT(*) as count FROM (
+          SELECT brand, user_id, MIN(created_at) as first_checkin
+          FROM checkins
+          GROUP BY brand
+          HAVING user_id = ?
+        )
       `).bind(userId).first<{ count: number }>(),
     ]);
 
@@ -269,6 +334,8 @@ export async function GET(): Promise<Response> {
       earlyMorningSmokes: earlyMorningResult?.count || 0,
       lateNightSmokes: lateNightResult?.count || 0,
       weekendSmokes: weekendResult?.count || 0,
+      referrals: referralsResult?.count || 0,
+      brandsDiscovered: brandsDiscoveredResult?.count || 0,
     };
 
     // Calculate badges
