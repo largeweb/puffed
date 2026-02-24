@@ -44,7 +44,7 @@ export default function NightThoughtsPage() {
   const checkLoungeStatus = useCallback(async () => {
     try {
       const res = await fetch("/api/late-night-lounge");
-      const data = await res.json();
+      const data = await res.json() as { loungeOpen: boolean; currentHour: number };
       setLoungeOpen(data.loungeOpen);
       setCurrentHour(data.currentHour);
     } catch (err) {
