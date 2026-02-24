@@ -68,6 +68,7 @@ function calculateTarget(baseTarget: number, activeUsers: number): number {
 }
 
 export async function GET(request: NextRequest) {
+  try {
   const { env } = getRequestContext();
   const db = env.DB;
   const cookieStore = await cookies();
@@ -306,4 +307,8 @@ export async function GET(request: NextRequest) {
     message,
     totalParticipants: activeUsers?.count || 0,
   });
+  } catch (error) {
+    console.error("Community challenge error:", error);
+    return NextResponse.json({ error: "Failed to load community challenge", details: String(error) }, { status: 500 });
+  }
 }
