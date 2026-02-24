@@ -684,3 +684,18 @@ export interface OnThisDayResponse {
   hasMemories: boolean;
   message?: string;
 }
+
+// Suggested Follows - People Like You
+export interface SuggestedUser {
+  id: string;
+  username: string;
+  totalSmokes: number;
+  commonBrands: number;
+  tasteMatchScore: number;
+  topBrand?: string;
+}
+
+export interface SuggestedFollowsResponse {
+  suggestions?: SuggestedUser[];
+  error?: string;
+}

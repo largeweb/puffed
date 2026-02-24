@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity, FiRss } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -387,6 +387,8 @@ export default function DashboardPage() {
   const [newThought, setNewThought] = useState("");
   const [submittingThought, setSubmittingThought] = useState(false);
   const [memories, setMemories] = useState<OnThisDayMemory[]>([]);
+  const [suggestedFollows, setSuggestedFollows] = useState<SuggestedUser[]>([]);
+  const [followingUser, setFollowingUser] = useState<string | null>(null);
   const router = useRouter();
 
   // Quick Smoke handler - one-tap to log your go-to brand
@@ -665,6 +667,13 @@ export default function DashboardPage() {
         if (milestonesRes.ok) {
           const milestonesData: CommunityMilestonesResponse = await milestonesRes.json();
           setCommunityMilestones(milestonesData);
+        }
+
+        // Load suggested follows (People Like You)
+        const suggestedRes = await fetch("/api/suggested-follows");
+        if (suggestedRes.ok) {
+          const suggestedData: SuggestedFollowsResponse = await suggestedRes.json();
+          setSuggestedFollows(suggestedData.suggestions || []);
         }
       } catch (error) {
         console.error("Load error:", error);
@@ -2471,7 +2480,7 @@ export default function DashboardPage() {
         )}
 
         {/* Prompt to follow people if not following anyone */}
-        {followStats.following === 0 && checkins.length > 0 && (
+        {followStats.following === 0 && checkins.length > 0 && suggestedFollows.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -2493,6 +2502,88 @@ export default function DashboardPage() {
                 Discover
               </Link>
             </div>
+          </motion.div>
+        )}
+
+        {/* People Like You - Suggested Follows */}
+        {suggestedFollows.length > 0 && followStats.following < 5 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.07 }}
+            className="glass rounded-2xl p-5 mb-6 border border-pink-500/20"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">💕</span>
+                <h2 className="text-sm font-semibold bg-gradient-to-r from-pink-400 to-rose-400 bg-clip-text text-transparent">People Like You</h2>
+              </div>
+              <Link href="/people" className="text-xs text-gray-500 hover:text-pink-400 transition-colors">
+                See all →
+              </Link>
+            </div>
+            
+            <div className="space-y-3">
+              {suggestedFollows.map((user, idx) => (
+                <motion.div
+                  key={user.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors"
+                >
+                  <Link href={`/user/${user.username}`} className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-sm font-bold">
+                      {user.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">@{user.username}</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        {user.tasteMatchScore > 0 && (
+                          <span className="text-pink-400">{user.tasteMatchScore}% match</span>
+                        )}
+                        {user.commonBrands > 0 && (
+                          <span>• {user.commonBrands} brand{user.commonBrands > 1 ? 's' : ''} in common</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={async () => {
+                      if (followingUser === user.id) return;
+                      setFollowingUser(user.id);
+                      try {
+                        const res = await fetch("/api/follow", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ targetId: user.id }),
+                        });
+                        if (res.ok) {
+                          setSuggestedFollows(prev => prev.filter(u => u.id !== user.id));
+                          setFollowStats(prev => ({ ...prev, following: prev.following + 1 }));
+                        }
+                      } catch (e) {
+                        console.error("Follow error:", e);
+                      } finally {
+                        setFollowingUser(null);
+                      }
+                    }}
+                    disabled={followingUser === user.id}
+                    className="px-3 py-1.5 rounded-lg bg-pink-500/20 text-pink-400 text-xs font-medium hover:bg-pink-500/30 transition-colors disabled:opacity-50"
+                  >
+                    {followingUser === user.id ? "..." : "Follow"}
+                  </button>
+                </motion.div>
+              ))}
+            </div>
+            
+            {suggestedFollows.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-white/5 text-center">
+                <Link href="/people" className="text-xs text-gray-500 hover:text-pink-400 transition-colors">
+                  Discover more people with similar taste →
+                </Link>
+              </div>
+            )}
           </motion.div>
         )}
 
