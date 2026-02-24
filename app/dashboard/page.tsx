@@ -178,6 +178,23 @@ function CheckinCard({ checkin, onDelete }: { checkin: Checkin; onDelete?: (id: 
         );
       })()}
 
+      {/* Drink pairing badge */}
+      {checkin.drink_pairing && (() => {
+        const drinkTag = getDrinkTag(checkin.drink_pairing);
+        if (!drinkTag) return null;
+        return (
+          <div className="mb-2">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+              drinkTag.category === 'coffee' ? 'bg-amber-500/20 text-amber-400' :
+              drinkTag.category === 'alcohol' ? 'bg-purple-500/20 text-purple-400' :
+              'bg-gray-500/20 text-gray-400'
+            }`}>
+              {drinkTag.emoji} {drinkTag.name}
+            </span>
+          </div>
+        );
+      })()}
+
       {/* Category badge */}
       {checkin.category && checkin.category !== 'cigar' && (
         <div className="mb-2">
@@ -3151,6 +3168,32 @@ export default function DashboardPage() {
                       >
                         <span>{mood.emoji}</span>
                         <span>{mood.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Drink Pairing Selector 🥃 */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Pairing with? 🥃</label>
+                  <div className="flex flex-wrap gap-2">
+                    {DRINK_TAGS.map(drink => (
+                      <button
+                        key={drink.id}
+                        type="button"
+                        onClick={() => setSelectedDrink(selectedDrink === drink.id ? '' : drink.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                          selectedDrink === drink.id
+                            ? drink.category === 'coffee' 
+                              ? 'bg-amber-700/40 text-amber-300 font-medium ring-2 ring-amber-500/30'
+                              : drink.category === 'alcohol'
+                              ? 'bg-purple-700/40 text-purple-300 font-medium ring-2 ring-purple-500/30'
+                              : 'bg-gray-700/40 text-gray-300 font-medium ring-2 ring-gray-500/30'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                        }`}
+                      >
+                        <span>{drink.emoji}</span>
+                        <span>{drink.name}</span>
                       </button>
                     ))}
                   </div>
