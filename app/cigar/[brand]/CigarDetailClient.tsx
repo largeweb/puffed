@@ -16,8 +16,10 @@ import {
   FiBookmark,
   FiCheck,
   FiLayers,
-  FiAward
+  FiAward,
+  FiCoffee
 } from "react-icons/fi";
+import { getDrinkTag } from "@/lib/drinks";
 import { GiCigarette } from "react-icons/gi";
 import type { LikeResponse, WishlistResponse } from "@/lib/types";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -67,6 +69,13 @@ interface TopFan {
   avg_rating: number | null;
   first_smoke: number;
   latest_smoke: number;
+}
+
+interface DrinkPairing {
+  drink_id: string;
+  count: number;
+  percentage: number;
+  avg_rating: number | null;
 }
 
 function getTimeAgo(timestamp: number): string {
@@ -223,6 +232,8 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
   const [alsoEnjoyedLoading, setAlsoEnjoyedLoading] = useState(true);
   const [topFans, setTopFans] = useState<TopFan[]>([]);
   const [topFansLoading, setTopFansLoading] = useState(true);
+  const [drinkPairings, setDrinkPairings] = useState<DrinkPairing[]>([]);
+  const [drinkPairingsLoading, setDrinkPairingsLoading] = useState(true);
 
   // Check if this brand is in the user's wishlist
   useEffect(() => {
@@ -279,6 +290,24 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
       }
     }
     fetchTopFans();
+  }, [brand]);
+
+  // Fetch drink pairings for this brand
+  useEffect(() => {
+    async function fetchDrinkPairings() {
+      try {
+        const res = await fetch(`/api/brand/${encodeURIComponent(brand)}/drink-pairings`);
+        if (res.ok) {
+          const data: { pairings: DrinkPairing[] } = await res.json();
+          setDrinkPairings(data.pairings || []);
+        }
+      } catch (error) {
+        console.error("Drink pairings error:", error);
+      } finally {
+        setDrinkPairingsLoading(false);
+      }
+    }
+    fetchDrinkPairings();
   }, [brand]);
 
   const toggleWishlist = async () => {
@@ -515,6 +544,61 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
                   </motion.div>
                 </Link>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Popular Drink Pairings */}
+        {!drinkPairingsLoading && drinkPairings.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.13 }}
+          >
+            <h3 className="text-lg font-semibold text-amber-300 mb-3 flex items-center gap-2">
+              <FiCoffee size={18} className="text-amber-400" />
+              Popular Pairings
+            </h3>
+            <p className="text-sm text-amber-400/60 mb-3">
+              What people drink with {brand}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {drinkPairings.slice(0, 6).map((pairing, idx) => {
+                const drink = getDrinkTag(pairing.drink_id);
+                if (!drink) return null;
+                return (
+                  <motion.div
+                    key={pairing.drink_id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.13 + idx * 0.05 }}
+                    className={`p-3 rounded-xl border transition-colors ${
+                      idx === 0 
+                        ? "bg-gradient-to-br from-amber-900/40 to-stone-800/40 border-amber-700/40" 
+                        : "bg-stone-800/40 border-amber-900/20"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">{drink.emoji}</span>
+                      <span className="text-amber-100 font-medium text-sm">{drink.name}</span>
+                      {idx === 0 && (
+                        <span className="text-xs bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded-full">
+                          #1
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-amber-400/60">
+                      <span>{pairing.percentage}% of smokers</span>
+                      {pairing.avg_rating && (
+                        <span className="flex items-center gap-0.5">
+                          <FiStar size={10} className="fill-amber-400 text-amber-400" />
+                          {pairing.avg_rating.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </motion.div>
         )}
