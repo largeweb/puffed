@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -381,6 +381,7 @@ export default function DashboardPage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingProgress, setOnboardingProgress] = useState({ completed: 0, total: 0 });
   const [communityMilestones, setCommunityMilestones] = useState<CommunityMilestonesResponse | null>(null);
+  const [loungeData, setLoungeData] = useState<LoungeResponse | null>(null);
   const router = useRouter();
 
   // Quick Smoke handler - one-tap to log your go-to brand
@@ -551,6 +552,13 @@ export default function DashboardPage() {
           const activeSmokersData: ActiveSmokersResponse = await activeSmokersRes.json();
           setActiveSmokers(activeSmokersData.smokers || []);
           setActiveSmokersStats(activeSmokersData.stats || { activeNow: 0, smokersToday: 0, checkinsToday: 0 });
+        }
+
+        // Load late night lounge (only shows during night hours)
+        const loungeRes = await fetch("/api/late-night-lounge");
+        if (loungeRes.ok) {
+          const loungeResData: LoungeResponse = await loungeRes.json();
+          setLoungeData(loungeResData);
         }
 
         // Load weekly recap (shows on weekends)
@@ -1602,6 +1610,81 @@ export default function DashboardPage() {
             {activeSmokers.length > 0 && (
               <p className="text-xs text-gray-500 mt-3 text-center">
                 🤝 Join them! Log a smoke to show up here
+              </p>
+            )}
+          </motion.div>
+        )}
+
+        {/* Late Night Lounge - Only visible during night hours (10 PM - 4 AM) */}
+        {loungeData?.loungeOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.053 }}
+            className="glass rounded-2xl p-5 mb-6 border border-indigo-500/30 bg-gradient-to-br from-indigo-900/20 to-purple-900/20"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="text-2xl">{loungeData.vibes.emoji}</span>
+                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-indigo-400 rounded-full animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-medium text-indigo-300">Late Night Lounge</h2>
+                  <p className="text-xs text-purple-400">{loungeData.vibes.message}</p>
+                </div>
+              </div>
+              <Link 
+                href="/leaderboard" 
+                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
+              >
+                🦉 Night Owls
+              </Link>
+            </div>
+
+            {/* Night stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-indigo-300">{loungeData.stats.yourNightSmokes}</div>
+                <div className="text-[10px] text-gray-500">Your Night Smokes</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-purple-300">{loungeData.stats.loungeMembers}</div>
+                <div className="text-[10px] text-gray-500">Night Owls</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-pink-300">{loungeData.stats.nightOwlPercentile}%</div>
+                <div className="text-[10px] text-gray-500">Percentile</div>
+              </div>
+            </div>
+
+            {/* Active night owls */}
+            {loungeData.nightOwls.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-500 mb-2">🌙 Fellow night owls recently:</p>
+                <div className="flex flex-wrap gap-2">
+                  {loungeData.nightOwls.slice(0, 6).map((owl) => (
+                    <Link
+                      key={owl.username}
+                      href={`/user/${owl.username}`}
+                      className={`px-3 py-1.5 rounded-full text-xs transition-all ${
+                        owl.isActive 
+                          ? "bg-indigo-500/30 text-indigo-300 border border-indigo-500/50" 
+                          : "bg-white/5 text-gray-400 hover:bg-white/10"
+                      }`}
+                    >
+                      {owl.isActive && <span className="mr-1">🦉</span>}
+                      @{owl.username}
+                      <span className="ml-1 text-gray-500">{owl.lastSmoke}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {loungeData.nightOwls.length === 0 && (
+              <p className="text-xs text-gray-500 text-center py-2">
+                🌙 You&apos;re the first night owl! Log a smoke to join the lounge.
               </p>
             )}
           </motion.div>

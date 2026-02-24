@@ -421,6 +421,33 @@ export interface ActiveSmokersResponse {
   error?: string;
 }
 
+// Late Night Lounge (night owl feature)
+export interface NightOwlUser {
+  username: string;
+  lastSmoke: string;
+  nightSmokes: number;
+  isActive: boolean;
+}
+
+export interface LoungeResponse {
+  isNightTime: boolean;
+  currentHour: number;
+  loungeOpen: boolean;
+  nightOwls: NightOwlUser[];
+  stats: {
+    totalNightSmokes: number;
+    yourNightSmokes: number;
+    nightOwlPercentile: number;
+    mostActiveHour: number;
+    loungeMembers: number;
+  };
+  vibes: {
+    message: string;
+    emoji: string;
+  };
+  error?: string;
+}
+
 // Trending Week (momentum tracking)
 export interface TrendingWeekBrand {
   brand: string;
