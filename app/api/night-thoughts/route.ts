@@ -1,6 +1,5 @@
 import { getRequestContext } from "@cloudflare/next-on-pages";
 import { cookies } from "next/headers";
-import { nanoid } from "nanoid";
 
 export const runtime = "edge";
 
@@ -22,29 +21,34 @@ function formatTimeAgo(timestamp: number): string {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-function isNightHours(): boolean {
+function isNightTime(): { isNight: boolean; hour: number } {
   const now = new Date();
   const utcHour = now.getUTCHours();
-  // Approximate EST/EDT (UTC-5 or UTC-4)
+  // EST/EDT approximation (UTC-5)
   const estHour = (utcHour - 5 + 24) % 24;
   // Night hours: 10 PM (22) to 4 AM
-  return estHour >= 22 || estHour <= 4;
+  const isNight = estHour >= 22 || estHour <= 4;
+  return { isNight, hour: estHour };
 }
 
-// GET - Fetch recent night thoughts
+// GET - Fetch thoughts from last 12 hours (only during night time)
 export async function GET(): Promise<Response> {
   try {
-    if (!isNightHours()) {
+    const { isNight, hour } = isNightTime();
+    
+    if (!isNight) {
       return Response.json({
+        message: "Night Thoughts only available 10 PM - 4 AM EST",
+        loungeOpen: false,
+        currentHour: hour,
         thoughts: [],
-        message: "Night thoughts are only visible during lounge hours (10 PM - 4 AM)",
       });
     }
 
     const { env } = getRequestContext();
     const db = env.DB;
 
-    // Get thoughts from the last 12 hours
+    // Get thoughts from last 12 hours
     const twelveHoursAgo = Math.floor(Date.now() / 1000) - (12 * 60 * 60);
 
     const result = await db.prepare(`
@@ -57,7 +61,7 @@ export async function GET(): Promise<Response> {
       JOIN users u ON nt.user_id = u.id
       WHERE nt.created_at >= ?
       ORDER BY nt.created_at DESC
-      LIMIT 20
+      LIMIT 50
     `).bind(twelveHoursAgo).all<{
       id: string;
       username: string;
@@ -73,20 +77,27 @@ export async function GET(): Promise<Response> {
       timeAgo: formatTimeAgo(row.created_at),
     }));
 
-    return Response.json({ thoughts });
+    return Response.json({
+      loungeOpen: true,
+      currentHour: hour,
+      thoughts,
+    });
   } catch (error) {
-    console.error("Error fetching night thoughts:", error);
-    return Response.json({ thoughts: [], error: "Failed to load thoughts" }, { status: 500 });
+    console.error("Night thoughts GET error:", error);
+    return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
 
-// POST - Submit a night thought
+// POST - Create a new thought (only during night time, requires auth)
 export async function POST(request: Request): Promise<Response> {
   try {
-    if (!isNightHours()) {
-      return Response.json({
-        error: "Night thoughts can only be shared during lounge hours (10 PM - 4 AM)",
-      }, { status: 400 });
+    const { isNight } = isNightTime();
+    
+    if (!isNight) {
+      return Response.json(
+        { error: "Night Thoughts only available 10 PM - 4 AM EST" },
+        { status: 403 }
+      );
     }
 
     const cookieStore = await cookies();
@@ -101,8 +112,8 @@ export async function POST(request: Request): Promise<Response> {
 
     // Get user from session
     const session = await db
-      .prepare("SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?")
-      .bind(sessionId, Math.floor(Date.now() / 1000))
+      .prepare("SELECT user_id FROM sessions WHERE id = ?")
+      .bind(sessionId)
       .first<{ user_id: string }>();
 
     if (!session) {
@@ -110,39 +121,42 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const body = await request.json() as { thought?: string };
-    const thought = (body.thought || "").trim();
+    const thought = body.thought?.trim();
 
     if (!thought) {
-      return Response.json({ error: "Thought cannot be empty" }, { status: 400 });
+      return Response.json({ error: "Thought is required" }, { status: 400 });
     }
 
-    if (thought.length > 140) {
-      return Response.json({ error: "Thought must be 140 characters or less" }, { status: 400 });
+    if (thought.length > 280) {
+      return Response.json({ error: "Thought too long (max 280 chars)" }, { status: 400 });
     }
 
-    // Check if user already posted a thought in the last 30 minutes
-    const thirtyMinsAgo = Math.floor(Date.now() / 1000) - (30 * 60);
-    const recentThought = await db.prepare(`
-      SELECT id FROM night_thoughts
+    // Rate limit: max 5 thoughts per hour per user
+    const oneHourAgo = Math.floor(Date.now() / 1000) - 3600;
+    const recentCount = await db.prepare(`
+      SELECT COUNT(*) as count FROM night_thoughts
       WHERE user_id = ? AND created_at >= ?
-      LIMIT 1
-    `).bind(session.user_id, thirtyMinsAgo).first();
+    `).bind(session.user_id, oneHourAgo).first<{ count: number }>();
 
-    if (recentThought) {
-      return Response.json({ 
-        error: "You can share a new thought every 30 minutes" 
-      }, { status: 429 });
+    if ((recentCount?.count || 0) >= 5) {
+      return Response.json(
+        { error: "Slow down! Max 5 thoughts per hour" },
+        { status: 429 }
+      );
     }
 
-    // Insert the thought
-    const thoughtId = nanoid();
+    // Create thought
+    const thoughtId = crypto.randomUUID();
+    const now = Math.floor(Date.now() / 1000);
+
     await db.prepare(`
       INSERT INTO night_thoughts (id, user_id, thought, created_at)
       VALUES (?, ?, ?, ?)
-    `).bind(thoughtId, session.user_id, thought, Math.floor(Date.now() / 1000)).run();
+    `).bind(thoughtId, session.user_id, thought, now).run();
 
     // Get username for response
-    const user = await db.prepare("SELECT username FROM users WHERE id = ?")
+    const user = await db
+      .prepare("SELECT username FROM users WHERE id = ?")
       .bind(session.user_id)
       .first<{ username: string }>();
 
@@ -152,12 +166,12 @@ export async function POST(request: Request): Promise<Response> {
         id: thoughtId,
         username: user?.username || "unknown",
         thought,
-        createdAt: Math.floor(Date.now() / 1000),
+        createdAt: now,
         timeAgo: "just now",
       },
     });
   } catch (error) {
-    console.error("Error posting night thought:", error);
-    return Response.json({ error: "Failed to share thought" }, { status: 500 });
+    console.error("Night thoughts POST error:", error);
+    return Response.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -1781,6 +1781,16 @@ export default function DashboardPage() {
                   No thoughts shared yet tonight. Be the first! 🌙
                 </p>
               )}
+              
+              {/* View all link */}
+              <div className="mt-3 pt-3 border-t border-white/5 text-center">
+                <Link 
+                  href="/night-thoughts"
+                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
+                  View all thoughts →
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}
