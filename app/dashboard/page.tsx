@@ -1041,6 +1041,13 @@ export default function DashboardPage() {
               💬
             </Link>
             <Link
+              href="/battle"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-red-400 transition-all"
+              title="Brand Battle"
+            >
+              🥊
+            </Link>
+            <Link
               href="/pulse"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-500 transition-all"
               title="Platform Pulse"

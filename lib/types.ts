@@ -701,3 +701,18 @@ export interface SuggestedFollowsResponse {
   suggestions?: SuggestedUser[];
   error?: string;
 }
+
+// Brand Battle - Weekly Voting
+export interface BrandBattleResponse {
+  brandA: string;
+  brandB: string;
+  weekNumber: number;
+  votesA: number;
+  votesB: number;
+  totalVotes: number;
+  userVote: string | null;
+  votersA: string[];
+  votersB: string[];
+  endsAt: number;
+  error?: string;
+}
