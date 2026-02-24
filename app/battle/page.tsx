@@ -3,8 +3,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FiArrowLeft, FiHome, FiClock, FiUsers, FiTrendingUp, FiAward, FiZap } from "react-icons/fi";
+import { FiArrowLeft, FiHome, FiClock, FiUsers, FiTrendingUp, FiAward, FiZap, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import type { BrandBattleResponse } from "@/app/api/brand-battle/route";
+import type { PastBattle, BattleHistoryResponse } from "@/app/api/brand-battle/history/route";
 
 function getTimeRemaining(endsAt: number): string {
   const now = Math.floor(Date.now() / 1000);
@@ -27,9 +28,14 @@ export default function BrandBattlePage() {
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [pastBattles, setPastBattles] = useState<PastBattle[]>([]);
+  const [historyStats, setHistoryStats] = useState<BattleHistoryResponse['stats'] | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
     loadBattle();
+    loadHistory();
   }, []);
 
   async function loadBattle() {
@@ -43,6 +49,22 @@ export default function BrandBattlePage() {
       console.error("Load error:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadHistory() {
+    setLoadingHistory(true);
+    try {
+      const res = await fetch("/api/brand-battle/history");
+      if (res.ok) {
+        const data: BattleHistoryResponse = await res.json();
+        setPastBattles(data.pastBattles);
+        setHistoryStats(data.stats);
+      }
+    } catch (error) {
+      console.error("Load history error:", error);
+    } finally {
+      setLoadingHistory(false);
     }
   }
 
@@ -344,6 +366,174 @@ export default function BrandBattlePage() {
               </motion.div>
             )}
           </>
+        )}
+
+        {/* Past Battles Section */}
+        {!loading && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-8"
+          >
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="w-full glass rounded-xl p-4 flex items-center justify-between hover:bg-white/5 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🏆</span>
+                <div className="text-left">
+                  <h3 className="font-medium text-white">Battle History</h3>
+                  <p className="text-xs text-gray-400">
+                    {historyStats?.totalBattles || 0} past battles • {historyStats?.totalVotes || 0} total votes
+                  </p>
+                </div>
+              </div>
+              {showHistory ? (
+                <FiChevronUp className="text-gray-400" />
+              ) : (
+                <FiChevronDown className="text-gray-400" />
+              )}
+            </button>
+
+            <AnimatePresence>
+              {showHistory && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  {loadingHistory ? (
+                    <div className="glass rounded-xl mt-3 p-8 text-center">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full mx-auto"
+                      />
+                    </div>
+                  ) : pastBattles.length === 0 ? (
+                    <div className="glass rounded-xl mt-3 p-6 text-center">
+                      <p className="text-gray-400">No past battles yet.</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Be one of the first to vote in this week&apos;s battle!
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 mt-3">
+                      {/* Stats Summary */}
+                      {historyStats && (historyStats.mostVotedBattle || historyStats.biggestLandslide) && (
+                        <div className="grid grid-cols-2 gap-3">
+                          {historyStats.mostVotedBattle && (
+                            <div className="glass rounded-xl p-3 border border-purple-500/20">
+                              <p className="text-xs text-purple-400 font-medium mb-1">Most Voted</p>
+                              <p className="text-sm text-white font-bold">
+                                {historyStats.mostVotedBattle.brandA} vs {historyStats.mostVotedBattle.brandB}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {historyStats.mostVotedBattle.totalVotes} votes
+                              </p>
+                            </div>
+                          )}
+                          {historyStats.biggestLandslide && historyStats.biggestLandslide.winner && (
+                            <div className="glass rounded-xl p-3 border border-amber-500/20">
+                              <p className="text-xs text-amber-400 font-medium mb-1">Biggest Win</p>
+                              <p className="text-sm text-white font-bold">
+                                {historyStats.biggestLandslide.winner}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                +{historyStats.biggestLandslide.winMargin} margin
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Past battle cards */}
+                      {pastBattles.map((pastBattle, idx) => (
+                        <motion.div
+                          key={pastBattle.weekNumber}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                          className="glass rounded-xl p-4"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">Week {pastBattle.weekNumber}</span>
+                              <span className="text-xs text-gray-600">•</span>
+                              <span className="text-xs text-gray-500">{pastBattle.dateRange}</span>
+                            </div>
+                            <span className="text-xs text-gray-400">
+                              {pastBattle.totalVotes} votes
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            {/* Brand A */}
+                            <div className={`flex-1 p-3 rounded-lg ${
+                              pastBattle.winner === pastBattle.brandA 
+                                ? 'bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/30' 
+                                : 'bg-white/5'
+                            }`}>
+                              <div className="flex items-center gap-2 mb-1">
+                                {pastBattle.winner === pastBattle.brandA && (
+                                  <span className="text-amber-400">👑</span>
+                                )}
+                                <p className={`font-medium text-sm ${
+                                  pastBattle.winner === pastBattle.brandA ? 'text-amber-400' : 'text-gray-300'
+                                }`}>
+                                  {pastBattle.brandA}
+                                </p>
+                              </div>
+                              <p className="text-xs text-gray-400">{pastBattle.votesA} votes</p>
+                            </div>
+
+                            {/* VS */}
+                            <div className="text-xs text-gray-500 font-bold">VS</div>
+
+                            {/* Brand B */}
+                            <div className={`flex-1 p-3 rounded-lg ${
+                              pastBattle.winner === pastBattle.brandB 
+                                ? 'bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/30' 
+                                : 'bg-white/5'
+                            }`}>
+                              <div className="flex items-center gap-2 mb-1">
+                                {pastBattle.winner === pastBattle.brandB && (
+                                  <span className="text-amber-400">👑</span>
+                                )}
+                                <p className={`font-medium text-sm ${
+                                  pastBattle.winner === pastBattle.brandB ? 'text-amber-400' : 'text-gray-300'
+                                }`}>
+                                  {pastBattle.brandB}
+                                </p>
+                              </div>
+                              <p className="text-xs text-gray-400">{pastBattle.votesB} votes</p>
+                            </div>
+                          </div>
+
+                          {/* Result indicator */}
+                          {pastBattle.winner ? (
+                            <div className="mt-3 text-center">
+                              <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded-full">
+                                🏆 {pastBattle.winner} wins by {pastBattle.winMargin}!
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="mt-3 text-center">
+                              <span className="text-xs bg-gray-500/20 text-gray-400 px-2 py-1 rounded-full">
+                                🤝 Tie game!
+                              </span>
+                            </div>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
     </main>
