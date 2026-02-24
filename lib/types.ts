@@ -10,7 +10,7 @@ export interface SignupRequest {
   password: string;
 }
 
-export type CheckinCategory = 'cigar' | 'cannabis' | 'hookah' | 'vape';
+export type CheckinCategory = 'cigar' | 'cannabis' | 'hookah' | 'vape' | 'snus';
 export type StrainType = 'indica' | 'sativa' | 'hybrid';
 
 export type SmokeMood = 'relaxed' | 'social' | 'celebratory' | 'thoughtful' | 'stressed' | 'creative' | 'tired' | 'focused' | 'bored' | 'adventurous';

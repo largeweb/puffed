@@ -471,7 +471,7 @@ export default function DashboardPage() {
   };
 
   // Form state
-  const [category, setCategory] = useState<'cigar' | 'cannabis' | 'hookah' | 'vape'>('cigar');
+  const [category, setCategory] = useState<'cigar' | 'cannabis' | 'hookah' | 'vape' | 'snus'>('cigar');
   const [brand, setBrand] = useState("");
   const [product, setProduct] = useState("");
   const [rating, setRating] = useState(0);
@@ -2919,12 +2919,13 @@ export default function DashboardPage() {
                 {/* Category Selector */}
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">What are you smoking?</label>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-5 gap-2">
                     {[
                       { id: 'cigar', label: 'Cigar', emoji: '🚬' },
                       { id: 'cannabis', label: 'Cannabis', emoji: '🌿' },
                       { id: 'hookah', label: 'Hookah', emoji: '💨' },
                       { id: 'vape', label: 'Vape', emoji: '🌫️' },
+                      { id: 'snus', label: 'Snus', emoji: '🫦' },
                     ].map(cat => (
                       <button
                         key={cat.id}
@@ -3168,6 +3169,7 @@ export default function DashboardPage() {
                       category === 'cannabis' ? "Log Session 🌿" :
                       category === 'hookah' ? "Log Session 💨" :
                       category === 'vape' ? "Log Session 🌫️" :
+                      category === 'snus' ? "Log Pouch 🫦" :
                       "Log Smoke 🚬"
                     }
                   </button>

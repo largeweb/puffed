@@ -15,6 +15,7 @@ export const CATEGORIES: CategoryInfo[] = [
   { id: "cannabis", label: "Cannabis", emoji: "🌿", color: "text-green-500", bgColor: "bg-green-500/10" },
   { id: "hookah", label: "Hookah", emoji: "💨", color: "text-blue-400", bgColor: "bg-blue-400/10" },
   { id: "vape", label: "Vape", emoji: "🌫️", color: "text-purple-400", bgColor: "bg-purple-400/10" },
+  { id: "snus", label: "Snus", emoji: "🫦", color: "text-rose-400", bgColor: "bg-rose-400/10" },
 ];
 
 export function getCategory(id: CheckinCategory | undefined): CategoryInfo {
