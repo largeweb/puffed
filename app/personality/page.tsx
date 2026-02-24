@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { FiArrowLeft, FiShare2, FiRefreshCw, FiStar, FiClock, FiUsers, FiCompass, FiHeart, FiTrendingUp } from "react-icons/fi";
+import { FiArrowLeft, FiShare2, FiRefreshCw, FiClock, FiHeart } from "react-icons/fi";
 
 interface PersonalityData {
   username: string;
@@ -60,7 +60,7 @@ const TRAIT_LABELS: Record<string, Record<string, { label: string; emoji: string
   },
 };
 
-export default function PersonalityPage() {
+function PersonalityContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const targetUsername = searchParams.get('user');
@@ -97,7 +97,7 @@ export default function PersonalityPage() {
         // Trigger reveal animation
         setTimeout(() => setShowAnimation(false), 2000);
       }
-    } catch (err) {
+    } catch {
       setError({ error: 'Failed to load personality' });
     } finally {
       setLoading(false);
@@ -468,5 +468,26 @@ export default function PersonalityPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 p-4">
+      <div className="max-w-md mx-auto pt-20">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="text-6xl animate-pulse">🔮</div>
+          <p className="text-gray-400 text-lg">Loading...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function PersonalityPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PersonalityContent />
+    </Suspense>
   );
 }
