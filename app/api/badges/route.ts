@@ -190,6 +190,41 @@ const BADGE_DEFINITIONS = [
     check: (stats: UserStats) => stats.comebackReturns >= 3,
     progress: (stats: UserStats) => ({ current: stats.comebackReturns, target: 3 }),
   },
+  // Midnight Club - exclusive late night recognition
+  {
+    id: "midnight_club",
+    name: "Midnight Club",
+    description: "Log a smoke at exactly midnight hour (12-1 AM)",
+    emoji: "🌙",
+    check: (stats: UserStats) => stats.midnightSmokes >= 1,
+    progress: (stats: UserStats) => ({ current: stats.midnightSmokes, target: 1 }),
+  },
+  // Century milestone
+  {
+    id: "century_smoker",
+    name: "Century Smoker",
+    description: "Log 100 check-ins",
+    emoji: "💯",
+    check: (stats: UserStats) => stats.checkins >= 100,
+    progress: (stats: UserStats) => ({ current: stats.checkins, target: 100 }),
+  },
+  // Social proof badges
+  {
+    id: "beloved",
+    name: "Beloved",
+    description: "Receive 10 likes on your check-ins",
+    emoji: "💕",
+    check: (stats: UserStats) => stats.likesReceived >= 10,
+    progress: (stats: UserStats) => ({ current: stats.likesReceived, target: 10 }),
+  },
+  {
+    id: "fan_favorite",
+    name: "Fan Favorite",
+    description: "Receive 50 likes on your check-ins",
+    emoji: "🌟",
+    check: (stats: UserStats) => stats.likesReceived >= 50,
+    progress: (stats: UserStats) => ({ current: stats.likesReceived, target: 50 }),
+  },
   // Referral badges - incentivize growth!
   {
     id: "friend_finder",
@@ -224,11 +259,13 @@ interface UserStats {
   photosUploaded: number;
   uniqueBrands: number;
   likesGiven: number;
+  likesReceived: number;
   following: number;
   commentsGiven: number;
   bestStreak: number;
   earlyMorningSmokes: number;
   lateNightSmokes: number;
+  midnightSmokes: number;
   weekendSmokes: number;
   referrals: number;
   brandsDiscovered: number;
@@ -274,9 +311,11 @@ export async function GET(): Promise<Response> {
       datesResult,
       earlyMorningResult,
       lateNightResult,
+      midnightResult,
       weekendResult,
       referralsResult,
       brandsDiscoveredResult,
+      likesReceivedResult,
     ] = await Promise.all([
       db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ?").bind(userId).first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ? AND rating IS NOT NULL").bind(userId).first<{ count: number }>(),
@@ -302,6 +341,11 @@ export async function GET(): Promise<Response> {
         SELECT COUNT(*) as count FROM checkins 
         WHERE user_id = ? AND CAST(strftime('%H', created_at, 'unixepoch') AS INTEGER) BETWEEN 0 AND 3
       `).bind(userId).first<{ count: number }>(),
+      // Midnight Club: check-ins exactly at midnight hour (12 AM = hour 0)
+      db.prepare(`
+        SELECT COUNT(*) as count FROM checkins 
+        WHERE user_id = ? AND CAST(strftime('%H', created_at, 'unixepoch') AS INTEGER) = 0
+      `).bind(userId).first<{ count: number }>(),
       // Weekend warrior: count distinct weekends (year-week combo on Sat/Sun)
       db.prepare(`
         SELECT COUNT(DISTINCT strftime('%Y-%W', created_at, 'unixepoch')) as count 
@@ -318,6 +362,12 @@ export async function GET(): Promise<Response> {
           GROUP BY brand
           HAVING user_id = ?
         )
+      `).bind(userId).first<{ count: number }>(),
+      // Likes received on user's check-ins
+      db.prepare(`
+        SELECT COUNT(*) as count FROM likes l
+        JOIN checkins c ON l.checkin_id = c.id
+        WHERE c.user_id = ?
       `).bind(userId).first<{ count: number }>(),
     ]);
 
@@ -356,11 +406,13 @@ export async function GET(): Promise<Response> {
       photosUploaded: photosResult?.count || 0,
       uniqueBrands: brandsResult?.count || 0,
       likesGiven: likesResult?.count || 0,
+      likesReceived: likesReceivedResult?.count || 0,
       following: followingResult?.count || 0,
       commentsGiven: commentsResult?.count || 0,
       bestStreak,
       earlyMorningSmokes: earlyMorningResult?.count || 0,
       lateNightSmokes: lateNightResult?.count || 0,
+      midnightSmokes: midnightResult?.count || 0,
       weekendSmokes: weekendResult?.count || 0,
       referrals: referralsResult?.count || 0,
       brandsDiscovered: brandsDiscoveredResult?.count || 0,
