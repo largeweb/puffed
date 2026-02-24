@@ -2,11 +2,29 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiAward, FiHome, FiTrendingUp, FiCalendar, FiHeart, FiStar, FiZap } from "react-icons/fi";
+import { FiAward, FiHome, FiTrendingUp, FiCalendar, FiHeart, FiStar, FiZap, FiMoon } from "react-icons/fi";
 import Link from "next/link";
 import type { LeaderboardEntry, LeaderboardResponse, StreakLeaderEntry } from "@/lib/types";
 
-type TimeFrame = "allTime" | "thisMonth" | "thisWeek" | "streaks";
+type TimeFrame = "allTime" | "thisMonth" | "thisWeek" | "streaks" | "nightOwls";
+
+interface NightOwlEntry {
+  username: string;
+  nightSmokes: number;
+  totalSmokes: number;
+  nightPercentage: number;
+  latestNightHour: number;
+  rank: number;
+}
+
+interface NightOwlResponse {
+  leaders: NightOwlEntry[];
+  platformStats: {
+    totalNightSmokes: number;
+    mostActiveNightHour: number;
+    nightOwlCount: number;
+  };
+}
 
 const RANK_EMOJIS = ["🥇", "🥈", "🥉"];
 const RANK_COLORS = [
@@ -14,6 +32,68 @@ const RANK_COLORS = [
   "from-gray-300 to-gray-400", 
   "from-amber-600 to-orange-700"
 ];
+
+function formatHour(hour: number): string {
+  if (hour === 0) return "12 AM";
+  if (hour < 12) return `${hour} AM`;
+  if (hour === 12) return "12 PM";
+  return `${hour - 12} PM`;
+}
+
+function NightOwlCard({ entry, index }: { entry: NightOwlEntry; index: number }) {
+  const isTopThree = index < 3;
+  const NIGHT_OWL_COLORS = [
+    "from-indigo-500 to-purple-600",
+    "from-indigo-400 to-purple-500", 
+    "from-purple-500 to-pink-600"
+  ];
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className={`glass rounded-xl p-4 ${isTopThree ? "border border-indigo-500/30" : ""}`}
+    >
+      <div className="flex items-center gap-4">
+        {/* Rank */}
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${
+          isTopThree 
+            ? `bg-gradient-to-br ${NIGHT_OWL_COLORS[index]} text-white`
+            : "bg-white/5 text-gray-400"
+        }`}>
+          {isTopThree ? "🦉" : entry.rank}
+        </div>
+
+        {/* User info */}
+        <div className="flex-1 min-w-0">
+          <Link 
+            href={`/user/${entry.username}`}
+            className="font-semibold hover:text-indigo-400 transition-colors truncate block"
+          >
+            @{entry.username}
+          </Link>
+          <div className="flex flex-wrap gap-3 text-xs text-gray-400 mt-1">
+            <span className="flex items-center gap-1 text-indigo-400 font-medium">
+              🌙 {entry.nightSmokes} night smoke{entry.nightSmokes === 1 ? "" : "s"}
+            </span>
+            <span className="flex items-center gap-1 text-purple-400">
+              {entry.nightPercentage}% nocturnal
+            </span>
+          </div>
+        </div>
+
+        {/* Favorite hour */}
+        <div className="text-right">
+          <div className="text-xs text-gray-500">Peak</div>
+          <div className="text-sm text-indigo-300 font-medium">
+            {formatHour(entry.latestNightHour)}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 function StreakCard({ entry, index }: { entry: StreakLeaderEntry; index: number }) {
   const isTopThree = index < 3;
@@ -121,6 +201,7 @@ function LeaderboardCard({ entry, index }: { entry: LeaderboardEntry; index: num
 
 export default function LeaderboardPage() {
   const [data, setData] = useState<LeaderboardResponse | null>(null);
+  const [nightOwlData, setNightOwlData] = useState<NightOwlResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("allTime");
 
@@ -130,9 +211,16 @@ export default function LeaderboardPage() {
 
   async function loadLeaderboard() {
     try {
-      const res = await fetch("/api/leaderboard");
-      const json: LeaderboardResponse = await res.json();
-      setData(json);
+      const [mainRes, nightRes] = await Promise.all([
+        fetch("/api/leaderboard"),
+        fetch("/api/leaderboard/night-owls"),
+      ]);
+      const [mainJson, nightJson] = await Promise.all([
+        mainRes.json() as Promise<LeaderboardResponse>,
+        nightRes.json() as Promise<NightOwlResponse>,
+      ]);
+      setData(mainJson);
+      setNightOwlData(nightJson);
     } catch (error) {
       console.error("Leaderboard error:", error);
     } finally {
@@ -140,8 +228,13 @@ export default function LeaderboardPage() {
     }
   }
 
-  const entries = timeFrame === "streaks" ? (data?.streaks || []) : (data?.[timeFrame] || []);
+  const entries = timeFrame === "streaks" 
+    ? (data?.streaks || []) 
+    : timeFrame === "nightOwls"
+      ? (nightOwlData?.leaders || [])
+      : (data?.[timeFrame] || []);
   const isStreakMode = timeFrame === "streaks";
+  const isNightOwlMode = timeFrame === "nightOwls";
 
   if (loading) {
     return (
@@ -192,17 +285,6 @@ export default function LeaderboardPage() {
               All
             </button>
             <button
-              onClick={() => setTimeFrame("thisMonth")}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${
-                timeFrame === "thisMonth" 
-                  ? "bg-amber-500 text-black" 
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <FiCalendar size={14} />
-              Month
-            </button>
-            <button
               onClick={() => setTimeFrame("thisWeek")}
               className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${
                 timeFrame === "thisWeek" 
@@ -223,6 +305,17 @@ export default function LeaderboardPage() {
             >
               🔥
               Streaks
+            </button>
+            <button
+              onClick={() => setTimeFrame("nightOwls")}
+              className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                timeFrame === "nightOwls" 
+                  ? "bg-indigo-500 text-white" 
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              🦉
+              Night
             </button>
           </div>
         </div>
@@ -259,20 +352,24 @@ export default function LeaderboardPage() {
               exit={{ opacity: 0 }}
               className="text-center py-12 text-gray-400"
             >
-              <p className="text-4xl mb-3">{isStreakMode ? "🔥" : "🏆"}</p>
+              <p className="text-4xl mb-3">{isStreakMode ? "🔥" : isNightOwlMode ? "🦉" : "🏆"}</p>
               <p>
                 {isStreakMode 
                   ? "No active streaks yet" 
-                  : timeFrame === "thisWeek" 
-                    ? "No activity this week" 
-                    : timeFrame === "thisMonth" 
-                      ? "No activity this month" 
-                      : "No activity yet"}
+                  : isNightOwlMode
+                    ? "No night owls yet"
+                    : timeFrame === "thisWeek" 
+                      ? "No activity this week" 
+                      : timeFrame === "thisMonth" 
+                        ? "No activity this month" 
+                        : "No activity yet"}
               </p>
               <p className="text-sm mt-2">
                 {isStreakMode 
                   ? "Log a smoke daily to build your streak!" 
-                  : "Be the first to claim the top spot!"}
+                  : isNightOwlMode
+                    ? "Log a smoke between 10 PM - 4 AM to join the night owls!"
+                    : "Be the first to claim the top spot!"}
               </p>
             </motion.div>
           ) : (
@@ -283,7 +380,33 @@ export default function LeaderboardPage() {
               exit={{ opacity: 0 }}
               className="space-y-3"
             >
-              {isStreakMode ? (
+              {isNightOwlMode ? (
+                <>
+                  {/* Night Owl info banner */}
+                  <div className="glass rounded-xl p-4 mb-4 border border-indigo-500/20 bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-indigo-400 text-sm">
+                        <span className="text-xl">🌙</span>
+                        <span>Night hours: 10 PM - 4 AM</span>
+                      </div>
+                      {nightOwlData?.platformStats && (
+                        <div className="flex items-center gap-3 text-xs text-gray-400">
+                          <span className="text-purple-400">
+                            {nightOwlData.platformStats.totalNightSmokes} night smokes
+                          </span>
+                          <span>•</span>
+                          <span className="text-indigo-400">
+                            Peak: {formatHour(nightOwlData.platformStats.mostActiveNightHour)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {(entries as NightOwlEntry[]).map((entry, index) => (
+                    <NightOwlCard key={entry.username} entry={entry} index={index} />
+                  ))}
+                </>
+              ) : isStreakMode ? (
                 <>
                   {/* Streak info banner */}
                   <div className="glass rounded-xl p-4 mb-4 border border-orange-500/20">

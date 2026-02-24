@@ -1,0 +1,1 @@
+var r={},i=(_,c,l)=>(r.__chunk_7487=(g,o,n)=>{"use strict";n.d(o,{Ak:()=>s});let s=(a=21)=>crypto.getRandomValues(new Uint8Array(a)).reduce((t,e)=>((e&=63)<36?t+=e.toString(36):e<62?t+=(e-26).toString(36).toUpperCase():e>62?t+="-":t+="_",t),"")},r);export{i as __getNamedExports};
