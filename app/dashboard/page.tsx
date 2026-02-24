@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -386,6 +386,7 @@ export default function DashboardPage() {
   const [nightThoughts, setNightThoughts] = useState<NightThought[]>([]);
   const [newThought, setNewThought] = useState("");
   const [submittingThought, setSubmittingThought] = useState(false);
+  const [memories, setMemories] = useState<OnThisDayMemory[]>([]);
   const router = useRouter();
 
   // Quick Smoke handler - one-tap to log your go-to brand
@@ -608,6 +609,13 @@ export default function DashboardPage() {
         if (morningRes.ok) {
           const morningResData: MorningCoffeeResponse = await morningRes.json();
           setMorningData(morningResData);
+        }
+
+        // Load "On This Day" memories
+        const memoriesRes = await fetch("/api/on-this-day");
+        if (memoriesRes.ok) {
+          const memoriesData: OnThisDayResponse = await memoriesRes.json();
+          setMemories(memoriesData.memories || []);
         }
 
         // Load weekly recap (shows on weekends)
@@ -1806,6 +1814,76 @@ export default function DashboardPage() {
                   View all thoughts →
                 </Link>
               </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* On This Day - Memories Section */}
+        {memories.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.053 }}
+            className="glass rounded-2xl p-5 mb-6 border border-purple-500/30 bg-gradient-to-br from-purple-900/20 to-pink-900/20"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-2xl">📸</span>
+              <div>
+                <h2 className="text-sm font-medium text-purple-300">On This Day</h2>
+                <p className="text-xs text-pink-400">Your smoking memories</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {memories.map((memory) => (
+                <div key={memory.period} className="p-3 rounded-xl bg-white/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span>{memory.emoji}</span>
+                    <span className="text-xs text-purple-300 font-medium">{memory.label}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {memory.checkins.map((checkin) => (
+                      <Link
+                        key={checkin.id}
+                        href={`/checkin/${checkin.id}`}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all group"
+                      >
+                        {checkin.image_url ? (
+                          <img 
+                            src={checkin.image_url} 
+                            alt={checkin.brand}
+                            className="w-10 h-10 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                            <span className="text-lg">🚬</span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate group-hover:text-purple-300 transition-colors">
+                            {checkin.brand}
+                          </p>
+                          {checkin.product && (
+                            <p className="text-xs text-gray-500 truncate">{checkin.product}</p>
+                          )}
+                        </div>
+                        {checkin.rating && (
+                          <div className="flex items-center gap-1 bg-amber-500/20 px-2 py-0.5 rounded text-xs">
+                            <FiStar className="text-amber-500" size={10} fill="currentColor" />
+                            <span className="text-amber-500">{checkin.rating}</span>
+                          </div>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-white/10 text-center">
+              <p className="text-xs text-purple-400/80 italic">
+                ✨ Every smoke tells a story
+              </p>
             </div>
           </motion.div>
         )}

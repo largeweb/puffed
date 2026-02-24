@@ -659,3 +659,28 @@ export interface CommunityMilestonesResponse {
   };
   error?: string;
 }
+
+// On This Day - Memories
+export interface MemoryCheckin {
+  id: string;
+  brand: string;
+  product: string | null;
+  rating: number | null;
+  image_url: string | null;
+  created_at: number;
+  review: string | null;
+}
+
+export interface OnThisDayMemory {
+  period: 'last_week' | 'last_month' | 'last_year';
+  label: string;
+  emoji: string;
+  checkins: MemoryCheckin[];
+  daysAgo: number;
+}
+
+export interface OnThisDayResponse {
+  memories: OnThisDayMemory[];
+  hasMemories: boolean;
+  message?: string;
+}
