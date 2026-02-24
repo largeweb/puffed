@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS checkins (
   thc_percent REAL,
   -- Mood tracking
   mood TEXT,
+  -- Drink pairing
+  drink_pairing TEXT,
   created_at INTEGER DEFAULT (unixepoch()),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

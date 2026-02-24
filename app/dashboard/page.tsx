@@ -11,6 +11,7 @@ import { FiTrendingUp, FiTrendingDown, FiMinus, FiMenu } from "react-icons/fi";
 import MobileSidebar from "../components/MobileSidebar";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 import { MOOD_TAGS } from "@/lib/moods";
+import { DRINK_TAGS, getDrinkTag } from "@/lib/drinks";
 import type { SmokeMood } from "@/lib/types";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
 import { InstallBanner } from "@/components/InstallBanner";
@@ -489,6 +490,8 @@ export default function DashboardPage() {
   const [thcPercent, setThcPercent] = useState("");
   // Mood (all categories)
   const [selectedMood, setSelectedMood] = useState<SmokeMood | ''>('');
+  // Drink pairing
+  const [selectedDrink, setSelectedDrink] = useState<string>('');
   // Image
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -778,6 +781,7 @@ export default function DashboardPage() {
           review: review || undefined,
           imageUrl,
           mood: selectedMood || undefined,
+          drinkPairing: selectedDrink || undefined,
           // Cigar fields
           flavorNotes: category === 'cigar' && selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : undefined,
           drawRating: category === 'cigar' ? (drawRating || undefined) : undefined,
@@ -840,6 +844,8 @@ export default function DashboardPage() {
         setThcPercent("");
         // Mood
         setSelectedMood('');
+        // Drink
+        setSelectedDrink('');
         // Image
         setImageFile(null);
         setImagePreview(null);
@@ -1009,6 +1015,13 @@ export default function DashboardPage() {
               title="Achievement Showcase"
             >
               🏆
+            </Link>
+            <Link
+              href="/conversations"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-cyan-400 transition-all"
+              title="Hot Conversations"
+            >
+              💬
             </Link>
             <Link
               href="/pulse"

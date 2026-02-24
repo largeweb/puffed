@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as CheckinRequest;
     const { 
       category = 'cigar',
-      brand, product, rating, review, imageUrl, mood,
+      brand, product, rating, review, imageUrl, mood, drinkPairing,
       // Cigar fields
       flavorNotes, drawRating, burnRating, aromaRating, smokeTimeMins,
       // Cannabis fields
@@ -292,11 +292,11 @@ export async function POST(request: NextRequest) {
     await db
       .prepare(`
         INSERT INTO checkins (
-          id, user_id, category, brand, product, rating, review, image_url, mood,
+          id, user_id, category, brand, product, rating, review, image_url, mood, drink_pairing,
           flavor_notes, draw_rating, burn_rating, aroma_rating, smoke_time_mins,
           strain_name, strain_type, effects, thc_percent
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
         checkinId,
@@ -308,6 +308,7 @@ export async function POST(request: NextRequest) {
         review || null,
         imageUrl || null,
         mood || null,
+        drinkPairing || null,
         flavorNotes || null,
         drawRating || null,
         burnRating || null,

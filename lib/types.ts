@@ -24,6 +24,7 @@ export interface CheckinRequest {
   review?: string;
   imageUrl?: string;
   mood?: SmokeMood;
+  drinkPairing?: string; // Drink pairing (coffee, bourbon, etc.)
   // Cigar-specific
   flavorNotes?: string;
   drawRating?: number;
@@ -63,6 +64,7 @@ export interface Checkin {
   review?: string;
   image_url?: string;
   mood?: SmokeMood;
+  drink_pairing?: string; // What drink they paired with
   created_at: number;
   // Cigar-specific
   flavor_notes?: string;
