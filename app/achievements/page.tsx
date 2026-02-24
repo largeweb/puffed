@@ -214,9 +214,14 @@ export default function AchievementsPage() {
       const data: BadgesResponse = await res.json();
       
       // Transform badges to have progress object
-      const allBadges = data.badges.map(b => ({
-        ...b,
-        progress: !b.earned && b.progress !== undefined && b.target !== undefined
+      const allBadges: Badge[] = data.badges.map(b => ({
+        id: b.id,
+        name: b.name,
+        description: b.description,
+        emoji: b.emoji,
+        earned: b.earned,
+        earnedAt: b.earnedAt,
+        progress: !b.earned && typeof b.progress === 'number' && typeof b.target === 'number'
           ? { current: b.progress, target: b.target }
           : undefined,
       }));
