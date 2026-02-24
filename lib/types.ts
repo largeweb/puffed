@@ -593,6 +593,43 @@ export interface BrandOfWeekResponse extends BrandOfWeek {
   error?: string;
 }
 
+// Community Challenge
+export interface CommunityChallengeMilestone {
+  percent: number;
+  reached: boolean;
+  label: string;
+}
+
+export interface CommunityChallengeContributor {
+  username: string;
+  contribution: number;
+}
+
+export interface CommunityChallenge {
+  challenge: {
+    type: string;
+    name: string;
+    description: string;
+    icon: string;
+  };
+  weekNumber: number;
+  year: number;
+  target: number;
+  current: number;
+  progress: number;
+  completed: boolean;
+  milestones: CommunityChallengeMilestone[];
+  contributors: CommunityChallengeContributor[];
+  userContribution: number;
+  daysRemaining: number;
+  message: string;
+  totalParticipants: number;
+}
+
+export interface CommunityChallengeResponse extends CommunityChallenge {
+  error?: string;
+}
+
 // Flavor-based Recommendations
 export interface FlavorRecommendation {
   brand: string;

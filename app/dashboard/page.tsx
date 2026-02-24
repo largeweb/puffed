@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity, FiRss } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus, FiMenu } from "react-icons/fi";
 import MobileSidebar from "../components/MobileSidebar";
@@ -409,6 +409,7 @@ export default function DashboardPage() {
   const [memories, setMemories] = useState<OnThisDayMemory[]>([]);
   const [suggestedFollows, setSuggestedFollows] = useState<SuggestedUser[]>([]);
   const [followingUser, setFollowingUser] = useState<string | null>(null);
+  const [communityChallenge, setCommunityChallenge] = useState<CommunityChallenge | null>(null);
   const router = useRouter();
 
   // Quick Smoke handler - one-tap to log your go-to brand
@@ -662,6 +663,13 @@ export default function DashboardPage() {
         if (bowRes.ok) {
           const bowData: BrandOfWeek = await bowRes.json();
           setBrandOfWeek(bowData);
+        }
+
+        // Load community challenge
+        const challengeRes = await fetch("/api/community-challenge");
+        if (challengeRes.ok) {
+          const challengeData: CommunityChallenge = await challengeRes.json();
+          setCommunityChallenge(challengeData);
         }
 
         // Load flavor-based recommendations
@@ -2429,6 +2437,112 @@ export default function DashboardPage() {
               <div className="text-center pt-2">
                 <p className="text-xs text-green-400">🎉 You&apos;re part of this week&apos;s challenge!</p>
               </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Community Challenge - Collective Goal */}
+        {communityChallenge && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.0695 }}
+            className="glass rounded-2xl p-5 mb-6 border border-teal-500/20 bg-gradient-to-br from-teal-500/5 to-cyan-500/5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{communityChallenge.challenge.icon}</span>
+                <div>
+                  <h2 className="text-sm font-medium text-teal-400">{communityChallenge.challenge.name}</h2>
+                  <p className="text-xs text-gray-500">{communityChallenge.challenge.description} • {communityChallenge.daysRemaining} day{communityChallenge.daysRemaining !== 1 ? 's' : ''} left</p>
+                </div>
+              </div>
+              {communityChallenge.completed && (
+                <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium flex items-center gap-1">
+                  🎉 Complete!
+                </span>
+              )}
+            </div>
+
+            {/* Progress bar */}
+            <div className="mb-4">
+              <div className="flex justify-between items-end mb-2">
+                <div>
+                  <span className="text-2xl font-bold text-teal-400">{communityChallenge.current}</span>
+                  <span className="text-gray-500 text-sm"> / {communityChallenge.target}</span>
+                </div>
+                <span className="text-xs text-gray-500">{communityChallenge.progress}%</span>
+              </div>
+              <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${communityChallenge.progress}%` }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className={`h-full rounded-full ${communityChallenge.completed ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-teal-500 to-cyan-500'}`}
+                />
+              </div>
+            </div>
+
+            {/* Milestones */}
+            <div className="flex justify-between mb-4">
+              {communityChallenge.milestones.map((milestone) => (
+                <div
+                  key={milestone.percent}
+                  className={`flex flex-col items-center ${milestone.reached ? 'text-teal-400' : 'text-gray-600'}`}
+                >
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-xs ${milestone.reached ? 'bg-teal-500/30' : 'bg-gray-800'}`}>
+                    {milestone.reached ? '✓' : ''}
+                  </span>
+                  <span className="text-[10px] mt-1">{milestone.percent}%</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Motivational message */}
+            <div className="text-center mb-4">
+              <p className="text-sm text-gray-300">{communityChallenge.message}</p>
+            </div>
+
+            {/* Top contributors */}
+            {communityChallenge.contributors.length > 0 && (
+              <div className="border-t border-white/5 pt-4">
+                <p className="text-xs text-gray-500 mb-2">🏅 Top Contributors</p>
+                <div className="flex flex-wrap gap-2">
+                  {communityChallenge.contributors.slice(0, 5).map((c, idx) => (
+                    <Link
+                      key={c.username}
+                      href={`/user/${c.username}`}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      {idx === 0 && <span className="text-xs">🥇</span>}
+                      {idx === 1 && <span className="text-xs">🥈</span>}
+                      {idx === 2 && <span className="text-xs">🥉</span>}
+                      <span className="text-xs text-gray-300">@{c.username}</span>
+                      <span className="text-xs text-teal-400">+{c.contribution}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* User contribution */}
+            {communityChallenge.userContribution > 0 && (
+              <div className="mt-3 pt-3 border-t border-white/5 text-center">
+                <p className="text-xs text-teal-400">
+                  🙌 You&apos;ve contributed {communityChallenge.userContribution} to this challenge!
+                </p>
+              </div>
+            )}
+
+            {/* CTA for non-contributors */}
+            {communityChallenge.userContribution === 0 && !communityChallenge.completed && (
+              <button
+                onClick={() => setShowForm(true)}
+                className="mt-3 w-full py-3 rounded-xl bg-teal-500/20 text-teal-400 font-medium hover:bg-teal-500/30 transition-all flex items-center justify-center gap-2"
+              >
+                <FiPlus size={16} />
+                Join the challenge!
+              </button>
             )}
           </motion.div>
         )}
