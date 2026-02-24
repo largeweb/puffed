@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity, FiRss } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus, FiMenu } from "react-icons/fi";
 import MobileSidebar from "../components/MobileSidebar";
@@ -410,6 +410,8 @@ export default function DashboardPage() {
   const [suggestedFollows, setSuggestedFollows] = useState<SuggestedUser[]>([]);
   const [followingUser, setFollowingUser] = useState<string | null>(null);
   const [communityChallenge, setCommunityChallenge] = useState<CommunityChallenge | null>(null);
+  const [dailyPoll, setDailyPoll] = useState<DailyPollData | null>(null);
+  const [pollVoting, setPollVoting] = useState(false);
   const router = useRouter();
 
   // Quick Smoke handler - one-tap to log your go-to brand
@@ -670,6 +672,13 @@ export default function DashboardPage() {
         if (challengeRes.ok) {
           const challengeData: CommunityChallenge = await challengeRes.json();
           setCommunityChallenge(challengeData);
+        }
+
+        // Load daily poll
+        const pollRes = await fetch("/api/daily-poll");
+        if (pollRes.ok) {
+          const pollData: DailyPollData = await pollRes.json();
+          setDailyPoll(pollData);
         }
 
         // Load flavor-based recommendations
@@ -2543,6 +2552,103 @@ export default function DashboardPage() {
                 <FiPlus size={16} />
                 Join the challenge!
               </button>
+            )}
+          </motion.div>
+        )}
+
+        {/* Daily Poll - Quick Vote */}
+        {dailyPoll && !dailyPoll.error && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.07 }}
+            className="glass rounded-2xl p-5 mb-6 border border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🗳️</span>
+                <div>
+                  <h2 className="text-sm font-medium text-indigo-400">Daily Poll</h2>
+                  <p className="text-xs text-gray-500">{dailyPoll.totalVotes} vote{dailyPoll.totalVotes !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <Link href="/poll" className="text-xs text-indigo-400 hover:text-indigo-300">
+                View all →
+              </Link>
+            </div>
+
+            <h3 className="text-lg font-semibold text-center mb-4 text-indigo-200">
+              {dailyPoll.poll.question}
+            </h3>
+
+            <div className="space-y-2">
+              {dailyPoll.poll.options.map((option) => {
+                const result = dailyPoll.results.find((r) => r.option === option);
+                const isSelected = dailyPoll.userVote === option;
+                const isWinner = dailyPoll.winners.includes(option) && dailyPoll.hasVoted;
+                const percentage = result?.percentage || 0;
+
+                return (
+                  <button
+                    key={option}
+                    onClick={async () => {
+                      if (dailyPoll.hasVoted || pollVoting) return;
+                      setPollVoting(true);
+                      try {
+                        const res = await fetch("/api/daily-poll", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ vote: option }),
+                        });
+                        if (res.ok) {
+                          const pollRes = await fetch("/api/daily-poll");
+                          if (pollRes.ok) {
+                            const pollData: DailyPollData = await pollRes.json();
+                            setDailyPoll(pollData);
+                          }
+                        }
+                      } catch (error) {
+                        console.error("Vote error:", error);
+                      } finally {
+                        setPollVoting(false);
+                      }
+                    }}
+                    disabled={dailyPoll.hasVoted || pollVoting}
+                    className={`relative w-full p-3 rounded-xl text-left overflow-hidden transition-all ${
+                      dailyPoll.hasVoted ? "cursor-default" : "hover:bg-indigo-500/10 cursor-pointer"
+                    } ${isSelected ? "border-2 border-indigo-400" : "border border-white/10"} ${isWinner ? "ring-1 ring-amber-400" : ""}`}
+                  >
+                    {dailyPoll.hasVoted && (
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 0.6 }}
+                        className={`absolute inset-y-0 left-0 ${isWinner ? "bg-amber-500/20" : "bg-indigo-500/15"}`}
+                      />
+                    )}
+                    <div className="relative flex items-center justify-between">
+                      <span className={`text-sm ${isWinner ? "text-amber-300 font-medium" : ""}`}>
+                        {isWinner && "👑 "}{option}
+                      </span>
+                      {dailyPoll.hasVoted && (
+                        <span className={`text-xs font-medium ${isWinner ? "text-amber-400" : "text-indigo-400"}`}>
+                          {percentage}%
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {dailyPoll.hasVoted ? (
+              <p className="text-center text-xs text-indigo-300 mt-3">
+                ✅ You voted! New poll tomorrow at midnight.
+              </p>
+            ) : (
+              <p className="text-center text-xs text-gray-500 mt-3">
+                Tap to vote
+              </p>
             )}
           </motion.div>
         )}

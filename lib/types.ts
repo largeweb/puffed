@@ -753,3 +753,24 @@ export interface BrandBattleResponse {
   endsAt: number;
   error?: string;
 }
+
+// Daily Poll
+export interface DailyPollResult {
+  option: string;
+  count: number;
+  percentage: number;
+}
+
+export interface DailyPollData {
+  poll: {
+    id: string;
+    question: string;
+    options: string[];
+  };
+  results: DailyPollResult[];
+  totalVotes: number;
+  userVote: string | null;
+  hasVoted: boolean;
+  winners: string[];
+  error?: string;
+}
