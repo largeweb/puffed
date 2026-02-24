@@ -448,6 +448,21 @@ export interface LoungeResponse {
   error?: string;
 }
 
+// Night Thoughts (ephemeral thoughts in Late Night Lounge)
+export interface NightThought {
+  id: string;
+  username: string;
+  thought: string;
+  createdAt: number;
+  timeAgo: string;
+}
+
+export interface NightThoughtsResponse {
+  thoughts: NightThought[];
+  message?: string;
+  error?: string;
+}
+
 // Trending Week (momentum tracking)
 export interface TrendingWeekBrand {
   brand: string;

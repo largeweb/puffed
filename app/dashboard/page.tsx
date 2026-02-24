@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus } from "react-icons/fi";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
@@ -382,6 +382,9 @@ export default function DashboardPage() {
   const [onboardingProgress, setOnboardingProgress] = useState({ completed: 0, total: 0 });
   const [communityMilestones, setCommunityMilestones] = useState<CommunityMilestonesResponse | null>(null);
   const [loungeData, setLoungeData] = useState<LoungeResponse | null>(null);
+  const [nightThoughts, setNightThoughts] = useState<NightThought[]>([]);
+  const [newThought, setNewThought] = useState("");
+  const [submittingThought, setSubmittingThought] = useState(false);
   const router = useRouter();
 
   // Quick Smoke handler - one-tap to log your go-to brand
@@ -429,6 +432,35 @@ export default function DashboardPage() {
       console.error("Quick smoke error:", error);
     } finally {
       setQuickSmoking(null);
+    }
+  };
+
+  // Submit a night thought
+  const handleSubmitThought = async () => {
+    if (!newThought.trim() || submittingThought) return;
+    
+    setSubmittingThought(true);
+    try {
+      const res = await fetch("/api/night-thoughts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ thought: newThought.trim() }),
+      });
+      
+      if (res.ok) {
+        const data = await res.json() as { thought?: NightThought };
+        if (data.thought) {
+          setNightThoughts(prev => [data.thought!, ...prev]);
+        }
+        setNewThought("");
+      } else {
+        const errorData = await res.json() as { error?: string };
+        alert(errorData.error || "Failed to share thought");
+      }
+    } catch (error) {
+      console.error("Error submitting thought:", error);
+    } finally {
+      setSubmittingThought(false);
     }
   };
 
@@ -559,6 +591,15 @@ export default function DashboardPage() {
         if (loungeRes.ok) {
           const loungeResData: LoungeResponse = await loungeRes.json();
           setLoungeData(loungeResData);
+          
+          // If lounge is open, also fetch night thoughts
+          if (loungeResData.loungeOpen) {
+            const thoughtsRes = await fetch("/api/night-thoughts");
+            if (thoughtsRes.ok) {
+              const thoughtsData: NightThoughtsResponse = await thoughtsRes.json();
+              setNightThoughts(thoughtsData.thoughts || []);
+            }
+          }
         }
 
         // Load weekly recap (shows on weekends)
@@ -1687,6 +1728,60 @@ export default function DashboardPage() {
                 🌙 You&apos;re the first night owl! Log a smoke to join the lounge.
               </p>
             )}
+
+            {/* Night Thoughts - Share your late night reflections */}
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <p className="text-xs text-gray-500 mb-3">💭 Night Thoughts</p>
+              
+              {/* Submit form */}
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={newThought}
+                  onChange={(e) => setNewThought(e.target.value.slice(0, 140))}
+                  onKeyDown={(e) => e.key === "Enter" && handleSubmitThought()}
+                  placeholder="What's on your mind tonight?"
+                  className="flex-1 bg-white/5 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 border border-white/10 focus:border-indigo-500/50 focus:outline-none"
+                  maxLength={140}
+                  disabled={submittingThought}
+                />
+                <button
+                  onClick={handleSubmitThought}
+                  disabled={!newThought.trim() || submittingThought}
+                  className="px-3 py-2 bg-indigo-500/30 text-indigo-300 rounded-lg text-sm hover:bg-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {submittingThought ? "..." : "Share"}
+                </button>
+              </div>
+              <p className="text-[10px] text-gray-600 mb-3">{newThought.length}/140</p>
+
+              {/* Thoughts list */}
+              {nightThoughts.length > 0 ? (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {nightThoughts.slice(0, 8).map((thought) => (
+                    <div 
+                      key={thought.id} 
+                      className="bg-white/5 rounded-lg p-3 border border-white/5"
+                    >
+                      <p className="text-sm text-gray-300 leading-relaxed">&ldquo;{thought.thought}&rdquo;</p>
+                      <div className="flex justify-between items-center mt-2">
+                        <Link 
+                          href={`/user/${thought.username}`}
+                          className="text-xs text-indigo-400 hover:text-indigo-300"
+                        >
+                          @{thought.username}
+                        </Link>
+                        <span className="text-[10px] text-gray-600">{thought.timeAgo}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-600 text-center py-2 italic">
+                  No thoughts shared yet tonight. Be the first! 🌙
+                </p>
+              )}
+            </div>
           </motion.div>
         )}
 

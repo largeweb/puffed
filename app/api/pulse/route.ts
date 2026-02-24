@@ -3,7 +3,6 @@ import { getRequestContext } from "@cloudflare/next-on-pages";
 export const runtime = "edge";
 
 interface PulseData {
-  // Real-time counts
   totalUsers: number;
   totalCheckins: number;
   totalLikes: number;
@@ -12,17 +11,14 @@ interface PulseData {
   totalReactions: number;
   uniqueBrands: number;
   
-  // This week stats
   weekUsers: number;
   weekCheckins: number;
   weekLikes: number;
   weekFollows: number;
   
-  // Growth metrics
   userGrowthPercent: number;
   checkinGrowthPercent: number;
   
-  // Milestones reached
   milestones: {
     type: 'users' | 'checkins' | 'brands' | 'likes';
     value: number;
@@ -30,220 +26,285 @@ interface PulseData {
     label: string;
   }[];
   
-  // Hot right now
   hotBrands: {
     brand: string;
     weekCount: number;
     trend: 'up' | 'same' | 'down' | 'new';
   }[];
   
-  // New members
   newMembers: {
     username: string;
     joinedAgo: string;
     checkinCount: number;
   }[];
   
-  // Recent activity pulse
   activityPulse: {
     type: 'checkin' | 'like' | 'follow' | 'comment' | 'reaction';
     count: number;
     label: string;
   }[];
   
-  // Platform vibe
   avgRating: number;
   topFlavor: string | null;
   mostActiveHour: number;
 }
 
-function getGrowthPercent(current: number, previous: number): number {
-  if (previous === 0) return current > 0 ? 100 : 0;
-  return Math.round(((current - previous) / previous) * 100);
-}
-
-function getTimeAgo(timestamp: number): string {
-  const now = Math.floor(Date.now() / 1000);
-  const diff = now - timestamp;
-  
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return `${Math.floor(diff / 604800)}w ago`;
-}
-
-export async function GET(): Promise<Response> {
+export async function GET() {
   try {
     const { env } = getRequestContext();
     const db = env.DB;
-    
+
     const now = Math.floor(Date.now() / 1000);
     const oneWeekAgo = now - (7 * 24 * 60 * 60);
     const twoWeeksAgo = now - (14 * 24 * 60 * 60);
     const oneDayAgo = now - (24 * 60 * 60);
-    
+
     // Total counts
-    const totalUsers = await db.prepare(`SELECT COUNT(*) as c FROM users`).first<{ c: number }>();
-    const totalCheckins = await db.prepare(`SELECT COUNT(*) as c FROM checkins`).first<{ c: number }>();
-    const totalLikes = await db.prepare(`SELECT COUNT(*) as c FROM likes`).first<{ c: number }>();
-    const totalFollows = await db.prepare(`SELECT COUNT(*) as c FROM follows`).first<{ c: number }>();
-    const totalComments = await db.prepare(`SELECT COUNT(*) as c FROM comments`).first<{ c: number }>();
-    const totalReactions = await db.prepare(`SELECT COUNT(*) as c FROM reactions`).first<{ c: number }>();
-    const uniqueBrands = await db.prepare(`SELECT COUNT(DISTINCT brand) as c FROM checkins`).first<{ c: number }>();
-    
+    const totalsQuery = `
+      SELECT
+        (SELECT COUNT(*) FROM users) as total_users,
+        (SELECT COUNT(*) FROM checkins) as total_checkins,
+        (SELECT COUNT(*) FROM likes) as total_likes,
+        (SELECT COUNT(*) FROM follows) as total_follows,
+        (SELECT COUNT(*) FROM comments) as total_comments,
+        (SELECT COUNT(*) FROM reactions) as total_reactions,
+        (SELECT COUNT(DISTINCT brand) FROM checkins) as unique_brands
+    `;
+
     // This week counts
-    const weekUsers = await db.prepare(`SELECT COUNT(*) as c FROM users WHERE created_at >= ?`).bind(oneWeekAgo).first<{ c: number }>();
-    const weekCheckins = await db.prepare(`SELECT COUNT(*) as c FROM checkins WHERE created_at >= ?`).bind(oneWeekAgo).first<{ c: number }>();
-    const weekLikes = await db.prepare(`SELECT COUNT(*) as c FROM likes WHERE created_at >= ?`).bind(oneWeekAgo).first<{ c: number }>();
-    const weekFollows = await db.prepare(`SELECT COUNT(*) as c FROM follows WHERE created_at >= ?`).bind(oneWeekAgo).first<{ c: number }>();
-    
-    // Last week counts (for growth comparison)
-    const lastWeekUsers = await db.prepare(`SELECT COUNT(*) as c FROM users WHERE created_at >= ? AND created_at < ?`).bind(twoWeeksAgo, oneWeekAgo).first<{ c: number }>();
-    const lastWeekCheckins = await db.prepare(`SELECT COUNT(*) as c FROM checkins WHERE created_at >= ? AND created_at < ?`).bind(twoWeeksAgo, oneWeekAgo).first<{ c: number }>();
-    
-    // Hot brands this week
-    const hotBrandsResults = await db.prepare(`
+    const weekQuery = `
+      SELECT
+        (SELECT COUNT(*) FROM users WHERE created_at >= ?) as week_users,
+        (SELECT COUNT(*) FROM checkins WHERE created_at >= ?) as week_checkins,
+        (SELECT COUNT(*) FROM likes WHERE created_at >= ?) as week_likes,
+        (SELECT COUNT(*) FROM follows WHERE created_at >= ?) as week_follows
+    `;
+
+    // Last week counts (for growth calculation)
+    const lastWeekQuery = `
+      SELECT
+        (SELECT COUNT(*) FROM users WHERE created_at >= ? AND created_at < ?) as last_week_users,
+        (SELECT COUNT(*) FROM checkins WHERE created_at >= ? AND created_at < ?) as last_week_checkins
+    `;
+
+    // Hot brands this week (compared to last week)
+    const hotBrandsQuery = `
+      WITH this_week AS (
+        SELECT brand, COUNT(*) as count
+        FROM checkins
+        WHERE created_at >= ?
+        GROUP BY brand
+      ),
+      last_week AS (
+        SELECT brand, COUNT(*) as count
+        FROM checkins
+        WHERE created_at >= ? AND created_at < ?
+        GROUP BY brand
+      )
       SELECT 
-        brand,
-        COUNT(*) as week_count
-      FROM checkins 
-      WHERE created_at >= ?
-      GROUP BY brand
-      ORDER BY week_count DESC
+        tw.brand,
+        tw.count as week_count,
+        COALESCE(lw.count, 0) as last_week_count
+      FROM this_week tw
+      LEFT JOIN last_week lw ON tw.brand = lw.brand
+      ORDER BY tw.count DESC
       LIMIT 5
-    `).bind(oneWeekAgo).all<{ brand: string; week_count: number }>();
-    
-    // Get last week brand counts for trend comparison
-    const lastWeekBrands = await db.prepare(`
-      SELECT brand, COUNT(*) as count
-      FROM checkins 
-      WHERE created_at >= ? AND created_at < ?
-      GROUP BY brand
-    `).bind(twoWeeksAgo, oneWeekAgo).all<{ brand: string; count: number }>();
-    
-    const lastWeekBrandMap = new Map(lastWeekBrands.results?.map(b => [b.brand, b.count]) || []);
-    
-    const hotBrands = (hotBrandsResults.results || []).map(b => {
-      const lastWeek = lastWeekBrandMap.get(b.brand) || 0;
-      let trend: 'up' | 'same' | 'down' | 'new' = 'same';
-      if (lastWeek === 0) trend = 'new';
-      else if (b.week_count > lastWeek) trend = 'up';
-      else if (b.week_count < lastWeek) trend = 'down';
-      
-      return {
-        brand: b.brand,
-        weekCount: b.week_count,
-        trend
-      };
-    });
-    
-    // New members this week
-    const newMembersResults = await db.prepare(`
-      SELECT u.username, u.created_at, 
+    `;
+
+    // New members (last 3 days)
+    const newMembersQuery = `
+      SELECT 
+        u.username,
+        u.created_at,
         (SELECT COUNT(*) FROM checkins c WHERE c.user_id = u.id) as checkin_count
       FROM users u
       WHERE u.created_at >= ?
       ORDER BY u.created_at DESC
       LIMIT 5
-    `).bind(oneWeekAgo).all<{ username: string; created_at: number; checkin_count: number }>();
-    
-    const newMembers = (newMembersResults.results || []).map(m => ({
-      username: m.username,
-      joinedAgo: getTimeAgo(m.created_at),
-      checkinCount: m.checkin_count
-    }));
-    
-    // Activity pulse (last 24h)
-    const dayCheckins = await db.prepare(`SELECT COUNT(*) as c FROM checkins WHERE created_at >= ?`).bind(oneDayAgo).first<{ c: number }>();
-    const dayLikes = await db.prepare(`SELECT COUNT(*) as c FROM likes WHERE created_at >= ?`).bind(oneDayAgo).first<{ c: number }>();
-    const dayFollows = await db.prepare(`SELECT COUNT(*) as c FROM follows WHERE created_at >= ?`).bind(oneDayAgo).first<{ c: number }>();
-    const dayComments = await db.prepare(`SELECT COUNT(*) as c FROM comments WHERE created_at >= ?`).bind(oneDayAgo).first<{ c: number }>();
-    const dayReactions = await db.prepare(`SELECT COUNT(*) as c FROM reactions WHERE created_at >= ?`).bind(oneDayAgo).first<{ c: number }>();
-    
-    const activityPulse = [
-      { type: 'checkin' as const, count: dayCheckins?.c || 0, label: 'smokes logged' },
-      { type: 'like' as const, count: dayLikes?.c || 0, label: 'likes given' },
-      { type: 'follow' as const, count: dayFollows?.c || 0, label: 'new follows' },
-      { type: 'comment' as const, count: dayComments?.c || 0, label: 'comments' },
-      { type: 'reaction' as const, count: dayReactions?.c || 0, label: 'reactions' },
-    ].filter(a => a.count > 0);
-    
-    // Platform vibe
-    const avgRatingResult = await db.prepare(`SELECT AVG(rating) as avg FROM checkins WHERE rating IS NOT NULL`).first<{ avg: number }>();
-    
-    // Top flavor - wrapped in try-catch since checkin_flavors table may not exist
-    let topFlavorResult: { flavor_id: string; c: number } | null = null;
-    try {
-      topFlavorResult = await db.prepare(`
-        SELECT flavor_id, COUNT(*) as c 
-        FROM checkin_flavors 
-        GROUP BY flavor_id 
-        ORDER BY c DESC 
-        LIMIT 1
-      `).first<{ flavor_id: string; c: number }>();
-    } catch {
-      // checkin_flavors table doesn't exist yet, that's ok
-    }
-    
-    // Most active hour
-    const mostActiveHourResult = await db.prepare(`
-      SELECT (created_at % 86400) / 3600 as hour, COUNT(*) as c
+    `;
+
+    // 24h activity pulse
+    const activityQuery = `
+      SELECT
+        (SELECT COUNT(*) FROM checkins WHERE created_at >= ?) as checkins_24h,
+        (SELECT COUNT(*) FROM likes WHERE created_at >= ?) as likes_24h,
+        (SELECT COUNT(*) FROM follows WHERE created_at >= ?) as follows_24h,
+        (SELECT COUNT(*) FROM comments WHERE created_at >= ?) as comments_24h,
+        (SELECT COUNT(*) FROM reactions WHERE created_at >= ?) as reactions_24h
+    `;
+
+    // Average rating & top flavor
+    const vibeQuery = `
+      SELECT 
+        ROUND(AVG(CASE WHEN rating IS NOT NULL THEN rating END), 1) as avg_rating,
+        (
+          SELECT flavor_tags FROM checkins 
+          WHERE flavor_tags IS NOT NULL AND flavor_tags != '' AND flavor_tags != '[]'
+          GROUP BY flavor_tags 
+          ORDER BY COUNT(*) DESC 
+          LIMIT 1
+        ) as top_flavor_raw
+      FROM checkins
+    `;
+
+    // Most active hour (all time)
+    const hourQuery = `
+      SELECT 
+        CAST(strftime('%H', created_at, 'unixepoch') AS INTEGER) as hour,
+        COUNT(*) as count
       FROM checkins
       GROUP BY hour
-      ORDER BY c DESC
+      ORDER BY count DESC
       LIMIT 1
-    `).first<{ hour: number; c: number }>();
-    
-    // Calculate milestones
-    const userCount = totalUsers?.c || 0;
-    const checkinCount = totalCheckins?.c || 0;
-    const brandCount = uniqueBrands?.c || 0;
-    const likeCount = totalLikes?.c || 0;
-    
+    `;
+
+    const threeDaysAgo = now - (3 * 24 * 60 * 60);
+
+    const [
+      totalsResult,
+      weekResult,
+      lastWeekResult,
+      hotBrandsResult,
+      newMembersResult,
+      activityResult,
+      vibeResult,
+      hourResult,
+    ] = await Promise.all([
+      db.prepare(totalsQuery).first(),
+      db.prepare(weekQuery).bind(oneWeekAgo, oneWeekAgo, oneWeekAgo, oneWeekAgo).first(),
+      db.prepare(lastWeekQuery).bind(twoWeeksAgo, oneWeekAgo, twoWeeksAgo, oneWeekAgo).first(),
+      db.prepare(hotBrandsQuery).bind(oneWeekAgo, twoWeeksAgo, oneWeekAgo).all(),
+      db.prepare(newMembersQuery).bind(threeDaysAgo).all(),
+      db.prepare(activityQuery).bind(oneDayAgo, oneDayAgo, oneDayAgo, oneDayAgo, oneDayAgo).first(),
+      db.prepare(vibeQuery).first(),
+      db.prepare(hourQuery).first(),
+    ]);
+
+    const totals = totalsResult as any || {};
+    const week = weekResult as any || {};
+    const lastWeek = lastWeekResult as any || {};
+    const activity = activityResult as any || {};
+    const vibe = vibeResult as any || {};
+    const hourData = hourResult as any || {};
+
+    // Calculate growth percentages
+    const userGrowth = lastWeek.last_week_users > 0 
+      ? Math.round(((week.week_users - lastWeek.last_week_users) / lastWeek.last_week_users) * 100)
+      : (week.week_users > 0 ? 100 : 0);
+    const checkinGrowth = lastWeek.last_week_checkins > 0
+      ? Math.round(((week.week_checkins - lastWeek.last_week_checkins) / lastWeek.last_week_checkins) * 100)
+      : (week.week_checkins > 0 ? 100 : 0);
+
+    // Build hot brands with trends
+    const hotBrands = (hotBrandsResult.results || []).map((row: any) => {
+      let trend: 'up' | 'same' | 'down' | 'new' = 'same';
+      if (row.last_week_count === 0) {
+        trend = 'new';
+      } else if (row.week_count > row.last_week_count) {
+        trend = 'up';
+      } else if (row.week_count < row.last_week_count) {
+        trend = 'down';
+      }
+      return {
+        brand: row.brand,
+        weekCount: row.week_count,
+        trend,
+      };
+    });
+
+    // Build new members with relative time
+    const newMembers = (newMembersResult.results || []).map((row: any) => {
+      const secondsAgo = now - row.created_at;
+      let joinedAgo = '';
+      if (secondsAgo < 3600) {
+        joinedAgo = `${Math.floor(secondsAgo / 60)}m ago`;
+      } else if (secondsAgo < 86400) {
+        joinedAgo = `${Math.floor(secondsAgo / 3600)}h ago`;
+      } else {
+        joinedAgo = `${Math.floor(secondsAgo / 86400)}d ago`;
+      }
+      return {
+        username: row.username,
+        joinedAgo,
+        checkinCount: row.checkin_count || 0,
+      };
+    });
+
+    // Build milestones
     const milestones = [
-      { type: 'users' as const, value: 10, reached: userCount >= 10, label: '10 smokers' },
-      { type: 'users' as const, value: 25, reached: userCount >= 25, label: '25 smokers' },
-      { type: 'users' as const, value: 50, reached: userCount >= 50, label: '50 smokers' },
-      { type: 'checkins' as const, value: 25, reached: checkinCount >= 25, label: '25 smokes logged' },
-      { type: 'checkins' as const, value: 50, reached: checkinCount >= 50, label: '50 smokes logged' },
-      { type: 'checkins' as const, value: 100, reached: checkinCount >= 100, label: '100 smokes logged' },
-      { type: 'brands' as const, value: 10, reached: brandCount >= 10, label: '10 unique brands' },
-      { type: 'brands' as const, value: 25, reached: brandCount >= 25, label: '25 unique brands' },
-      { type: 'likes' as const, value: 25, reached: likeCount >= 25, label: '25 likes shared' },
-      { type: 'likes' as const, value: 50, reached: likeCount >= 50, label: '50 likes shared' },
-    ];
-    
-    const data: PulseData = {
-      totalUsers: userCount,
-      totalCheckins: checkinCount,
-      totalLikes: likeCount,
-      totalFollows: totalFollows?.c || 0,
-      totalComments: totalComments?.c || 0,
-      totalReactions: totalReactions?.c || 0,
-      uniqueBrands: brandCount,
+      { type: 'users' as const, value: 10, label: '10 Users' },
+      { type: 'users' as const, value: 25, label: '25 Users' },
+      { type: 'users' as const, value: 50, label: '50 Users' },
+      { type: 'users' as const, value: 100, label: '100 Users' },
+      { type: 'checkins' as const, value: 50, label: '50 Check-ins' },
+      { type: 'checkins' as const, value: 100, label: '100 Check-ins' },
+      { type: 'checkins' as const, value: 250, label: '250 Check-ins' },
+      { type: 'checkins' as const, value: 500, label: '500 Check-ins' },
+      { type: 'brands' as const, value: 25, label: '25 Brands Logged' },
+      { type: 'brands' as const, value: 50, label: '50 Brands Logged' },
+      { type: 'brands' as const, value: 100, label: '100 Brands Logged' },
+      { type: 'likes' as const, value: 50, label: '50 Likes' },
+      { type: 'likes' as const, value: 100, label: '100 Likes' },
+      { type: 'likes' as const, value: 250, label: '250 Likes' },
+    ].map(m => ({
+      ...m,
+      reached: m.type === 'users' ? totals.total_users >= m.value :
+               m.type === 'checkins' ? totals.total_checkins >= m.value :
+               m.type === 'brands' ? totals.unique_brands >= m.value :
+               totals.total_likes >= m.value,
+    }));
+
+    // Parse top flavor from stored JSON
+    let topFlavor: string | null = null;
+    if (vibe.top_flavor_raw) {
+      try {
+        const flavors = JSON.parse(vibe.top_flavor_raw);
+        if (Array.isArray(flavors) && flavors.length > 0) {
+          topFlavor = flavors[0];
+        }
+      } catch {
+        // Not JSON, might be comma-separated or single value
+        topFlavor = vibe.top_flavor_raw.split(',')[0]?.trim() || null;
+      }
+    }
+
+    const response: PulseData = {
+      totalUsers: totals.total_users || 0,
+      totalCheckins: totals.total_checkins || 0,
+      totalLikes: totals.total_likes || 0,
+      totalFollows: totals.total_follows || 0,
+      totalComments: totals.total_comments || 0,
+      totalReactions: totals.total_reactions || 0,
+      uniqueBrands: totals.unique_brands || 0,
       
-      weekUsers: weekUsers?.c || 0,
-      weekCheckins: weekCheckins?.c || 0,
-      weekLikes: weekLikes?.c || 0,
-      weekFollows: weekFollows?.c || 0,
+      weekUsers: week.week_users || 0,
+      weekCheckins: week.week_checkins || 0,
+      weekLikes: week.week_likes || 0,
+      weekFollows: week.week_follows || 0,
       
-      userGrowthPercent: getGrowthPercent(weekUsers?.c || 0, lastWeekUsers?.c || 0),
-      checkinGrowthPercent: getGrowthPercent(weekCheckins?.c || 0, lastWeekCheckins?.c || 0),
+      userGrowthPercent: userGrowth,
+      checkinGrowthPercent: checkinGrowth,
       
       milestones,
       hotBrands,
       newMembers,
-      activityPulse,
       
-      avgRating: avgRatingResult?.avg ? Math.round(avgRatingResult.avg * 10) / 10 : 0,
-      topFlavor: topFlavorResult?.flavor_id || null,
-      mostActiveHour: mostActiveHourResult?.hour || 12,
+      activityPulse: [
+        { type: 'checkin', count: activity.checkins_24h || 0, label: 'Check-ins' },
+        { type: 'like', count: activity.likes_24h || 0, label: 'Likes' },
+        { type: 'follow', count: activity.follows_24h || 0, label: 'Follows' },
+        { type: 'comment', count: activity.comments_24h || 0, label: 'Comments' },
+        { type: 'reaction', count: activity.reactions_24h || 0, label: 'Reactions' },
+      ],
+      
+      avgRating: vibe.avg_rating || 0,
+      topFlavor,
+      mostActiveHour: hourData.hour ?? 12,
     };
-    
-    return Response.json(data);
+
+    return Response.json(response);
   } catch (error) {
     console.error("Pulse error:", error);
-    return Response.json({ error: "Failed to fetch pulse data" }, { status: 500 });
+    return Response.json({ error: "Failed to load pulse" }, { status: 500 });
   }
 }
