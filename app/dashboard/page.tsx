@@ -1004,6 +1004,13 @@ export default function DashboardPage() {
               <FiAward size={20} />
             </Link>
             <Link
+              href="/achievements"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-500 transition-all"
+              title="Achievement Showcase"
+            >
+              🏆
+            </Link>
+            <Link
               href="/pulse"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-500 transition-all"
               title="Platform Pulse"
