@@ -76,7 +76,16 @@ export default function AdminDashboard() {
     try {
       // First GET to preview
       const previewRes = await fetch(`${endpoint}?key=${ADMIN_KEY}`);
-      const previewData = await previewRes.json();
+      const previewData = await previewRes.json() as {
+        eligibleCount?: number;
+        count?: number;
+        users?: { username: string }[];
+        at_risk_users?: { username: string }[];
+        success?: boolean;
+        message?: string;
+        sent?: number;
+        sent_count?: number;
+      };
       
       let result: ActionResult;
       
@@ -92,13 +101,19 @@ export default function AdminDashboard() {
       } else {
         // Run the action
         const postRes = await fetch(`${endpoint}?key=${ADMIN_KEY}`, { method: "POST" });
-        const postData = await postRes.json();
+        const postData = await postRes.json() as {
+          success?: boolean;
+          message?: string;
+          sent?: number;
+          sent_count?: number;
+          users?: { username: string }[];
+        };
         
         result = {
           action,
           success: postData.success || postRes.ok,
           message: postData.message || `Sent to ${postData.sent || postData.sent_count || 0} users`,
-          details: postData.users ? postData.users.map((u: { username: string }) => u.username).join(", ") : undefined
+          details: postData.users ? postData.users.map((u) => u.username).join(", ") : undefined
         };
       }
       
