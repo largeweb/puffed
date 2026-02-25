@@ -108,7 +108,7 @@ export async function GET(): Promise<Response> {
             AND CAST(strftime('%H', datetime(c.created_at, 'unixepoch', '-5 hours')) AS INTEGER) < 22)
           THEN 1 
         END) as evening_smokes
-      FROM check_ins c
+      FROM checkins c
       JOIN users u ON c.user_id = u.id
       WHERE c.created_at >= ?
       GROUP BY u.id
@@ -125,7 +125,7 @@ export async function GET(): Promise<Response> {
       SELECT 
         COUNT(*) as total_evening_smokes,
         COUNT(DISTINCT user_id) as evening_regulars
-      FROM check_ins
+      FROM checkins
       WHERE CAST(strftime('%H', datetime(created_at, 'unixepoch', '-5 hours')) AS INTEGER) >= 18
         AND CAST(strftime('%H', datetime(created_at, 'unixepoch', '-5 hours')) AS INTEGER) < 22
     `).first<{ total_evening_smokes: number; evening_regulars: number }>();
@@ -135,7 +135,7 @@ export async function GET(): Promise<Response> {
       SELECT 
         CAST(strftime('%H', datetime(created_at, 'unixepoch', '-5 hours')) AS INTEGER) as hour,
         COUNT(*) as count
-      FROM check_ins
+      FROM checkins
       WHERE CAST(strftime('%H', datetime(created_at, 'unixepoch', '-5 hours')) AS INTEGER) >= 18
         AND CAST(strftime('%H', datetime(created_at, 'unixepoch', '-5 hours')) AS INTEGER) < 22
       GROUP BY hour
@@ -150,7 +150,7 @@ export async function GET(): Promise<Response> {
     if (userId) {
       const userStats = await db.prepare(`
         SELECT COUNT(*) as evening_smokes
-        FROM check_ins
+        FROM checkins
         WHERE user_id = ?
           AND CAST(strftime('%H', datetime(created_at, 'unixepoch', '-5 hours')) AS INTEGER) >= 18
           AND CAST(strftime('%H', datetime(created_at, 'unixepoch', '-5 hours')) AS INTEGER) < 22
@@ -162,7 +162,7 @@ export async function GET(): Promise<Response> {
       if (yourEveningSmokes > 0 && platformStats?.evening_regulars) {
         const betterThan = await db.prepare(`
           SELECT COUNT(DISTINCT user_id) as count
-          FROM check_ins
+          FROM checkins
           WHERE user_id != ?
             AND CAST(strftime('%H', datetime(created_at, 'unixepoch', '-5 hours')) AS INTEGER) >= 18
             AND CAST(strftime('%H', datetime(created_at, 'unixepoch', '-5 hours')) AS INTEGER) < 22
