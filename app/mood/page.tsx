@@ -52,11 +52,11 @@ export default function MoodPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/mood-stats').then(r => r.json()),
-      fetch('/api/mood-analytics').then(r => r.json()).catch(() => ({}))
+      fetch('/api/mood-stats').then(r => r.json() as Promise<Partial<MoodData>>),
+      fetch('/api/mood-analytics').then(r => r.json() as Promise<Partial<MoodData>>).catch(() => ({} as Partial<MoodData>))
     ])
       .then(([moodStats, analytics]) => {
-        setData({ ...moodStats, ...analytics });
+        setData({ ...moodStats, ...analytics } as MoodData);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
