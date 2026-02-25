@@ -433,6 +433,23 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
               <p className="text-xs text-amber-400/60">Smokers</p>
             </div>
           </div>
+
+          {/* My Brand Story Link */}
+          <Link
+            href={`/brand-story/${encodeURIComponent(brand)}`}
+            className="block mt-4 p-4 bg-gradient-to-r from-indigo-900/40 to-purple-900/40 rounded-xl border border-indigo-500/30 hover:border-indigo-400/50 transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📖</span>
+                <div>
+                  <p className="font-medium text-indigo-200 group-hover:text-indigo-100 transition-colors">My {brand} Story</p>
+                  <p className="text-xs text-indigo-400/60">See your personal history with this brand</p>
+                </div>
+              </div>
+              <FiArrowLeft className="rotate-180 text-indigo-400 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
         </motion.div>
 
         {/* Products/Vitolas */}
