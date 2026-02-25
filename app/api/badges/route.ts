@@ -303,6 +303,47 @@ const BADGE_DEFINITIONS = [
     check: (stats: UserStats) => stats.referrals >= 10,
     progress: (stats: UserStats) => ({ current: stats.referrals, target: 10 }),
   },
+  // Session Duration Badges - encourage timer usage!
+  {
+    id: "session_tracker",
+    name: "Session Tracker",
+    description: "Log 5 timed smoke sessions",
+    emoji: "⏱️",
+    check: (stats: UserStats) => stats.timedSessions >= 5,
+    progress: (stats: UserStats) => ({ current: stats.timedSessions, target: 5 }),
+  },
+  {
+    id: "time_lord",
+    name: "Time Lord",
+    description: "Log 25 timed smoke sessions",
+    emoji: "🕐",
+    check: (stats: UserStats) => stats.timedSessions >= 25,
+    progress: (stats: UserStats) => ({ current: stats.timedSessions, target: 25 }),
+  },
+  {
+    id: "quick_draw",
+    name: "Quick Draw",
+    description: "Complete a timed smoke in under 30 minutes",
+    emoji: "🔫",
+    check: (stats: UserStats) => stats.quickSessions >= 1,
+    progress: (stats: UserStats) => ({ current: stats.quickSessions, target: 1 }),
+  },
+  {
+    id: "marathon_smoker",
+    name: "Marathon Smoker",
+    description: "Complete a timed smoke over 90 minutes",
+    emoji: "🏃",
+    check: (stats: UserStats) => stats.marathonSessions >= 1,
+    progress: (stats: UserStats) => ({ current: stats.marathonSessions, target: 1 }),
+  },
+  {
+    id: "slow_burner",
+    name: "Slow Burner",
+    description: "Complete 5 timed smokes over an hour each",
+    emoji: "🐢",
+    check: (stats: UserStats) => stats.longSessions >= 5,
+    progress: (stats: UserStats) => ({ current: stats.longSessions, target: 5 }),
+  },
 ];
 
 interface UserStats {
@@ -326,6 +367,11 @@ interface UserStats {
   referrals: number;
   brandsDiscovered: number;
   comebackReturns: number;
+  // Timer-based stats
+  timedSessions: number;
+  quickSessions: number;    // < 30 min
+  marathonSessions: number; // > 90 min
+  longSessions: number;     // > 60 min
 }
 
 export const runtime = "edge";
@@ -375,6 +421,10 @@ export async function GET(): Promise<Response> {
       referralsResult,
       brandsDiscoveredResult,
       likesReceivedResult,
+      timedSessionsResult,
+      quickSessionsResult,
+      marathonSessionsResult,
+      longSessionsResult,
     ] = await Promise.all([
       db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ?").bind(userId).first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ? AND rating IS NOT NULL").bind(userId).first<{ count: number }>(),
@@ -443,6 +493,26 @@ export async function GET(): Promise<Response> {
         JOIN checkins c ON l.checkin_id = c.id
         WHERE c.user_id = ?
       `).bind(userId).first<{ count: number }>(),
+      // Timer stats - completed timed sessions
+      db.prepare(`
+        SELECT COUNT(*) as count FROM smoke_timers 
+        WHERE user_id = ? AND ended_at IS NOT NULL
+      `).bind(userId).first<{ count: number }>(),
+      // Quick sessions (< 30 minutes = 1800 seconds)
+      db.prepare(`
+        SELECT COUNT(*) as count FROM smoke_timers 
+        WHERE user_id = ? AND ended_at IS NOT NULL AND (ended_at - started_at) < 1800
+      `).bind(userId).first<{ count: number }>(),
+      // Marathon sessions (> 90 minutes = 5400 seconds)
+      db.prepare(`
+        SELECT COUNT(*) as count FROM smoke_timers 
+        WHERE user_id = ? AND ended_at IS NOT NULL AND (ended_at - started_at) > 5400
+      `).bind(userId).first<{ count: number }>(),
+      // Long sessions (> 60 minutes = 3600 seconds)
+      db.prepare(`
+        SELECT COUNT(*) as count FROM smoke_timers 
+        WHERE user_id = ? AND ended_at IS NOT NULL AND (ended_at - started_at) > 3600
+      `).bind(userId).first<{ count: number }>(),
     ]);
 
     // Calculate best streak and comeback returns from dates
@@ -494,6 +564,11 @@ export async function GET(): Promise<Response> {
       referrals: referralsResult?.count || 0,
       brandsDiscovered: brandsDiscoveredResult?.count || 0,
       comebackReturns,
+      // Timer stats
+      timedSessions: timedSessionsResult?.count || 0,
+      quickSessions: quickSessionsResult?.count || 0,
+      marathonSessions: marathonSessionsResult?.count || 0,
+      longSessions: longSessionsResult?.count || 0,
     };
 
     // Calculate badges
