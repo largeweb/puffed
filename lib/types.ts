@@ -801,3 +801,36 @@ export interface DailyPollData {
   winners: string[];
   error?: string;
 }
+
+// Tonight's Pick
+export interface TonightsPick {
+  brand: string;
+  product?: string;
+  reason: string;
+  reasonEmoji: string;
+  confidence: "perfect" | "strong" | "good";
+  lastSmoked?: number;
+  avgRating?: number;
+  communityAvgRating?: number;
+  timesSmoked: number;
+  flavorProfile: string[];
+  suggestion: string;
+  alternatives: {
+    brand: string;
+    reason: string;
+  }[];
+}
+
+// Daily Tip
+export interface DailyTip {
+  id: string;
+  category: string;
+  emoji: string;
+  tip: string;
+  detail: string;
+}
+
+export interface DailyTipResponse {
+  tip: DailyTip;
+  dayOfYear: number;
+}

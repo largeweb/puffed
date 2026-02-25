@@ -3,9 +3,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity, FiRss, FiTarget } from "react-icons/fi";
+import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity, FiRss, FiTarget, FiMoon } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData, EveningLoungeResponse, EveningSmoker } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData, EveningLoungeResponse, EveningSmoker, TonightsPick, DailyTip } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus, FiMenu } from "react-icons/fi";
 import MobileSidebar from "../components/MobileSidebar";
@@ -414,6 +414,8 @@ export default function DashboardPage() {
   const [communityChallenge, setCommunityChallenge] = useState<CommunityChallenge | null>(null);
   const [dailyPoll, setDailyPoll] = useState<DailyPollData | null>(null);
   const [pollVoting, setPollVoting] = useState(false);
+  const [tonightsPick, setTonightsPick] = useState<TonightsPick | null>(null);
+  const [dailyTip, setDailyTip] = useState<DailyTip | null>(null);
   const router = useRouter();
 
   // Quick Smoke handler - one-tap to log your go-to brand
@@ -688,6 +690,13 @@ export default function DashboardPage() {
         if (pollRes.ok) {
           const pollData: DailyPollData = await pollRes.json();
           setDailyPoll(pollData);
+        }
+
+        // Load tonight's pick (personalized recommendation)
+        const pickRes = await fetch("/api/tonights-pick");
+        if (pickRes.ok) {
+          const pickData: TonightsPick = await pickRes.json();
+          setTonightsPick(pickData);
         }
 
         // Load flavor-based recommendations
@@ -1053,6 +1062,13 @@ export default function DashboardPage() {
               <FiCalendar size={20} />
             </Link>
             <Link
+              href="/heatmap"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
+              title="Activity Heatmap"
+            >
+              🔥
+            </Link>
+            <Link
               href="/leaderboard"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-500 transition-all"
               title="Leaderboard"
@@ -1100,6 +1116,13 @@ export default function DashboardPage() {
               title="Your Flavor DNA"
             >
               🧬
+            </Link>
+            <Link
+              href="/tonight"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
+              title="Tonight's Pick"
+            >
+              <FiMoon size={20} />
             </Link>
             <Link
               href="/invite"
@@ -1498,6 +1521,119 @@ export default function DashboardPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Tonight's Pick 🎯 - Personalized Recommendation */}
+        {tonightsPick && tonightsPick.brand !== "Your First Pick" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.025 }}
+            className="glass rounded-2xl p-5 mb-6 border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-blue-500/5"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-medium text-cyan-400 flex items-center gap-2">
+                <FiTarget className="text-cyan-500" size={14} />
+                Tonight&apos;s Pick
+              </h2>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                tonightsPick.confidence === 'perfect' ? 'bg-cyan-500/20 text-cyan-400' :
+                tonightsPick.confidence === 'strong' ? 'bg-blue-500/20 text-blue-400' :
+                'bg-gray-500/20 text-gray-400'
+              }`}>
+                {tonightsPick.confidence === 'perfect' ? '🎯 Perfect Match' : 
+                 tonightsPick.confidence === 'strong' ? '💪 Strong Pick' : '👍 Good Choice'}
+              </span>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-3xl border border-cyan-500/30">
+                {tonightsPick.reasonEmoji}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-lg text-white truncate">{tonightsPick.brand}</h3>
+                {tonightsPick.product && (
+                  <p className="text-sm text-gray-400 truncate">{tonightsPick.product}</p>
+                )}
+                <p className="text-xs text-cyan-400 mt-1">{tonightsPick.reason}</p>
+                
+                <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                  {tonightsPick.avgRating && (
+                    <span className="flex items-center gap-1">
+                      <FiStar size={10} className="text-amber-500" fill="currentColor" />
+                      Your avg: {tonightsPick.avgRating.toFixed(1)}
+                    </span>
+                  )}
+                  {tonightsPick.timesSmoked > 0 && (
+                    <span>×{tonightsPick.timesSmoked} times</span>
+                  )}
+                  {tonightsPick.lastSmoked && (
+                    <span>{getTimeAgo(new Date(tonightsPick.lastSmoked))}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-400 mt-3 italic">
+              &ldquo;{tonightsPick.suggestion}&rdquo;
+            </p>
+
+            {/* Flavor profile tags */}
+            {tonightsPick.flavorProfile.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-3">
+                {tonightsPick.flavorProfile.slice(0, 4).map(flavor => {
+                  const tag = getFlavorTag(flavor);
+                  return (
+                    <span key={flavor} className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      {tag?.emoji || '🌿'} {tag?.label || flavor}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => {
+                  setBrand(tonightsPick.brand);
+                  if (tonightsPick.product) setProduct(tonightsPick.product);
+                  setShowForm(true);
+                }}
+                className="flex-1 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-medium hover:opacity-90 transition-all flex items-center justify-center gap-2"
+              >
+                <FiPlus size={16} />
+                Log This Smoke
+              </button>
+              <Link
+                href={`/cigar/${encodeURIComponent(tonightsPick.brand)}`}
+                className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all flex items-center"
+              >
+                <FiCompass size={16} />
+              </Link>
+            </div>
+
+            {/* Alternatives */}
+            {tonightsPick.alternatives.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-white/10">
+                <p className="text-xs text-gray-500 mb-2">Also consider:</p>
+                <div className="flex gap-2">
+                  {tonightsPick.alternatives.map(alt => (
+                    <button
+                      key={alt.brand}
+                      onClick={() => {
+                        setBrand(alt.brand);
+                        setShowForm(true);
+                      }}
+                      className="text-xs px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-all truncate max-w-[150px]"
+                      title={alt.reason}
+                    >
+                      {alt.brand}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Quick Smoke Section ⚡ */}
         {recentBrands.length > 0 && (

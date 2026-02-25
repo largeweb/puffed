@@ -322,6 +322,14 @@ export default function UserProfileClient({ initialData }: { initialData: UserPr
 
         {/* Smoke Heatmap Calendar */}
         <SmokeHeatmap username={user.username} />
+        <div className="text-center mt-2 mb-4">
+          <Link 
+            href={`/heatmap?user=${user.username}`}
+            className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
+          >
+            View full activity heatmap →
+          </Link>
+        </div>
 
         {/* Taste Match Score Card */}
         {initialData.tasteMatch && !isOwnProfile && (
