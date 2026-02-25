@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { motion } from "framer-motion";
 import { FiCalendar, FiZap, FiTrendingUp, FiAward, FiArrowLeft, FiStar, FiClock, FiTarget, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import Link from "next/link";
@@ -31,7 +31,25 @@ interface UserInfo {
   bio?: string;
 }
 
+// Wrapper component to handle Suspense for useSearchParams
 export default function HeatmapPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="h-8 bg-gray-700 rounded w-1/3 mb-4 animate-pulse"></div>
+          <div className="glass rounded-xl p-6 animate-pulse">
+            <div className="h-48 bg-gray-700/50 rounded"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <HeatmapContent />
+    </Suspense>
+  );
+}
+
+function HeatmapContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const username = searchParams.get("user");
