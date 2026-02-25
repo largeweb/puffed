@@ -5,7 +5,7 @@ import Link from "next/link";
 import { 
   FiX, FiCompass, FiSearch, FiUsers, FiRss, FiLayers, FiBookmark, 
   FiZap, FiBarChart2, FiCalendar, FiAward, FiActivity, FiCamera,
-  FiShare2, FiBell, FiSettings, FiLogOut, FiHome
+  FiShare2, FiBell, FiSettings, FiLogOut, FiHome, FiTarget
 } from "react-icons/fi";
 
 interface MobileSidebarProps {
@@ -50,6 +50,7 @@ const navGroups = [
     items: [
       { href: "/mystats", icon: <FiBarChart2 size={20} />, label: "My Stats", color: "text-cyan-400" },
       { href: "/records", icon: <span>🏆</span>, label: "Personal Records", color: "text-yellow-400" },
+      { href: "/milestones", icon: <FiTarget size={20} />, label: "Milestones", color: "text-orange-400" },
       { href: "/personality", icon: <span>🔮</span>, label: "Smoke Personality", color: "text-purple-400" },
       { href: "/flavor-dna", icon: <span>🧬</span>, label: "Flavor DNA", color: "text-purple-400" },
       { href: "/calendar", icon: <FiCalendar size={20} />, label: "Smoke Calendar", color: "text-emerald-400" },
