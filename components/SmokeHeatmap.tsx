@@ -1,198 +1,208 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { FiCalendar, FiTrendingUp, FiZap } from "react-icons/fi";
+import { FiCalendar, FiZap, FiTrendingUp, FiAward } from "react-icons/fi";
+
+interface DayData {
+  date: string;
+  count: number;
+  avgRating: number | null;
+}
 
 interface HeatmapData {
-  heatmap: Record<string, number>;
+  days: DayData[];
   stats: {
+    totalDays: number;
+    maxStreak: number;
     currentStreak: number;
-    longestStreak: number;
-    totalSmokes: number;
-    activeDays: number;
+    busiestDay: string | null;
+    busiestDayCount: number;
+    totalCheckins: number;
     avgPerActiveDay: number;
   };
 }
 
-interface SmokeHeatmapProps {
-  username: string;
+interface Props {
+  username?: string;
 }
 
-function getIntensityClass(count: number): string {
-  if (count === 0) return "bg-white/5";
-  if (count === 1) return "bg-amber-900/60";
-  if (count === 2) return "bg-amber-700/70";
-  if (count === 3) return "bg-amber-600/80";
-  return "bg-amber-500"; // 4+
-}
-
-function getIntensityLabel(count: number): string {
-  if (count === 0) return "No smokes";
-  if (count === 1) return "1 smoke";
-  return `${count} smokes`;
-}
-
-export default function SmokeHeatmap({ username }: SmokeHeatmapProps) {
+export default function SmokeHeatmap({ username }: Props) {
   const [data, setData] = useState<HeatmapData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hoveredDay, setHoveredDay] = useState<{ date: string; count: number; x: number; y: number } | null>(null);
+  const [hoveredDay, setHoveredDay] = useState<DayData | null>(null);
 
   useEffect(() => {
-    async function fetchHeatmap() {
-      try {
-        const res = await fetch(`/api/user/${encodeURIComponent(username)}/heatmap`);
-        if (res.ok) {
-          const result: HeatmapData = await res.json();
-          setData(result);
-        }
-      } catch (err) {
-        console.error("Failed to fetch heatmap:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchHeatmap();
+    const url = username ? `/api/smoke-heatmap?username=${username}` : "/api/smoke-heatmap";
+    fetch(url)
+      .then(r => r.json() as Promise<HeatmapData & { error?: string }>)
+      .then(d => {
+        if (!d.error) setData(d);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, [username]);
+
+  // Generate calendar grid for last 52 weeks
+  const calendarData = useMemo(() => {
+    if (!data) return [];
+    
+    const dayMap = new Map(data.days.map(d => [d.date, d]));
+    const weeks: (DayData | null)[][] = [];
+    
+    // Start from today and go back 52 weeks
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() - endDate.getDay()); // Go to Sunday of current week
+    
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - (52 * 7) + 1); // 52 weeks back
+    
+    let currentDate = new Date(startDate);
+    let currentWeek: (DayData | null)[] = [];
+    
+    // Pad first week if it doesn't start on Sunday
+    const startDay = currentDate.getDay();
+    for (let i = 0; i < startDay; i++) {
+      currentWeek.push(null);
+    }
+    
+    while (currentDate <= today) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const dayData = dayMap.get(dateStr) || { date: dateStr, count: 0, avgRating: null };
+      currentWeek.push(dayData);
+      
+      if (currentDate.getDay() === 6) { // Saturday - end of week
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Add remaining days
+    if (currentWeek.length > 0) {
+      while (currentWeek.length < 7) {
+        currentWeek.push(null);
+      }
+      weeks.push(currentWeek);
+    }
+    
+    return weeks;
+  }, [data]);
+
+  const getIntensity = (count: number): string => {
+    if (count === 0) return "bg-gray-800/50";
+    if (count === 1) return "bg-amber-900/60";
+    if (count === 2) return "bg-amber-700/70";
+    if (count === 3) return "bg-amber-500/80";
+    return "bg-amber-400"; // 4+
+  };
+
+  const formatDate = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
 
   if (loading) {
     return (
-      <div className="glass rounded-2xl p-4 mb-6">
-        <div className="animate-pulse">
-          <div className="h-4 bg-white/10 rounded w-24 mb-3"></div>
-          <div className="h-20 bg-white/5 rounded"></div>
-        </div>
+      <div className="glass rounded-xl p-4 animate-pulse">
+        <div className="h-6 bg-gray-700 rounded w-1/3 mb-4"></div>
+        <div className="h-24 bg-gray-700/50 rounded"></div>
       </div>
     );
   }
 
-  if (!data || Object.keys(data.heatmap).length === 0) {
-    return null; // Don't show if no data
-  }
+  if (!data) return null;
 
-  // Generate weeks for the past ~6 months (26 weeks)
-  const weeks: { date: Date; dateStr: string; count: number }[][] = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  // Start from 26 weeks ago, aligned to Sunday
-  const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - (26 * 7) - startDate.getDay());
-  
-  let currentWeek: { date: Date; dateStr: string; count: number }[] = [];
-  const currentDate = new Date(startDate);
-  
-  while (currentDate <= today) {
-    const dateStr = currentDate.toISOString().split('T')[0];
-    const count = data.heatmap[dateStr] || 0;
-    
-    currentWeek.push({
-      date: new Date(currentDate),
-      dateStr,
-      count,
-    });
-    
-    if (currentWeek.length === 7) {
-      weeks.push(currentWeek);
-      currentWeek = [];
-    }
-    
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-  
-  if (currentWeek.length > 0) {
-    weeks.push(currentWeek);
-  }
-
-  // Month labels
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const monthLabels: { label: string; position: number }[] = [];
-  let lastMonth = -1;
   
-  weeks.forEach((week, weekIndex) => {
-    const firstDayOfWeek = week[0]?.date;
+  // Calculate month labels based on weeks
+  const monthLabels: { month: string; offset: number }[] = [];
+  let lastMonth = -1;
+  calendarData.forEach((week, weekIndex) => {
+    const firstDayOfWeek = week.find(d => d !== null);
     if (firstDayOfWeek) {
-      const month = firstDayOfWeek.getMonth();
+      const month = new Date(firstDayOfWeek.date).getMonth();
       if (month !== lastMonth) {
-        monthLabels.push({ label: months[month], position: weekIndex });
+        monthLabels.push({ month: months[month], offset: weekIndex });
         lastMonth = month;
       }
     }
   });
 
-  const handleMouseEnter = (day: { date: Date; dateStr: string; count: number }, e: React.MouseEvent) => {
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    setHoveredDay({
-      date: day.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-      count: day.count,
-      x: rect.left + rect.width / 2,
-      y: rect.top - 8,
-    });
-  };
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass rounded-2xl p-4 mb-6"
+      className="glass rounded-xl p-4 overflow-hidden"
     >
-      {/* Header with stats */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <FiCalendar className="text-amber-500" size={14} />
-          <span className="text-xs text-gray-400">Smoke Calendar</span>
+          <FiCalendar className="text-amber-400" />
+          <span className="font-semibold text-white">Smoke Calendar</span>
         </div>
-        <div className="flex items-center gap-3 text-xs">
-          {data.stats.currentStreak > 0 && (
-            <div className="flex items-center gap-1 text-orange-400">
-              <span>🔥</span>
-              <span>{data.stats.currentStreak}d streak</span>
-            </div>
-          )}
-          {data.stats.longestStreak > data.stats.currentStreak && (
-            <div className="flex items-center gap-1 text-gray-500">
-              <FiTrendingUp size={12} />
-              <span>Best: {data.stats.longestStreak}d</span>
-            </div>
-          )}
+        <div className="text-xs text-gray-400">
+          {data.stats.totalCheckins} smokes in {data.stats.totalDays} days
         </div>
       </div>
 
-      {/* Month labels */}
-      <div className="relative mb-1 ml-3 h-3 overflow-hidden">
+      {/* Stats Row */}
+      <div className="grid grid-cols-4 gap-2 mb-4">
+        <div className="bg-amber-500/10 rounded-lg p-2 text-center">
+          <div className="text-amber-400 text-lg font-bold">{data.stats.currentStreak}</div>
+          <div className="text-gray-400 text-xs">Current</div>
+        </div>
+        <div className="bg-orange-500/10 rounded-lg p-2 text-center">
+          <div className="text-orange-400 text-lg font-bold">{data.stats.maxStreak}</div>
+          <div className="text-gray-400 text-xs">Best Streak</div>
+        </div>
+        <div className="bg-green-500/10 rounded-lg p-2 text-center">
+          <div className="text-green-400 text-lg font-bold">{data.stats.avgPerActiveDay}</div>
+          <div className="text-gray-400 text-xs">Avg/Day</div>
+        </div>
+        <div className="bg-purple-500/10 rounded-lg p-2 text-center">
+          <div className="text-purple-400 text-lg font-bold">{data.stats.busiestDayCount}</div>
+          <div className="text-gray-400 text-xs">Max Day</div>
+        </div>
+      </div>
+
+      {/* Month Labels */}
+      <div className="flex mb-1 text-xs text-gray-500 pl-6 overflow-hidden">
         {monthLabels.map((m, i) => (
-          <span
-            key={i}
-            className="absolute text-[10px] text-gray-500"
-            style={{ left: `${m.position * 11}px` }}
+          <div 
+            key={i} 
+            className="absolute"
+            style={{ marginLeft: `${m.offset * 11 + 24}px` }}
           >
-            {m.label}
-          </span>
+            {m.month}
+          </div>
         ))}
       </div>
 
-      {/* Heatmap grid */}
-      <div className="overflow-x-auto pb-2">
-        <div className="flex gap-[2px] min-w-max">
-          {/* Day labels */}
-          <div className="flex flex-col gap-[2px] mr-1 text-[9px] text-gray-500">
-            <span className="h-[10px]"></span>
-            <span className="h-[10px] leading-[10px]">M</span>
-            <span className="h-[10px]"></span>
-            <span className="h-[10px] leading-[10px]">W</span>
-            <span className="h-[10px]"></span>
-            <span className="h-[10px] leading-[10px]">F</span>
-            <span className="h-[10px]"></span>
-          </div>
-          
-          {/* Weeks */}
-          {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="flex flex-col gap-[2px]">
+      {/* Heatmap Grid */}
+      <div className="flex gap-0.5 overflow-x-auto pb-2 relative">
+        {/* Day Labels */}
+        <div className="flex flex-col gap-0.5 mr-1 text-xs text-gray-500 justify-around">
+          <span>Mon</span>
+          <span></span>
+          <span>Wed</span>
+          <span></span>
+          <span>Fri</span>
+          <span></span>
+          <span></span>
+        </div>
+        
+        {/* Weeks */}
+        <div className="flex gap-0.5">
+          {calendarData.map((week, weekIndex) => (
+            <div key={weekIndex} className="flex flex-col gap-0.5">
               {week.map((day, dayIndex) => (
                 <div
-                  key={day.dateStr}
-                  className={`w-[10px] h-[10px] rounded-[2px] cursor-pointer transition-all hover:ring-1 hover:ring-white/40 ${getIntensityClass(day.count)}`}
-                  onMouseEnter={(e) => handleMouseEnter(day, e)}
+                  key={dayIndex}
+                  className={`w-2.5 h-2.5 rounded-sm ${day ? getIntensity(day.count) : 'bg-transparent'} transition-all cursor-pointer hover:ring-1 hover:ring-amber-400`}
+                  onMouseEnter={() => day && setHoveredDay(day)}
                   onMouseLeave={() => setHoveredDay(null)}
                 />
               ))}
@@ -201,32 +211,33 @@ export default function SmokeHeatmap({ username }: SmokeHeatmapProps) {
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
-        <div className="flex items-center gap-1 text-[10px] text-gray-500">
-          <span>Less</span>
-          <div className="w-[10px] h-[10px] rounded-[2px] bg-white/5"></div>
-          <div className="w-[10px] h-[10px] rounded-[2px] bg-amber-900/60"></div>
-          <div className="w-[10px] h-[10px] rounded-[2px] bg-amber-700/70"></div>
-          <div className="w-[10px] h-[10px] rounded-[2px] bg-amber-600/80"></div>
-          <div className="w-[10px] h-[10px] rounded-[2px] bg-amber-500"></div>
-          <span>More</span>
-        </div>
-        <div className="text-[10px] text-gray-500">
-          {data.stats.totalSmokes} smokes in {data.stats.activeDays} days
-        </div>
-      </div>
-
       {/* Tooltip */}
       {hoveredDay && (
-        <div
-          className="fixed z-50 px-2 py-1 text-xs bg-gray-900 border border-white/20 rounded-lg shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full"
-          style={{ left: hoveredDay.x, top: hoveredDay.y }}
-        >
-          <div className="font-medium text-white">{getIntensityLabel(hoveredDay.count)}</div>
-          <div className="text-gray-400">{hoveredDay.date}</div>
+        <div className="mt-2 p-2 bg-gray-800 rounded-lg text-sm">
+          <div className="text-white font-medium">{formatDate(hoveredDay.date)}</div>
+          <div className="text-gray-400">
+            {hoveredDay.count === 0 ? (
+              "No smokes"
+            ) : (
+              <>
+                {hoveredDay.count} smoke{hoveredDay.count !== 1 ? 's' : ''}
+                {hoveredDay.avgRating && ` • Avg: ${hoveredDay.avgRating}★`}
+              </>
+            )}
+          </div>
         </div>
       )}
+
+      {/* Legend */}
+      <div className="flex items-center justify-end gap-1 mt-2 text-xs text-gray-400">
+        <span>Less</span>
+        <div className="w-2.5 h-2.5 rounded-sm bg-gray-800/50"></div>
+        <div className="w-2.5 h-2.5 rounded-sm bg-amber-900/60"></div>
+        <div className="w-2.5 h-2.5 rounded-sm bg-amber-700/70"></div>
+        <div className="w-2.5 h-2.5 rounded-sm bg-amber-500/80"></div>
+        <div className="w-2.5 h-2.5 rounded-sm bg-amber-400"></div>
+        <span>More</span>
+      </div>
     </motion.div>
   );
 }

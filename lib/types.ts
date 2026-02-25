@@ -492,6 +492,33 @@ export interface MorningCoffeeResponse {
   error?: string;
 }
 
+// Evening Lounge (sunset smokers 6-10 PM)
+export interface EveningSmoker {
+  username: string;
+  lastSmoke: string;
+  eveningSmokes: number;
+  isActive: boolean;
+}
+
+export interface EveningLoungeResponse {
+  isEveningTime: boolean;
+  currentHour: number;
+  loungeOpen: boolean;
+  eveningSmokers: EveningSmoker[];
+  stats: {
+    totalEveningSmokes: number;
+    yourEveningSmokes: number;
+    sunsetPercentile: number;
+    mostActiveHour: number;
+    eveningRegulars: number;
+  };
+  vibes: {
+    message: string;
+    emoji: string;
+  };
+  error?: string;
+}
+
 // Trending Week (momentum tracking)
 export interface TrendingWeekBrand {
   brand: string;

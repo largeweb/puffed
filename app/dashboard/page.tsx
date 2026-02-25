@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity, FiRss } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData, EveningLoungeResponse, EveningSmoker } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus, FiMenu } from "react-icons/fi";
 import MobileSidebar from "../components/MobileSidebar";
@@ -15,6 +15,7 @@ import { DRINK_TAGS, getDrinkTag } from "@/lib/drinks";
 import type { SmokeMood } from "@/lib/types";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
 import { InstallBanner } from "@/components/InstallBanner";
+import SmokeHeatmap from "@/components/SmokeHeatmap";
 
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   return (
@@ -403,6 +404,7 @@ export default function DashboardPage() {
   const [communityMilestones, setCommunityMilestones] = useState<CommunityMilestonesResponse | null>(null);
   const [loungeData, setLoungeData] = useState<LoungeResponse | null>(null);
   const [morningData, setMorningData] = useState<MorningCoffeeResponse | null>(null);
+  const [eveningData, setEveningData] = useState<EveningLoungeResponse | null>(null);
   const [nightThoughts, setNightThoughts] = useState<NightThought[]>([]);
   const [newThought, setNewThought] = useState("");
   const [submittingThought, setSubmittingThought] = useState(false);
@@ -636,6 +638,13 @@ export default function DashboardPage() {
         if (morningRes.ok) {
           const morningResData: MorningCoffeeResponse = await morningRes.json();
           setMorningData(morningResData);
+        }
+
+        // Load evening lounge (shows 6 PM - 10 PM)
+        const eveningRes = await fetch("/api/evening-lounge");
+        if (eveningRes.ok) {
+          const eveningResData: EveningLoungeResponse = await eveningRes.json();
+          setEveningData(eveningResData);
         }
 
         // Load "On This Day" memories
@@ -1752,6 +1761,11 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
+        {/* Smoke Calendar Heatmap */}
+        <div className="mb-6">
+          <SmokeHeatmap />
+        </div>
+
         {/* Smoking Now Section - Who's active */}
         {activeSmokers.length > 0 && (
           <motion.div
@@ -2122,6 +2136,89 @@ export default function DashboardPage() {
                 className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
               >
                 View Morning Coffee Lounge →
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Evening Lounge Section - Sunset Smokers */}
+        {eveningData?.loungeOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.054 }}
+            className="glass rounded-2xl p-5 mb-6 border border-orange-500/30 bg-gradient-to-br from-orange-900/20 to-purple-900/20"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="text-2xl">{eveningData.vibes.emoji}</span>
+                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-medium text-orange-300">Sunset Lounge 🌅</h2>
+                  <p className="text-xs text-purple-400">{eveningData.vibes.message}</p>
+                </div>
+              </div>
+              <span className="text-xs text-orange-400/60">6 PM - 10 PM</span>
+            </div>
+
+            {/* Evening stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-orange-300">{eveningData.stats.yourEveningSmokes}</div>
+                <div className="text-[10px] text-gray-500">Your PM Smokes</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-purple-300">{eveningData.stats.eveningRegulars}</div>
+                <div className="text-[10px] text-gray-500">Sunset Regulars</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-pink-300">{eveningData.stats.sunsetPercentile}%</div>
+                <div className="text-[10px] text-gray-500">Percentile</div>
+              </div>
+            </div>
+
+            {/* Active evening smokers */}
+            {eveningData.eveningSmokers.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-500 mb-2">🌇 Winding down with:</p>
+                <div className="flex flex-wrap gap-2">
+                  {eveningData.eveningSmokers.slice(0, 6).map((smoker) => (
+                    <Link
+                      key={smoker.username}
+                      href={`/user/${smoker.username}`}
+                      className={`px-3 py-1.5 rounded-full text-xs transition-all ${
+                        smoker.isActive 
+                          ? "bg-orange-500/30 text-orange-300 border border-orange-500/50" 
+                          : "bg-white/5 text-gray-400 hover:bg-white/10"
+                      }`}
+                    >
+                      {smoker.isActive && <span className="mr-1">🌅</span>}
+                      @{smoker.username}
+                      <span className="ml-1 text-gray-500">{smoker.lastSmoke}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {eveningData.eveningSmokers.length === 0 && (
+              <p className="text-xs text-gray-500 text-center py-2">
+                🌅 Be the first! Log a smoke to join the sunset crew.
+              </p>
+            )}
+
+            {/* Evening motivation + link to full page */}
+            <div className="mt-4 pt-4 border-t border-white/10 text-center">
+              <p className="text-xs text-orange-400/80 italic mb-2">
+                &quot;Unwind with the setting sun&quot; 🌇
+              </p>
+              <Link 
+                href="/evening"
+                className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
+              >
+                View Sunset Lounge →
               </Link>
             </div>
           </motion.div>
