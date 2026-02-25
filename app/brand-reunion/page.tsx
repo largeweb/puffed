@@ -145,7 +145,7 @@ export default function BrandReunionPage() {
           router.push("/login");
           return null;
         }
-        return res.json();
+        return res.json() as Promise<BrandReunionResponse & { error?: string }>;
       })
       .then((d) => {
         if (d && !d.error) setData(d);
