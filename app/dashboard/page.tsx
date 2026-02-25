@@ -990,6 +990,13 @@ export default function DashboardPage() {
               <FiCompass size={20} />
             </Link>
             <Link
+              href="/hidden-gems"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
+              title="Hidden Gems"
+            >
+              💎
+            </Link>
+            <Link
               href="/people"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
               title="Discover People"

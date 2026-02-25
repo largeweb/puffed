@@ -549,6 +549,13 @@ export default function DiscoverPage() {
                 <FiCamera size={20} />
               </Link>
               <Link 
+                href="/hidden-gems"
+                className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
+                title="Hidden Gems"
+              >
+                💎
+              </Link>
+              <Link 
                 href="/dashboard"
                 className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
                 title="Dashboard"
