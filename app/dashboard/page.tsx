@@ -1075,6 +1075,13 @@ export default function DashboardPage() {
               <FiBarChart2 size={20} />
             </Link>
             <Link
+              href="/smoke-oclock"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Smoke O'Clock - When You Smoke"
+            >
+              🕐
+            </Link>
+            <Link
               href="/records"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
               title="Personal Records"
