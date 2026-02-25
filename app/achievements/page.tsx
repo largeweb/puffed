@@ -25,6 +25,19 @@ interface BadgesResponse {
   error?: string;
 }
 
+interface BadgeRarity {
+  badgeId: string;
+  earnedCount: number;
+  totalUsers: number;
+  rarityPercent: number;
+  tier: "common" | "uncommon" | "rare" | "epic" | "legendary";
+}
+
+interface RarityResponse {
+  totalUsers: number;
+  rarities: Record<string, BadgeRarity>;
+}
+
 // Categorize badges for display
 const BADGE_CATEGORIES = [
   { id: "activity", name: "Activity", icon: FiTrendingUp, color: "amber" },
@@ -81,7 +94,16 @@ const BADGE_CATEGORY_MAP: Record<string, string> = {
   first_follower: "milestones",
 };
 
-function BadgeCard({ badge }: { badge: Badge }) {
+// Rarity tier styling
+const RARITY_STYLES: Record<string, { bg: string; text: string; border: string; label: string; icon: string }> = {
+  common: { bg: "bg-gray-600/20", text: "text-gray-400", border: "border-gray-500/30", label: "Common", icon: "⚪" },
+  uncommon: { bg: "bg-green-600/20", text: "text-green-400", border: "border-green-500/30", label: "Uncommon", icon: "🟢" },
+  rare: { bg: "bg-blue-600/20", text: "text-blue-400", border: "border-blue-500/30", label: "Rare", icon: "🔵" },
+  epic: { bg: "bg-purple-600/20", text: "text-purple-400", border: "border-purple-500/30", label: "Epic", icon: "🟣" },
+  legendary: { bg: "bg-amber-600/20", text: "text-amber-400", border: "border-amber-500/50", label: "Legendary", icon: "🟡" },
+};
+
+function BadgeCard({ badge, rarity }: { badge: Badge; rarity?: BadgeRarity }) {
   // Handle progress which can be { current, target } object or just numbers
   const progressObj = typeof badge.progress === 'object' && badge.progress !== null
     ? badge.progress
@@ -92,6 +114,8 @@ function BadgeCard({ badge }: { badge: Badge }) {
   const progressPercent = progressObj 
     ? Math.min(100, (progressObj.current / progressObj.target) * 100) 
     : 0;
+
+  const rarityStyle = rarity ? RARITY_STYLES[rarity.tier] : RARITY_STYLES.common;
   
   return (
     <motion.div
@@ -99,10 +123,17 @@ function BadgeCard({ badge }: { badge: Badge }) {
       animate={{ opacity: 1, scale: 1 }}
       className={`relative glass rounded-xl p-4 ${
         badge.earned 
-          ? "border border-amber-500/30 bg-amber-500/5" 
+          ? `${rarityStyle.border} ${rarityStyle.bg}` 
           : "border border-gray-700/50 opacity-60"
       }`}
     >
+      {/* Rarity badge for earned */}
+      {badge.earned && rarity && (
+        <div className={`absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-medium ${rarityStyle.bg} ${rarityStyle.text}`}>
+          {rarity.rarityPercent}%
+        </div>
+      )}
+      
       {/* Locked overlay for unearned */}
       {!badge.earned && (
         <div className="absolute top-2 right-2">
@@ -120,10 +151,24 @@ function BadgeCard({ badge }: { badge: Badge }) {
         {badge.name}
       </h3>
       
+      {/* Rarity tier label */}
+      {badge.earned && rarity && (
+        <p className={`text-[10px] font-medium ${rarityStyle.text} mt-0.5`}>
+          {rarityStyle.icon} {rarityStyle.label} • {rarity.earnedCount}/{rarity.totalUsers} users
+        </p>
+      )}
+      
       {/* Description */}
       <p className="text-xs text-gray-500 mt-1">
         {badge.description}
       </p>
+      
+      {/* Rarity hint for unearned */}
+      {!badge.earned && rarity && (
+        <p className={`text-[10px] mt-2 ${rarityStyle.text}`}>
+          {rarityStyle.icon} {rarityStyle.label} • {rarity.rarityPercent}% have this
+        </p>
+      )}
       
       {/* Progress bar for unearned */}
       {!badge.earned && progressObj && progressObj.target > 1 && (
@@ -155,10 +200,12 @@ function BadgeCard({ badge }: { badge: Badge }) {
 
 function CategorySection({ 
   category, 
-  badges 
+  badges,
+  rarities,
 }: { 
   category: typeof BADGE_CATEGORIES[0]; 
   badges: Badge[];
+  rarities: Record<string, BadgeRarity>;
 }) {
   const earnedCount = badges.filter(b => b.earned).length;
   const Icon = category.icon;
@@ -187,7 +234,7 @@ function CategorySection({
       
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {badges.map(badge => (
-          <BadgeCard key={badge.id} badge={badge} />
+          <BadgeCard key={badge.id} badge={badge} rarity={rarities[badge.id]} />
         ))}
       </div>
     </div>
@@ -197,6 +244,7 @@ function CategorySection({
 export default function AchievementsPage() {
   const router = useRouter();
   const [badges, setBadges] = useState<Badge[]>([]);
+  const [rarities, setRarities] = useState<Record<string, BadgeRarity>>({});
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ earned: 0, total: 0 });
 
@@ -206,12 +254,18 @@ export default function AchievementsPage() {
 
   async function loadBadges() {
     try {
-      const res = await fetch("/api/badges");
-      if (res.status === 401) {
+      // Fetch badges and rarity data in parallel
+      const [badgesRes, rarityRes] = await Promise.all([
+        fetch("/api/badges"),
+        fetch("/api/badge-rarity"),
+      ]);
+      
+      if (badgesRes.status === 401) {
         router.push("/login");
         return;
       }
-      const data: BadgesResponse = await res.json();
+      
+      const data: BadgesResponse = await badgesRes.json();
       
       // Transform badges to have progress object
       const allBadges: Badge[] = data.badges.map(b => ({
@@ -231,6 +285,12 @@ export default function AchievementsPage() {
         earned: data.earned_count,
         total: data.total_count,
       });
+
+      // Load rarity data
+      if (rarityRes.ok) {
+        const rarityData: RarityResponse = await rarityRes.json();
+        setRarities(rarityData.rarities || {});
+      }
     } catch (error) {
       console.error("Load badges error:", error);
     } finally {
@@ -303,6 +363,18 @@ export default function AchievementsPage() {
             {completionPercent >= 75 && completionPercent < 100 && "👑 Almost complete! You're among the elite."}
             {completionPercent === 100 && "🏆 LEGENDARY! You've unlocked everything!"}
           </p>
+          
+          {/* Rarity Legend */}
+          <div className="mt-4 pt-4 border-t border-gray-700/50">
+            <p className="text-xs text-gray-500 mb-2">Badge Rarity:</p>
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] bg-gray-600/20 text-gray-400">⚪ Common &gt;50%</span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] bg-green-600/20 text-green-400">🟢 Uncommon 25-50%</span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] bg-blue-600/20 text-blue-400">🔵 Rare 10-25%</span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] bg-purple-600/20 text-purple-400">🟣 Epic 5-10%</span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] bg-amber-600/20 text-amber-400">🟡 Legendary &lt;5%</span>
+            </div>
+          </div>
         </motion.div>
 
         {/* Loading state */}
@@ -320,7 +392,7 @@ export default function AchievementsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <CategorySection category={category} badges={badges} />
+            <CategorySection category={category} badges={badges} rarities={rarities} />
           </motion.div>
         ))}
 
