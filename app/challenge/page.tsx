@@ -102,7 +102,7 @@ export default function ChallengePage() {
         router.push("/login");
         return;
       }
-      const json = await res.json();
+      const json: ChallengeData = await res.json();
       setData(json);
     } catch (error) {
       console.error("Failed to load challenge:", error);
