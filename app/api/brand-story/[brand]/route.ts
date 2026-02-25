@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { verifySession } from "@/lib/auth";
+import { parseSessionCookie } from "@/lib/auth";
 
 interface BrandStoryData {
   brand: string;
@@ -42,11 +42,25 @@ export async function GET(
     const ctx = getRequestContext();
     const db = ctx.env.DB;
 
-    // Verify session
-    const userId = await verifySession(request, db);
-    if (!userId) {
+    // Get user from session
+    const cookieHeader = request.headers.get("cookie");
+    const sessionId = parseSessionCookie(cookieHeader);
+    
+    if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const now = Math.floor(Date.now() / 1000);
+    const session = await db
+      .prepare("SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?")
+      .bind(sessionId, now)
+      .first<{ user_id: string }>();
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = session.user_id;
 
     // Get all check-ins for this brand by this user
     const checkins = await db
