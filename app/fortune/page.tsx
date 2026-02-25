@@ -39,7 +39,7 @@ export default function FortunePage() {
     setLoading(true);
     try {
       const res = await fetch("/api/smoke-fortune");
-      const data = await res.json() as { error?: string; fortune?: string; luckyNumber?: number; luckyBrand?: string; mood?: string };
+      const data = await res.json() as FortuneData;
       if (data.error) {
         router.push("/login");
         return;
