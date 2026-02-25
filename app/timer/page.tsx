@@ -31,6 +31,14 @@ interface BrandDuration {
   avg_duration: number;
 }
 
+interface TimerApiResponse {
+  activeTimer: ActiveTimer | null;
+  recentSessions: Session[];
+  brandDurations: BrandDuration[];
+  stats: { totalSessions: number };
+  avg_duration: number;
+}
+
 function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -93,7 +101,7 @@ export default function TimerPage() {
         router.push("/login");
         return;
       }
-      const data = await res.json();
+      const data = await res.json() as TimerApiResponse;
       setActiveTimer(data.activeTimer);
       setRecentSessions(data.recentSessions || []);
       setBrandDurations(data.brandDurations || []);
@@ -114,7 +122,7 @@ export default function TimerPage() {
         credentials: "include",
         body: JSON.stringify({ brand: brand.trim(), product: product.trim() || null })
       });
-      const data = await res.json();
+      const data = await res.json() as { success: boolean; timerId: number; startedAt: number };
       if (data.success) {
         setActiveTimer({
           id: data.timerId,
@@ -144,7 +152,7 @@ export default function TimerPage() {
         credentials: "include",
         body: JSON.stringify({ timerId: activeTimer.id })
       });
-      const data = await res.json();
+      const data = await res.json() as { success: boolean; timerId: number; duration: number; durationFormatted: string };
       if (data.success) {
         // Redirect to log page with pre-filled brand and duration
         const params = new URLSearchParams({
