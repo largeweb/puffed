@@ -36,6 +36,31 @@ const BADGE_DEFINITIONS = [
     check: (stats: UserStats) => stats.weekendSmokes >= 3,
     progress: (stats: UserStats) => ({ current: stats.weekendSmokes, target: 3 }),
   },
+  // Evening/Sunset badges - reward the golden hour crew!
+  {
+    id: "sunset_smoker",
+    name: "Sunset Smoker",
+    description: "Log a smoke during evening hours (6-10 PM)",
+    emoji: "🌇",
+    check: (stats: UserStats) => stats.eveningSmokes >= 1,
+    progress: (stats: UserStats) => ({ current: stats.eveningSmokes, target: 1 }),
+  },
+  {
+    id: "golden_hour",
+    name: "Golden Hour",
+    description: "Log 5 evening smokes (6-10 PM)",
+    emoji: "🌅",
+    check: (stats: UserStats) => stats.eveningSmokes >= 5,
+    progress: (stats: UserStats) => ({ current: stats.eveningSmokes, target: 5 }),
+  },
+  {
+    id: "twilight_regular",
+    name: "Twilight Regular",
+    description: "Log 10 evening smokes (6-10 PM)",
+    emoji: "🌆",
+    check: (stats: UserStats) => stats.eveningSmokes >= 10,
+    progress: (stats: UserStats) => ({ current: stats.eveningSmokes, target: 10 }),
+  },
   {
     id: "three_day_streak",
     name: "Hot Streak",
@@ -363,6 +388,7 @@ interface UserStats {
   twoAmSmokes: number;
   threeAmSmokes: number;
   fourAmSmokes: number;
+  eveningSmokes: number;    // 6-10 PM (hour 18-21)
   weekendSmokes: number;
   referrals: number;
   brandsDiscovered: number;
@@ -417,6 +443,7 @@ export async function GET(): Promise<Response> {
       twoAmResult,
       threeAmResult,
       fourAmResult,
+      eveningResult,
       weekendResult,
       referralsResult,
       brandsDiscoveredResult,
@@ -469,6 +496,11 @@ export async function GET(): Promise<Response> {
       db.prepare(`
         SELECT COUNT(*) as count FROM checkins 
         WHERE user_id = ? AND CAST(strftime('%H', created_at, 'unixepoch') AS INTEGER) = 4
+      `).bind(userId).first<{ count: number }>(),
+      // Evening smokes: check-ins between 6 PM and 10 PM (hour 18-21)
+      db.prepare(`
+        SELECT COUNT(*) as count FROM checkins 
+        WHERE user_id = ? AND CAST(strftime('%H', created_at, 'unixepoch') AS INTEGER) BETWEEN 18 AND 21
       `).bind(userId).first<{ count: number }>(),
       // Weekend warrior: count distinct weekends (year-week combo on Sat/Sun)
       db.prepare(`
@@ -560,6 +592,7 @@ export async function GET(): Promise<Response> {
       twoAmSmokes: twoAmResult?.count || 0,
       threeAmSmokes: threeAmResult?.count || 0,
       fourAmSmokes: fourAmResult?.count || 0,
+      eveningSmokes: eveningResult?.count || 0,
       weekendSmokes: weekendResult?.count || 0,
       referrals: referralsResult?.count || 0,
       brandsDiscovered: brandsDiscoveredResult?.count || 0,
