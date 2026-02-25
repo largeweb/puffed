@@ -321,8 +321,8 @@ export default function LeaderboardPage() {
         </div>
       </header>
 
-      {/* Brand Leaderboard Link */}
-      <div className="max-w-2xl mx-auto px-4 pt-4">
+      {/* Special Leaderboard Links */}
+      <div className="max-w-2xl mx-auto px-4 pt-4 space-y-3">
         <Link href="/leaderboard/brands">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -337,6 +337,23 @@ export default function LeaderboardPage() {
               </div>
             </div>
             <FiTrendingUp className="text-yellow-500" />
+          </motion.div>
+        </Link>
+        <Link href="/leaderboard/social">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass rounded-xl p-4 border border-pink-500/30 hover:bg-white/5 transition-all flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">💗</span>
+              <div>
+                <div className="font-semibold text-pink-400">Social MVPs</div>
+                <div className="text-xs text-gray-400">Who spreads the most love?</div>
+              </div>
+            </div>
+            <FiTrendingUp className="text-pink-500" />
           </motion.div>
         </Link>
       </div>
