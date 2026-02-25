@@ -59,7 +59,7 @@ export default function MoodMatchPage() {
     
     try {
       const res = await fetch(`/api/mood-match?mood=${moodId}`);
-      const json = await res.json();
+      const json = await res.json() as MoodMatchData;
       setData(json);
     } catch (error) {
       console.error('Failed to fetch mood matches:', error);
