@@ -1201,6 +1201,13 @@ export default function DashboardPage() {
               🧬
             </Link>
             <Link
+              href="/pairing-guide"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Pairing Guide"
+            >
+              🥃
+            </Link>
+            <Link
               href="/mood"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="Mood Analytics"
