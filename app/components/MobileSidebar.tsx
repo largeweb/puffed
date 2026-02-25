@@ -40,6 +40,7 @@ const navGroups = [
     title: "Tools",
     items: [
       { href: "/tonight", icon: <span>🌙</span>, label: "Tonight's Pick", color: "text-indigo-400" },
+      { href: "/mood-match", icon: <span>🎯</span>, label: "Mood Match", color: "text-pink-400" },
       { href: "/compare", icon: <FiLayers size={20} />, label: "Compare Brands", color: "text-green-400" },
       { href: "/wishlist", icon: <FiBookmark size={20} />, label: "Want to Try", color: "text-pink-400" },
       { href: "/suggest", icon: <FiZap size={20} />, label: "What to Smoke?", color: "text-purple-400" },

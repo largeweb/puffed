@@ -1068,6 +1068,13 @@ export default function DashboardPage() {
               🎰
             </Link>
             <Link
+              href="/mood-match"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
+              title="Mood Match - Cigars for your vibe"
+            >
+              🎯
+            </Link>
+            <Link
               href="/mystats"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-cyan-400 transition-all"
               title="My Stats"
