@@ -17,7 +17,8 @@ import {
   FiCheck,
   FiLayers,
   FiAward,
-  FiCoffee
+  FiCoffee,
+  FiBarChart2
 } from "react-icons/fi";
 import { getDrinkTag } from "@/lib/drinks";
 import { GiCigarette } from "react-icons/gi";
@@ -76,6 +77,26 @@ interface DrinkPairing {
   count: number;
   percentage: number;
   avg_rating: number | null;
+}
+
+interface RatingDistribution {
+  rating: number;
+  count: number;
+  percentage: number;
+  barWidth: number;
+}
+
+interface RatingDistributionData {
+  ratings: RatingDistribution[];
+  totalRated: number;
+  sentiment: {
+    positive: number;
+    neutral: number;
+    negative: number;
+    positivePercent: number;
+    neutralPercent: number;
+    negativePercent: number;
+  };
 }
 
 function getTimeAgo(timestamp: number): string {
@@ -234,6 +255,8 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
   const [topFansLoading, setTopFansLoading] = useState(true);
   const [drinkPairings, setDrinkPairings] = useState<DrinkPairing[]>([]);
   const [drinkPairingsLoading, setDrinkPairingsLoading] = useState(true);
+  const [ratingDist, setRatingDist] = useState<RatingDistributionData | null>(null);
+  const [ratingDistLoading, setRatingDistLoading] = useState(true);
 
   // Check if this brand is in the user's wishlist
   useEffect(() => {
@@ -308,6 +331,24 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
       }
     }
     fetchDrinkPairings();
+  }, [brand]);
+
+  // Fetch rating distribution for this brand
+  useEffect(() => {
+    async function fetchRatingDistribution() {
+      try {
+        const res = await fetch(`/api/brand/${encodeURIComponent(brand)}/rating-distribution`);
+        if (res.ok) {
+          const data: RatingDistributionData = await res.json();
+          setRatingDist(data);
+        }
+      } catch (error) {
+        console.error("Rating distribution error:", error);
+      } finally {
+        setRatingDistLoading(false);
+      }
+    }
+    fetchRatingDistribution();
   }, [brand]);
 
   const toggleWishlist = async () => {
@@ -488,6 +529,73 @@ export default function CigarDetailClient({ initialData }: { initialData: CigarD
                   </div>
                 </div>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Rating Distribution */}
+        {!ratingDistLoading && ratingDist && ratingDist.totalRated > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.11 }}
+          >
+            <h3 className="text-lg font-semibold text-amber-300 mb-3 flex items-center gap-2">
+              <FiBarChart2 size={18} className="text-cyan-400" />
+              Rating Distribution
+            </h3>
+            <div className="bg-gradient-to-br from-cyan-900/20 to-stone-800/40 rounded-xl p-4 border border-cyan-800/30">
+              {/* Sentiment Summary */}
+              <div className="flex items-center justify-between mb-4 text-sm">
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                    <span className="text-green-400">{ratingDist.sentiment.positivePercent}% loved it</span>
+                  </span>
+                  {ratingDist.sentiment.neutral > 0 && (
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+                      <span className="text-amber-400">{ratingDist.sentiment.neutralPercent}% mixed</span>
+                    </span>
+                  )}
+                  {ratingDist.sentiment.negative > 0 && (
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                      <span className="text-red-400">{ratingDist.sentiment.negativePercent}% not fans</span>
+                    </span>
+                  )}
+                </div>
+                <span className="text-amber-400/60">{ratingDist.totalRated} rated</span>
+              </div>
+              {/* Bar Chart */}
+              <div className="space-y-2">
+                {ratingDist.ratings.map((r) => (
+                  <div key={r.rating} className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 w-12 text-sm text-amber-300">
+                      <span>{r.rating}</span>
+                      <FiStar size={12} className="fill-amber-400 text-amber-400" />
+                    </div>
+                    <div className="flex-1 h-6 bg-stone-800/60 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${r.barWidth}%` }}
+                        transition={{ duration: 0.5, delay: 0.1 * (5 - r.rating) }}
+                        className={`h-full rounded-full ${
+                          r.rating >= 4 
+                            ? "bg-gradient-to-r from-green-600 to-green-500" 
+                            : r.rating === 3 
+                              ? "bg-gradient-to-r from-amber-600 to-amber-500"
+                              : "bg-gradient-to-r from-red-600 to-red-500"
+                        }`}
+                      />
+                    </div>
+                    <div className="w-16 text-right text-sm">
+                      <span className="text-amber-100">{r.count}</span>
+                      <span className="text-amber-400/50 ml-1">({r.percentage}%)</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}
