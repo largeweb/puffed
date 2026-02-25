@@ -151,7 +151,7 @@ export default function BrandLoyaltyPage() {
         }
         throw new Error("Failed to load");
       }
-      const json = await res.json();
+      const json: LoyaltyResponse = await res.json();
       setData(json);
     } catch (err) {
       console.error(err);
