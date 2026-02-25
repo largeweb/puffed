@@ -90,20 +90,20 @@ export async function GET(
       mood: string | null;
     }>;
 
-    const now = Date.now();
+    const nowMs = Date.now();
     const firstCheckin = allCheckins[0];
     const lastCheckin = allCheckins[allCheckins.length - 1];
 
     // Calculate first smoke info
     const firstSmokeDate = new Date(firstCheckin.created_at * 1000);
     const firstSmokeDaysAgo = Math.floor(
-      (now - firstSmokeDate.getTime()) / (1000 * 60 * 60 * 24)
+      (nowMs - firstSmokeDate.getTime()) / (1000 * 60 * 60 * 24)
     );
 
     // Calculate most recent smoke
     const lastSmokeDate = new Date(lastCheckin.created_at * 1000);
     const lastSmokeDaysAgo = Math.floor(
-      (now - lastSmokeDate.getTime()) / (1000 * 60 * 60 * 24)
+      (nowMs - lastSmokeDate.getTime()) / (1000 * 60 * 60 * 24)
     );
 
     // Calculate average rating

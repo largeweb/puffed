@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { verifySession } from "@/lib/auth";
+import { parseSessionCookie } from "@/lib/auth";
+
+export const runtime = "edge";
 
 interface WitchingHourSmoker {
   username: string;
@@ -29,14 +31,28 @@ function formatTimeAgo(timestamp: number): string {
   return `${Math.floor(seconds / 3600)}h ago`;
 }
 
-export async function GET(request: Request) {
-  const session = await verifySession(request);
-  if (!session?.userId) {
+export async function GET(request: NextRequest) {
+  const cookieHeader = request.headers.get("cookie");
+  const sessionId = parseSessionCookie(cookieHeader);
+  
+  if (!sessionId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { env } = getRequestContext();
   const db = env.DB;
+  
+  // Verify session
+  const nowTs = Math.floor(Date.now() / 1000);
+  const session = await db
+    .prepare("SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?")
+    .bind(sessionId, nowTs)
+    .first<{ user_id: string }>();
+    
+  if (!session) {
+    return NextResponse.json({ error: "Session expired" }, { status: 401 });
+  }
+  const userId = session.user_id;
 
   // Check if it's currently witching hour (2-4 AM in user's timezone)
   // We'll use server time and let the client adjust if needed
@@ -110,13 +126,13 @@ export async function GET(request: Request) {
            AND CAST(strftime('%H', datetime(created_at, 'unixepoch', '-5 hours')) AS INTEGER) >= 2
            AND CAST(strftime('%H', datetime(created_at, 'unixepoch', '-5 hours')) AS INTEGER) < 4`
       )
-      .bind(session.userId)
+      .bind(userId)
       .first<{ count: number }>();
 
     // Get user's total check-ins for percentage
     const userTotalResult = await db
       .prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ?")
-      .bind(session.userId)
+      .bind(userId)
       .first<{ count: number }>();
 
     const userTotal = userTotalResult?.count || 1;

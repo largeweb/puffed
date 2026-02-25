@@ -51,7 +51,7 @@ export default function WitchingHourPage() {
         router.push("/");
         return;
       }
-      const result = await res.json();
+      const result = await res.json() as WitchingHourData;
       setData(result);
     } catch (error) {
       console.error("Failed to load:", error);

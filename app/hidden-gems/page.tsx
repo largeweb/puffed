@@ -42,7 +42,7 @@ export default function HiddenGemsPage() {
 
   useEffect(() => {
     fetch('/api/hidden-gems')
-      .then(res => res.json())
+      .then(res => res.json() as Promise<GemsData>)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
