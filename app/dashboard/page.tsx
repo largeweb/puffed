@@ -419,6 +419,7 @@ export default function DashboardPage() {
   const [loungeData, setLoungeData] = useState<LoungeResponse | null>(null);
   const [morningData, setMorningData] = useState<MorningCoffeeResponse | null>(null);
   const [eveningData, setEveningData] = useState<EveningLoungeResponse | null>(null);
+  const [firstSmokeData, setFirstSmokeData] = useState<{ claimed: boolean; winner?: { username: string; brand: string; time: string; timeAgo: string }; totalSmokesToday: number; dayOfWeek: string } | null>(null);
   const [nightThoughts, setNightThoughts] = useState<NightThought[]>([]);
   const [newThought, setNewThought] = useState("");
   const [submittingThought, setSubmittingThought] = useState(false);
@@ -663,6 +664,13 @@ export default function DashboardPage() {
         if (eveningRes.ok) {
           const eveningResData: EveningLoungeResponse = await eveningRes.json();
           setEveningData(eveningResData);
+        }
+
+        // Load first smoke today data
+        const firstSmokeRes = await fetch("/api/first-smoke-today");
+        if (firstSmokeRes.ok) {
+          const firstSmokeResData = await firstSmokeRes.json();
+          setFirstSmokeData(firstSmokeResData);
         }
 
         // Load "On This Day" memories
@@ -2410,6 +2418,76 @@ export default function DashboardPage() {
                 View Sunset Lounge →
               </Link>
             </div>
+          </motion.div>
+        )}
+
+        {/* First Smoke Today - Daily Race */}
+        {firstSmokeData && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.054 }}
+            className={`glass rounded-2xl p-5 mb-6 border ${
+              firstSmokeData.claimed 
+                ? "border-yellow-500/30 bg-gradient-to-br from-yellow-900/20 to-orange-900/20" 
+                : "border-green-500/30 bg-gradient-to-br from-green-900/20 to-emerald-900/20"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="text-2xl">{firstSmokeData.claimed ? "🥇" : "🏁"}</span>
+                  {!firstSmokeData.claimed && (
+                    <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-sm font-medium text-yellow-300">First Smoke Today</h2>
+                  <p className="text-xs text-gray-500">{firstSmokeData.dayOfWeek}&apos;s Champion</p>
+                </div>
+              </div>
+              <Link 
+                href="/first-smoke"
+                className="text-xs text-yellow-400 hover:text-yellow-300"
+              >
+                View →
+              </Link>
+            </div>
+
+            {firstSmokeData.claimed && firstSmokeData.winner ? (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                <span className="text-3xl">🏆</span>
+                <div className="flex-1">
+                  <Link 
+                    href={`/user/${firstSmokeData.winner.username}`}
+                    className="font-bold text-yellow-400 hover:text-yellow-300"
+                  >
+                    @{firstSmokeData.winner.username}
+                  </Link>
+                  <p className="text-sm text-gray-400">{firstSmokeData.winner.brand}</p>
+                  <p className="text-xs text-gray-500">{firstSmokeData.winner.time} • {firstSmokeData.winner.timeAgo}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-green-400 font-medium mb-2">🏁 Unclaimed!</p>
+                <p className="text-sm text-gray-400 mb-3">Be the first to log a smoke today</p>
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"
+                >
+                  🚬 Claim First Smoke!
+                </button>
+              </div>
+            )}
+
+            {firstSmokeData.totalSmokesToday > 0 && (
+              <div className="mt-3 pt-3 border-t border-white/10 text-center">
+                <span className="text-xs text-gray-500">
+                  {firstSmokeData.totalSmokesToday} smoke{firstSmokeData.totalSmokesToday !== 1 ? "s" : ""} logged today
+                </span>
+              </div>
+            )}
           </motion.div>
         )}
 
