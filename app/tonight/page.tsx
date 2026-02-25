@@ -94,10 +94,10 @@ export default function TonightPage() {
       ]);
       
       if (pickRes.ok) {
-        setPick(await pickRes.json());
+        setPick(await pickRes.json() as TonightsPick);
       }
       if (tipRes.ok) {
-        const data = await tipRes.json();
+        const data = await tipRes.json() as { tip: DailyTip };
         setTip(data.tip);
       }
     } catch (error) {
