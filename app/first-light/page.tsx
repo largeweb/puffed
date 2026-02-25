@@ -46,7 +46,7 @@ export default function FirstLightPage() {
       try {
         const res = await fetch("/api/first-light");
         if (res.ok) {
-          const json = await res.json();
+          const json = await res.json() as FirstLightResponse;
           setData(json);
         }
       } catch (error) {
