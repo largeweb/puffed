@@ -1,16 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { verifyAuth } from '@/lib/auth';
+import { parseSessionCookie } from "@/lib/auth";
 
 export const runtime = 'edge';
 
+// Helper to get authenticated user
+async function getUser(request: NextRequest) {
+  const cookieHeader = request.headers.get("cookie");
+  const sessionId = parseSessionCookie(cookieHeader);
+  if (!sessionId) return null;
+
+  const { env } = getRequestContext();
+  const now = Math.floor(Date.now() / 1000);
+  const session = await env.DB
+    .prepare("SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?")
+    .bind(sessionId, now)
+    .first<{ user_id: number }>();
+
+  return session ? { id: session.user_id } : null;
+}
+
 // GET - Get active timer and recent sessions
 export async function GET(request: NextRequest) {
-  const { env } = getRequestContext();
-  const auth = await verifyAuth(request, env);
+  const auth = await getUser(request);
   if (!auth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const { env } = getRequestContext();
 
   // Get active timer if any
   const activeTimer = await env.DB.prepare(`
@@ -57,12 +74,12 @@ export async function GET(request: NextRequest) {
 
 // POST - Start a new timer
 export async function POST(request: NextRequest) {
-  const { env } = getRequestContext();
-  const auth = await verifyAuth(request, env);
+  const auth = await getUser(request);
   if (!auth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { env } = getRequestContext();
   const body = await request.json() as { brand: string; product?: string; notes?: string };
   const { brand, product, notes } = body;
 
@@ -95,12 +112,12 @@ export async function POST(request: NextRequest) {
 
 // PATCH - Stop timer and optionally link to check-in
 export async function PATCH(request: NextRequest) {
-  const { env } = getRequestContext();
-  const auth = await verifyAuth(request, env);
+  const auth = await getUser(request);
   if (!auth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { env } = getRequestContext();
   const body = await request.json() as { timerId?: number; checkinId?: number; notes?: string };
   const { timerId, checkinId, notes } = body;
 
@@ -142,11 +159,12 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE - Cancel active timer
 export async function DELETE(request: NextRequest) {
-  const { env } = getRequestContext();
-  const auth = await verifyAuth(request, env);
+  const auth = await getUser(request);
   if (!auth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const { env } = getRequestContext();
 
   await env.DB.prepare(`
     DELETE FROM smoke_timers WHERE user_id = ? AND ended_at IS NULL
