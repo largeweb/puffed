@@ -12,7 +12,8 @@ import MobileSidebar from "../components/MobileSidebar";
 import { FLAVOR_TAGS, getFlavorTag } from "@/lib/flavors";
 import { MOOD_TAGS } from "@/lib/moods";
 import { DRINK_TAGS, getDrinkTag } from "@/lib/drinks";
-import type { SmokeMood } from "@/lib/types";
+import { SMOKE_SPOTS, getSmokeSpot } from "@/lib/smoke-spots";
+import type { SmokeMood, SmokeSpot } from "@/lib/types";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
 import { InstallBanner } from "@/components/InstallBanner";
 import SmokeHeatmap from "@/components/SmokeHeatmap";
@@ -191,6 +192,19 @@ function CheckinCard({ checkin, onDelete }: { checkin: Checkin; onDelete?: (id: 
               'bg-gray-500/20 text-gray-400'
             }`}>
               {drinkTag.emoji} {drinkTag.name}
+            </span>
+          </div>
+        );
+      })()}
+
+      {/* Smoke spot badge */}
+      {checkin.smoke_spot && (() => {
+        const spotTag = getSmokeSpot(checkin.smoke_spot);
+        if (!spotTag) return null;
+        return (
+          <div className="mb-2">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-cyan-500/20 text-cyan-400">
+              {spotTag.emoji} {spotTag.label}
             </span>
           </div>
         );
@@ -516,6 +530,8 @@ export default function DashboardPage() {
   const [selectedMood, setSelectedMood] = useState<SmokeMood | ''>('');
   // Drink pairing
   const [selectedDrink, setSelectedDrink] = useState<string>('');
+  // Smoke spot
+  const [selectedSpot, setSelectedSpot] = useState<string>('');
   // Image
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -833,6 +849,7 @@ export default function DashboardPage() {
           review: review || undefined,
           imageUrl,
           mood: selectedMood || undefined,
+          smokeSpot: selectedSpot || undefined,
           drinkPairing: selectedDrink || undefined,
           // Cigar fields
           flavorNotes: category === 'cigar' && selectedFlavors.length > 0 ? JSON.stringify(selectedFlavors) : undefined,
@@ -898,6 +915,8 @@ export default function DashboardPage() {
         setSelectedMood('');
         // Drink
         setSelectedDrink('');
+        // Smoke spot
+        setSelectedSpot('');
         // Image
         setImageFile(null);
         setImagePreview(null);
@@ -2126,12 +2145,18 @@ export default function DashboardPage() {
               )}
               
               {/* View all link */}
-              <div className="mt-3 pt-3 border-t border-white/5 text-center">
+              <div className="mt-3 pt-3 border-t border-white/5 flex justify-center gap-4">
                 <Link 
                   href="/night-thoughts"
                   className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
                   View all thoughts →
+                </Link>
+                <Link 
+                  href="/witching-hour"
+                  className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                >
+                  🕯️ Witching Hour
                 </Link>
               </div>
             </div>
@@ -3668,6 +3693,28 @@ export default function DashboardPage() {
                       >
                         <span>{drink.emoji}</span>
                         <span>{drink.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Smoke Spot Selector 📍 */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Where are you smoking? 📍</label>
+                  <div className="flex flex-wrap gap-2">
+                    {SMOKE_SPOTS.map(spot => (
+                      <button
+                        key={spot.id}
+                        type="button"
+                        onClick={() => setSelectedSpot(selectedSpot === spot.id ? '' : spot.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                          selectedSpot === spot.id
+                            ? 'bg-cyan-700/40 text-cyan-300 font-medium ring-2 ring-cyan-500/30'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                        }`}
+                      >
+                        <span>{spot.emoji}</span>
+                        <span>{spot.label}</span>
                       </button>
                     ))}
                   </div>

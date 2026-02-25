@@ -15,6 +15,8 @@ export type StrainType = 'indica' | 'sativa' | 'hybrid';
 
 export type SmokeMood = 'relaxed' | 'social' | 'celebratory' | 'thoughtful' | 'stressed' | 'creative' | 'tired' | 'focused' | 'bored' | 'adventurous';
 
+export type SmokeSpot = 'backyard' | 'porch' | 'balcony' | 'lounge' | 'home' | 'walking' | 'car' | 'golf' | 'beach' | 'camping' | 'rooftop' | 'office' | 'bar' | 'other';
+
 export interface CheckinRequest {
   category?: CheckinCategory;
   // Common fields
@@ -24,6 +26,7 @@ export interface CheckinRequest {
   review?: string;
   imageUrl?: string;
   mood?: SmokeMood;
+  smokeSpot?: SmokeSpot; // Where they're smoking from
   drinkPairing?: string; // Drink pairing (coffee, bourbon, etc.)
   // Cigar-specific
   flavorNotes?: string;
@@ -64,6 +67,7 @@ export interface Checkin {
   review?: string;
   image_url?: string;
   mood?: SmokeMood;
+  smoke_spot?: SmokeSpot; // Where they smoked
   drink_pairing?: string; // What drink they paired with
   created_at: number;
   // Cigar-specific
