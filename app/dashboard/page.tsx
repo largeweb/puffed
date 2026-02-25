@@ -1158,6 +1158,13 @@ export default function DashboardPage() {
               🧬
             </Link>
             <Link
+              href="/mood"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Mood Analytics"
+            >
+              🎭
+            </Link>
+            <Link
               href="/tonight"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
               title="Tonight's Pick"
@@ -2171,6 +2178,12 @@ export default function DashboardPage() {
                   className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
                 >
                   🕯️ Witching Hour
+                </Link>
+                <Link 
+                  href="/twilight-zone"
+                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
+                  🌌 Twilight Zone
                 </Link>
               </div>
             </div>

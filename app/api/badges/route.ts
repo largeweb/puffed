@@ -226,6 +226,15 @@ const BADGE_DEFINITIONS = [
     check: (stats: UserStats) => stats.fourAmSmokes >= 1,
     progress: (stats: UserStats) => ({ current: stats.fourAmSmokes, target: 1 }),
   },
+  // Twilight Seeker - dedicated pre-dawn smoker
+  {
+    id: "twilight_seeker",
+    name: "Twilight Seeker",
+    description: "Log 5 smokes in the twilight zone (4-5 AM)",
+    emoji: "🌌",
+    check: (stats: UserStats) => stats.fourAmSmokes >= 5,
+    progress: (stats: UserStats) => ({ current: stats.fourAmSmokes, target: 5 }),
+  },
   // Night Owl progression badges
   {
     id: "night_owl_pro",
