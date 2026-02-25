@@ -838,3 +838,24 @@ export interface DailyTipResponse {
   tip: DailyTip;
   dayOfYear: number;
 }
+
+// Brand Reunion - Missed Brands
+export interface MissedBrand {
+  brand: string;
+  lastSmokedAt: number;
+  daysSince: number;
+  totalSmokes: number;
+  avgRating: number | null;
+  bestRating: number | null;
+  lastProduct: string | null;
+  lastImageUrl: string | null;
+}
+
+export interface BrandReunionResponse {
+  missedBrands: MissedBrand[];
+  stats: {
+    totalBrands: number;
+    oldestMiss: string | null;
+    longestAway: number;
+  };
+}
