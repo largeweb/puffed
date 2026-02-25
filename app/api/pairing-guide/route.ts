@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getD1 } from "@/lib/db";
-import { verifyAuth } from "@/lib/auth";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 import { cookies } from "next/headers";
 
 export const runtime = "edge";
@@ -26,9 +25,9 @@ interface DrinkBrandMatch {
 
 export async function GET(request: Request) {
   const cookieStore = await cookies();
-  const user = await verifyAuth(cookieStore);
+  const sessionId = cookieStore.get("session")?.value;
 
-  if (!user) {
+  if (!sessionId) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
@@ -37,7 +36,20 @@ export async function GET(request: Request) {
   const drinkFilter = url.searchParams.get("drink");
 
   try {
-    const db = getD1();
+    const { env } = getRequestContext();
+    const db = env.DB;
+
+    // Get current user from session
+    const session = await db
+      .prepare("SELECT user_id FROM sessions WHERE id = ?")
+      .bind(sessionId)
+      .first<{ user_id: string }>();
+    
+    if (!session) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+    
+    const userId = session.user_id;
 
     // If filtering by a specific brand, get detailed pairing data for it
     if (brandFilter) {
@@ -173,7 +185,7 @@ export async function GET(request: Request) {
         ORDER BY count DESC
         LIMIT 5
       `)
-      .bind(user.id)
+      .bind(userId)
       .all() as { results: Array<{ drink_pairing: string; count: number; avg_rating: number | null }> };
 
     // Platform stats

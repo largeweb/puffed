@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity, FiRss, FiTarget, FiMoon, FiMapPin } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData, EveningLoungeResponse, EveningSmoker, TonightsPick, DailyTip } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData, EveningLoungeResponse, EveningSmoker, TonightsPick, DailyTip, DailyChallengeData } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus, FiMenu } from "react-icons/fi";
 import MobileSidebar from "../components/MobileSidebar";
@@ -431,6 +431,7 @@ export default function DashboardPage() {
   const [pollVoting, setPollVoting] = useState(false);
   const [tonightsPick, setTonightsPick] = useState<TonightsPick | null>(null);
   const [dailyTip, setDailyTip] = useState<DailyTip | null>(null);
+  const [dailyChallenge, setDailyChallenge] = useState<DailyChallengeData | null>(null);
   const router = useRouter();
 
   // Quick Smoke handler - one-tap to log your go-to brand
@@ -721,6 +722,13 @@ export default function DashboardPage() {
         if (pickRes.ok) {
           const pickData: TonightsPick = await pickRes.json();
           setTonightsPick(pickData);
+        }
+
+        // Load daily challenge
+        const dailyChallengeRes = await fetch("/api/daily-challenge");
+        if (dailyChallengeRes.ok) {
+          const dailyChallengeData: DailyChallengeData = await dailyChallengeRes.json();
+          setDailyChallenge(dailyChallengeData);
         }
 
         // Load flavor-based recommendations
@@ -1145,6 +1153,13 @@ export default function DashboardPage() {
               🏆
             </Link>
             <Link
+              href="/brand-loyalty"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Brand Loyalty"
+            >
+              👑
+            </Link>
+            <Link
               href="/conversations"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-cyan-400 transition-all"
               title="Hot Conversations"
@@ -1213,6 +1228,13 @@ export default function DashboardPage() {
               title="Mood Analytics"
             >
               🎭
+            </Link>
+            <Link
+              href="/fortune"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-violet-400 transition-all"
+              title="Smoke Fortune"
+            >
+              ✨
             </Link>
             <Link
               href="/tonight"
@@ -2679,6 +2701,61 @@ export default function DashboardPage() {
                 </p>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* Daily Challenge - Personal daily goal */}
+        {dailyChallenge && !dailyChallenge.progress.completed && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.063 }}
+            className="glass rounded-2xl p-5 mb-6 border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
+          >
+            <Link href="/challenge" className="block">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{dailyChallenge.challenge.emoji}</span>
+                  <div>
+                    <h2 className="text-sm font-medium text-amber-400">Daily Challenge</h2>
+                    <p className="text-xs text-gray-500">{dailyChallenge.challenge.title}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-amber-400">{dailyChallenge.progress.current}/{dailyChallenge.progress.target}</p>
+                  <p className="text-xs text-gray-500">{dailyChallenge.progress.percent}%</p>
+                </div>
+              </div>
+              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${dailyChallenge.progress.percent}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2 text-center">{dailyChallenge.challenge.description}</p>
+            </Link>
+          </motion.div>
+        )}
+
+        {/* Daily Challenge Complete! */}
+        {dailyChallenge?.progress.completed && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass rounded-2xl p-4 mb-6 border border-green-500/30 bg-gradient-to-br from-green-500/10 to-emerald-500/5"
+          >
+            <Link href="/challenge" className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🎉</span>
+                <div>
+                  <p className="text-sm font-medium text-green-400">Daily Challenge Complete!</p>
+                  <p className="text-xs text-gray-500">{dailyChallenge.challenge.title}</p>
+                </div>
+              </div>
+              <span className="text-green-400">✓</span>
+            </Link>
           </motion.div>
         )}
 

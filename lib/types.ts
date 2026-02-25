@@ -859,3 +859,26 @@ export interface BrandReunionResponse {
     longestAway: number;
   };
 }
+
+// Daily Challenge
+export interface DailyChallengeData {
+  challenge: {
+    id: string;
+    title: string;
+    description: string;
+    emoji: string;
+    category: "social" | "activity" | "explore" | "quality" | "timing";
+  };
+  progress: {
+    current: number;
+    target: number;
+    completed: boolean;
+    percent: number;
+  };
+  refreshesAt: string;
+  stats: {
+    checkinsToday: number;
+    likesToday: number;
+    photosToday: number;
+  };
+}
