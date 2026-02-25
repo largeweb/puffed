@@ -669,7 +669,7 @@ export default function DashboardPage() {
         // Load first smoke today data
         const firstSmokeRes = await fetch("/api/first-smoke-today");
         if (firstSmokeRes.ok) {
-          const firstSmokeResData = await firstSmokeRes.json();
+          const firstSmokeResData = await firstSmokeRes.json() as { claimed: boolean; winner?: { username: string; brand: string; time: string; timeAgo: string }; totalSmokesToday: number; dayOfWeek: string };
           setFirstSmokeData(firstSmokeResData);
         }
 
