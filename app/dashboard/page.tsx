@@ -762,7 +762,10 @@ export default function DashboardPage() {
         // Load community goals
         const communityGoalsRes = await fetch("/api/community-goals");
         if (communityGoalsRes.ok) {
-          const communityGoalsData = await communityGoalsRes.json();
+          const communityGoalsData = await communityGoalsRes.json() as { 
+            goals: { id: string; name: string; icon: string; target: number; current: number }[]; 
+            summary: { overallProgress: number; completedGoals: number; totalGoals: number; daysRemaining: number; encouragement: string } 
+          };
           setCommunityGoals(communityGoalsData);
         }
 
