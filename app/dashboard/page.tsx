@@ -1130,6 +1130,13 @@ export default function DashboardPage() {
               <FiBarChart2 size={20} />
             </Link>
             <Link
+              href="/verdict"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="The Verdict - Your Rating Style"
+            >
+              ⚖️
+            </Link>
+            <Link
               href="/smoke-oclock"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Smoke O'Clock - When You Smoke"
@@ -1695,7 +1702,7 @@ export default function DashboardPage() {
               <p className="text-xs text-gray-400">Avg Rating</p>
             </div>
             {/* Streak */}
-            <div className="ml-auto text-right">
+            <Link href="/activity-streak" className="ml-auto text-right hover:opacity-80 transition-opacity cursor-pointer">
               <div className="flex items-center justify-end gap-1.5">
                 <span className={`text-3xl font-bold ${streak.active ? 'text-orange-500' : 'text-gray-500'}`}>
                   {streak.current}
@@ -1708,7 +1715,7 @@ export default function DashboardPage() {
               {streak.best > 0 && streak.best > streak.current && (
                 <p className="text-xs text-gray-500">Best: {streak.best} days</p>
               )}
-            </div>
+            </Link>
           </div>
           {/* Time Since Last Smoke */}
           {(() => {
