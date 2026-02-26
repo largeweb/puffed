@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FiArrowLeft, FiAward, FiRefreshCw, FiCrown } from "react-icons/fi";
+import { FiArrowLeft, FiAward, FiRefreshCw } from "react-icons/fi";
 
 interface Champion {
   username: string;
@@ -130,7 +130,7 @@ export default function ThroneRoomPage() {
     try {
       const res = await fetch("/api/throne-room");
       if (res.ok) {
-        const json = await res.json();
+        const json = await res.json() as ThroneRoomData;
         setData(json);
       }
     } catch (error) {

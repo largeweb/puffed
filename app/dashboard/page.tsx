@@ -2370,7 +2370,7 @@ export default function DashboardPage() {
               )}
               
               {/* View all link */}
-              <div className="mt-3 pt-3 border-t border-white/5 flex justify-center gap-4">
+              <div className="mt-3 pt-3 border-t border-white/5 flex justify-center gap-4 flex-wrap">
                 <Link 
                   href="/night-thoughts"
                   className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
@@ -2388,6 +2388,12 @@ export default function DashboardPage() {
                   className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
                   🌌 Twilight Zone
+                </Link>
+                <Link 
+                  href="/nightcap"
+                  className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  🌙 Nightcap Club
                 </Link>
               </div>
             </div>

@@ -67,11 +67,11 @@ export default function SpreadLovePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ checkinId: checkin.id }),
       });
-      const data = await res.json();
+      const data = await res.json() as { success?: boolean; lovesSpreadToday?: number; message?: string; error?: string };
       if (data.success) {
         setJustLoved(true);
-        setLovesSpreadToday(data.lovesSpreadToday);
-        setMessage(data.message);
+        setLovesSpreadToday(data.lovesSpreadToday || 0);
+        setMessage(data.message || "");
         // Auto-fetch next after a moment
         setTimeout(() => {
           fetchRandomCheckin();
