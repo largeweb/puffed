@@ -51,8 +51,8 @@ export default function CommunityGoalsPage() {
 
   useEffect(() => {
     fetch('/api/community-goals')
-      .then(res => res.json())
-      .then((data: GoalsData) => setData(data))
+      .then(res => res.json() as Promise<GoalsData>)
+      .then(data => setData(data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

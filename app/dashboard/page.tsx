@@ -419,6 +419,7 @@ export default function DashboardPage() {
   const [loungeData, setLoungeData] = useState<LoungeResponse | null>(null);
   const [morningData, setMorningData] = useState<MorningCoffeeResponse | null>(null);
   const [eveningData, setEveningData] = useState<EveningLoungeResponse | null>(null);
+  const [midweekData, setMidweekData] = useState<{ isWednesday: boolean; weekProgress: number; communityStats: { smokesThisWeek: number; activeSmokersThisWeek: number }; motivationalMessage: string } | null>(null);
   const [firstSmokeData, setFirstSmokeData] = useState<{ claimed: boolean; winner?: { username: string; brand: string; time: string; timeAgo: string }; totalSmokesToday: number; dayOfWeek: string } | null>(null);
   const [nightThoughts, setNightThoughts] = useState<NightThought[]>([]);
   const [newThought, setNewThought] = useState("");
@@ -666,6 +667,13 @@ export default function DashboardPage() {
         if (eveningRes.ok) {
           const eveningResData: EveningLoungeResponse = await eveningRes.json();
           setEveningData(eveningResData);
+        }
+
+        // Load midweek momentum (Wednesday celebration)
+        const midweekRes = await fetch("/api/midweek-momentum");
+        if (midweekRes.ok) {
+          const midweekResData = await midweekRes.json();
+          setMidweekData(midweekResData);
         }
 
         // Load first smoke today data
@@ -1078,6 +1086,13 @@ export default function DashboardPage() {
               title="Want to Try"
             >
               <FiBookmark size={20} />
+            </Link>
+            <Link
+              href="/humidor"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="My Humidor"
+            >
+              🗄️
             </Link>
             <Link
               href="/suggest"
@@ -2596,6 +2611,75 @@ export default function DashboardPage() {
                 className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
               >
                 View Sunset Lounge →
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Midweek Momentum - Wednesday Celebration */}
+        {midweekData?.isWednesday && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.055 }}
+            className="glass rounded-2xl p-5 mb-6 border border-amber-500/30 bg-gradient-to-br from-amber-900/20 to-orange-900/20"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="text-2xl animate-bounce">🐪</span>
+                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-medium text-amber-300">Hump Day!</h2>
+                  <p className="text-xs text-orange-400">{midweekData.motivationalMessage}</p>
+                </div>
+              </div>
+              <Link 
+                href="/midweek"
+                className="text-xs text-amber-400 hover:text-amber-300"
+              >
+                View →
+              </Link>
+            </div>
+
+            {/* Week Progress Bar */}
+            <div className="mb-4">
+              <div className="flex justify-between text-xs text-amber-400 mb-1">
+                <span>Week Progress</span>
+                <span className="font-medium">{midweekData.weekProgress}%</span>
+              </div>
+              <div className="h-2 bg-amber-900/50 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
+                  style={{ width: `${midweekData.weekProgress}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-amber-500/60 mt-1">
+                <span>Mon</span>
+                <span className="text-amber-300 font-bold">🐪 Wed</span>
+                <span>Sun</span>
+              </div>
+            </div>
+
+            {/* Community stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-amber-300">{midweekData.communityStats.smokesThisWeek}</div>
+                <div className="text-[10px] text-gray-500">Smokes This Week</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-orange-300">{midweekData.communityStats.activeSmokersThisWeek}</div>
+                <div className="text-[10px] text-gray-500">Active Smokers</div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-white/10 text-center">
+              <Link 
+                href="/midweek"
+                className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                View Midweek Momentum →
               </Link>
             </div>
           </motion.div>
