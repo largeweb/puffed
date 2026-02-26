@@ -1200,6 +1200,13 @@ export default function DashboardPage() {
               🏆
             </Link>
             <Link
+              href="/personal-bests"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
+              title="Personal Bests"
+            >
+              🥇
+            </Link>
+            <Link
               href="/brand-loyalty"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Brand Loyalty"
