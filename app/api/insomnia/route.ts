@@ -1,5 +1,4 @@
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { D1Database } from "@cloudflare/workers-types";
 import { jwtVerify } from "jose";
 
 interface CheckinRow {
