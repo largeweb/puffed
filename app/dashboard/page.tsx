@@ -1046,6 +1046,13 @@ export default function DashboardPage() {
               <FiHeart size={20} />
             </Link>
             <Link
+              href="/unsung"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
+              title="Unsung Heroes"
+            >
+              👏
+            </Link>
+            <Link
               href="/twins"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-cyan-400 transition-all"
               title="Smoke Time Twins"
@@ -2394,6 +2401,12 @@ export default function DashboardPage() {
                   className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
                 >
                   🌙 Nightcap Club
+                </Link>
+                <Link 
+                  href="/insomnia"
+                  className="text-xs text-gray-400 hover:text-gray-300 transition-colors"
+                >
+                  🌃 Insomnia Club
                 </Link>
               </div>
             </div>
