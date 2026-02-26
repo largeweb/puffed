@@ -50,8 +50,8 @@ export default function VerdictPage() {
         }
         return res.json();
       })
-      .then(json => {
-        if (json) setData(json);
+      .then((json: VerdictData | null) => {
+        if (json && json.userAvg !== undefined) setData(json);
         setLoading(false);
       });
   }, [router]);
