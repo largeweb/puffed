@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
-import type { D1Database } from "@cloudflare/workers-types";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
-
-interface Env {
-  DB: D1Database;
-}
 
 interface DbUser {
   id: number;
@@ -32,8 +27,8 @@ interface HourCount {
 
 export async function GET(req: NextRequest) {
   try {
-    const { env } = await getCloudflareContext();
-    const db = (env as Env).DB;
+    const { env } = getRequestContext();
+    const db = env.DB;
 
     // Get user from cookie
     const userId = req.cookies.get("user_id")?.value;
