@@ -95,7 +95,7 @@ export default function ConfessionalPage() {
         setShowForm(false);
         fetchData();
       } else {
-        const err = await res.json();
+        const err = await res.json() as { error?: string };
         alert(err.error || "Failed to submit");
       }
     } catch (error) {
