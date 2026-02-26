@@ -1,5 +1,5 @@
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { jwtVerify } from "jose";
+import { parseSessionCookie } from "@/lib/auth";
 
 interface CheckinRow {
   id: string;
@@ -47,26 +47,26 @@ function timeAgo(timestamp: number): string {
 export async function GET(request: Request) {
   try {
     const ctx = getRequestContext();
-    const db = ctx.env.DB as D1Database;
-    const jwtSecret = ctx.env.JWT_SECRET as string;
+    const db = ctx.env.DB;
 
     // Auth check
     const cookieHeader = request.headers.get("cookie") || "";
-    const tokenMatch = cookieHeader.match(/token=([^;]+)/);
-    const token = tokenMatch ? tokenMatch[1] : null;
+    const sessionId = parseSessionCookie(cookieHeader);
 
-    if (!token) {
+    if (!sessionId) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let userId: string;
-    try {
-      const secret = new TextEncoder().encode(jwtSecret);
-      const { payload } = await jwtVerify(token, secret);
-      userId = payload.userId as string;
-    } catch {
-      return Response.json({ error: "Invalid token" }, { status: 401 });
+    // Verify session and get user
+    const session = await db.prepare(`
+      SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?
+    `).bind(sessionId, Date.now()).first<{ user_id: string }>();
+
+    if (!session) {
+      return Response.json({ error: "Invalid session" }, { status: 401 });
     }
+
+    const userId = session.user_id;
 
     // Current time info (EST/EDT)
     const now = new Date();
