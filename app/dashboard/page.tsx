@@ -1063,6 +1063,13 @@ export default function DashboardPage() {
               <FiUsers size={20} />
             </Link>
             <Link
+              href="/soulmate"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
+              title="Cigar Soulmates"
+            >
+              💘
+            </Link>
+            <Link
               href="/spread-love"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-rose-400 transition-all"
               title="Spread the Love"
