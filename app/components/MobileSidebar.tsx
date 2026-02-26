@@ -40,6 +40,8 @@ const navGroups = [
   {
     title: "Tools",
     items: [
+      { href: "/weather", icon: <span>🌤️</span>, label: "Smoke Weather", color: "text-cyan-400" },
+      { href: "/tier-list", icon: <span>🎮</span>, label: "Brand Tier List", color: "text-pink-400" },
       { href: "/tonight", icon: <span>🌙</span>, label: "Tonight's Pick", color: "text-indigo-400" },
       { href: "/mood-match", icon: <span>🎯</span>, label: "Mood Match", color: "text-pink-400" },
       { href: "/pairing-guide", icon: <span>🥃</span>, label: "Pairing Guide", color: "text-purple-400" },
