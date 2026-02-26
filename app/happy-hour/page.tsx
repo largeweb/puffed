@@ -57,7 +57,7 @@ export default function HappyHourPage() {
   useEffect(() => {
     fetch('/api/happy-hour')
       .then(res => res.json())
-      .then(setData)
+      .then((json: HappyHourData) => setData(json))
       .finally(() => setLoading(false));
   }, []);
 
