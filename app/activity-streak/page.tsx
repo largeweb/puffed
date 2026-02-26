@@ -43,10 +43,10 @@ export default function ActivityStreakPage() {
           router.push("/login");
           return null;
         }
-        return res.json();
+        return res.json() as Promise<ActivityStreakData>;
       })
-      .then((d) => {
-        if (d) setData(d);
+      .then((d: ActivityStreakData | null) => {
+        if (d && d.currentStreak !== undefined) setData(d);
         setLoading(false);
       })
       .catch(() => setLoading(false));
