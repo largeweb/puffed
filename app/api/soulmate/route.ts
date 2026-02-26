@@ -1,17 +1,8 @@
-import { D1Database } from '@cloudflare/workers-types';
-import { getSession } from '@/lib/auth';
+import { getRequestContext } from '@cloudflare/next-on-pages';
+import { parseSessionCookie } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
-
-interface Env {
-  DB: D1Database;
-}
-
-interface UserRating {
-  brand: string;
-  rating: number;
-}
 
 interface SoulmateMatch {
   id: string;
@@ -36,17 +27,31 @@ interface SoulmateData {
 }
 
 export async function GET(request: NextRequest) {
-  const env = (process.env as unknown) as Env;
-  const session = await getSession();
-  const userId = session?.user?.id;
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
+    const cookieHeader = request.headers.get('cookie');
+    const sessionId = parseSessionCookie(cookieHeader);
+
+    if (!sessionId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    const { env } = getRequestContext();
+    const db = env.DB;
+
+    const now = Math.floor(Date.now() / 1000);
+    const session = await db
+      .prepare('SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?')
+      .bind(sessionId, now)
+      .first<{ user_id: string }>();
+
+    if (!session) {
+      return NextResponse.json({ error: 'Session expired' }, { status: 401 });
+    }
+
+    const userId = session.user_id;
+
     // Get current user's brand ratings
-    const userRatings = await env.DB.prepare(`
+    const userRatings = await db.prepare(`
       SELECT brand, AVG(rating) as avg_rating, COUNT(*) as count
       FROM checkins
       WHERE user_id = ?
@@ -69,7 +74,7 @@ export async function GET(request: NextRequest) {
     const topBrands = userRatings.results.slice(0, 5).map(r => r.brand);
 
     // Get user's personal stats
-    const personalStatsResult = await env.DB.prepare(`
+    const personalStatsResult = await db.prepare(`
       SELECT 
         COUNT(DISTINCT brand) as unique_brands,
         AVG(rating) as avg_rating,
@@ -79,7 +84,7 @@ export async function GET(request: NextRequest) {
     `).bind(userId).first<{ unique_brands: number; avg_rating: number; total_checkins: number }>();
 
     // Get all other users with their ratings
-    const otherUsers = await env.DB.prepare(`
+    const otherUsers = await db.prepare(`
       SELECT 
         u.id,
         u.username,
@@ -100,7 +105,7 @@ export async function GET(request: NextRequest) {
     }>();
 
     // Check who the user is following
-    const followingResult = await env.DB.prepare(`
+    const followingResult = await db.prepare(`
       SELECT following_id FROM follows WHERE follower_id = ?
     `).bind(userId).all<{ following_id: string }>();
 

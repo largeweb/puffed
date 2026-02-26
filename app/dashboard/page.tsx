@@ -421,6 +421,7 @@ export default function DashboardPage() {
   const [eveningData, setEveningData] = useState<EveningLoungeResponse | null>(null);
   const [lunchData, setLunchData] = useState<LunchLoungeResponse | null>(null);
   const [happyHourData, setHappyHourData] = useState<HappyHourResponse | null>(null);
+  const [hotTakesData, setHotTakesData] = useState<{ takes: { id: string; username: string; take: string; upvotes: number; downvotes: number }[]; isThursday: boolean; stats: { totalTakes: number; totalVotes: number } } | null>(null);
   const [afternoonData, setAfternoonData] = useState<AfternoonBreakResponse | null>(null);
   const [midweekData, setMidweekData] = useState<{ isWednesday: boolean; weekProgress: number; communityStats: { smokesThisWeek: number; activeSmokersThisWeek: number }; motivationalMessage: string } | null>(null);
   const [firstSmokeData, setFirstSmokeData] = useState<{ claimed: boolean; winner?: { username: string; brand: string; time: string; timeAgo: string }; totalSmokesToday: number; dayOfWeek: string } | null>(null);
@@ -691,6 +692,13 @@ export default function DashboardPage() {
         if (happyHourRes.ok) {
           const happyHourResData: HappyHourResponse = await happyHourRes.json();
           setHappyHourData(happyHourResData);
+        }
+
+        // Load hot takes (shows on Thursdays)
+        const hotTakesRes = await fetch("/api/hot-takes");
+        if (hotTakesRes.ok) {
+          const hotTakesResData = await hotTakesRes.json() as { takes: { id: string; username: string; take: string; upvotes: number; downvotes: number }[]; isThursday: boolean; stats: { totalTakes: number; totalVotes: number } };
+          setHotTakesData(hotTakesResData);
         }
 
         // Load midweek momentum (Wednesday celebration)
@@ -1203,6 +1211,13 @@ export default function DashboardPage() {
               🔙
             </Link>
             <Link
+              href="/hot-takes"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
+              title="Hot Take Thursday"
+            >
+              🔥
+            </Link>
+            <Link
               href="/milestones"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
               title="Milestones"
@@ -1257,6 +1272,13 @@ export default function DashboardPage() {
               title="Leaderboard"
             >
               <FiAward size={20} />
+            </Link>
+            <Link
+              href="/legends"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Smoke Legends - Hall of Fame"
+            >
+              🏛️
             </Link>
             <Link
               href="/throne"
@@ -1390,6 +1412,13 @@ export default function DashboardPage() {
               title="Mood Analytics"
             >
               🎭
+            </Link>
+            <Link
+              href="/roast"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-red-400 transition-all"
+              title="Smoke Roast"
+            >
+              🔥
             </Link>
             <Link
               href="/fortune"
@@ -2909,6 +2938,64 @@ export default function DashboardPage() {
                 className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
               >
                 View Happy Hour Lounge →
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Hot Take Thursday Section 🔥 */}
+        {hotTakesData?.isThursday && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.053 }}
+            className="glass rounded-2xl p-5 mb-6 border border-orange-500/30 bg-gradient-to-br from-orange-900/20 to-red-900/20"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="text-2xl">🔥</span>
+                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-medium text-orange-300">Hot Take Thursday</h2>
+                  <p className="text-xs text-red-400">Share your spiciest opinions!</p>
+                </div>
+              </div>
+              <span className="text-xs text-orange-400/60">🌶️ Weekly</span>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-orange-300">{hotTakesData.stats?.totalTakes || 0}</div>
+                <div className="text-[10px] text-gray-500">Hot Takes</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-red-300">{hotTakesData.stats?.totalVotes || 0}</div>
+                <div className="text-[10px] text-gray-500">Votes</div>
+              </div>
+            </div>
+
+            {/* Top hot take preview */}
+            {hotTakesData.takes && hotTakesData.takes.length > 0 && (
+              <div className="bg-black/20 rounded-xl p-3 mb-3">
+                <p className="text-xs text-gray-500 mb-1">🔥 Top hot take:</p>
+                <p className="text-sm text-white line-clamp-2">&quot;{hotTakesData.takes[0].take}&quot;</p>
+                <p className="text-xs text-orange-400/60 mt-1">— {hotTakesData.takes[0].username}</p>
+              </div>
+            )}
+
+            {/* CTA */}
+            <div className="mt-4 pt-4 border-t border-white/10 text-center">
+              <p className="text-xs text-orange-400/80 italic mb-2">
+                &quot;Controversy drives engagement!&quot; 🌶️
+              </p>
+              <Link 
+                href="/hot-takes"
+                className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
+              >
+                Join the Debate →
               </Link>
             </div>
           </motion.div>
