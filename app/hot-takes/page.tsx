@@ -85,7 +85,7 @@ export default function HotTakesPage() {
         setUserPosted(true);
         loadTakes();
       } else {
-        const data = await res.json();
+        const data = await res.json() as { error?: string };
         alert(data.error || "Failed to submit");
       }
     } catch (error) {
