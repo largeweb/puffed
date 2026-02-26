@@ -672,7 +672,7 @@ export default function DashboardPage() {
         // Load midweek momentum (Wednesday celebration)
         const midweekRes = await fetch("/api/midweek-momentum");
         if (midweekRes.ok) {
-          const midweekResData = await midweekRes.json();
+          const midweekResData = await midweekRes.json() as { isWednesday: boolean; weekProgress: number; communityStats: { smokesThisWeek: number; activeSmokersThisWeek: number }; motivationalMessage: string };
           setMidweekData(midweekResData);
         }
 
