@@ -1,362 +1,287 @@
-"use client";
+'use client';
 
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { FiArrowLeft, FiRefreshCw, FiStar, FiUsers, FiHash, FiMessageCircle, FiTarget } from "react-icons/fi";
-import { getFlavorTag } from "@/lib/flavors";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { 
+  FiRefreshCw, 
+  FiStar, 
+  FiArrowLeft,
+  FiHeart,
+  FiUser,
+  FiExternalLink
+} from 'react-icons/fi';
 
-export const runtime = "edge";
+interface Recommendation {
+  id: number;
+  brand: string;
+  product: string | null;
+  rating: number;
+  review: string | null;
+  image_url: string | null;
+  created_at: number;
+  username: string;
+  avatar_url: string | null;
+  like_count: number;
+}
 
-interface LuckyCigarData {
-  cigar: {
-    brand: string;
-    product: string | null;
-    avgRating: number | null;
-    totalCheckins: number;
-    uniqueSmokers: number;
-    topFlavors: string[];
-    recentSmoker: {
-      username: string;
-      rating: number | null;
-      review: string | null;
-      timeAgo: string;
-    } | null;
-  } | null;
-  triedBrands: string[];
-  communityBrands: number;
-  discoveryPercentage: number;
-  spinsToday: number;
+interface RouletteResult {
+  recommendation: Recommendation | null;
+  source: string;
   message: string;
-  error?: string;
 }
 
 export default function RoulettePage() {
-  const router = useRouter();
-  const [data, setData] = useState<LuckyCigarData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<RouletteResult | null>(null);
   const [spinning, setSpinning] = useState(false);
-  const [hasSpun, setHasSpun] = useState(false);
-
+  const [spinCount, setSpinCount] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    // Get current user
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(data => {
+        if (data.user) {
+          setUserId(data.user.id);
+        }
+      })
+      .catch(() => {});
+  }, []);
+  
   const spin = async () => {
     setSpinning(true);
-    setLoading(true);
+    setResult(null);
     
-    // Dramatic pause for effect
+    // Dramatic pause for the spin effect
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     try {
-      const res = await fetch("/api/lucky-cigar");
-      if (res.ok) {
-        const result = await res.json() as LuckyCigarData;
-        setData(result);
-        setHasSpun(true);
-      }
-    } catch (error) {
-      console.error("Error fetching lucky cigar:", error);
+      const params = new URLSearchParams();
+      params.set('minRating', '4');
+      if (userId) params.set('userId', userId);
+      
+      const res = await fetch(`/api/rating-roulette?${params}`);
+      const data = await res.json();
+      setResult(data);
+      setSpinCount(prev => prev + 1);
+    } catch {
+      setResult({
+        recommendation: null,
+        source: 'error',
+        message: 'Something went wrong. Try again!'
+      });
     } finally {
-      setLoading(false);
       setSpinning(false);
     }
   };
-
+  
+  const formatDate = (ts: number) => {
+    return new Date(ts).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+  
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-950/20 to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-gray-900 to-amber-950 text-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600/20 via-pink-500/20 to-purple-600/20 border-b border-purple-500/20">
-        <div className="max-w-2xl mx-auto p-4">
-          <div className="flex items-center gap-3 mb-4">
-            <button 
-              onClick={() => router.back()}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <FiArrowLeft className="text-white" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                🎰 Lucky Cigar
-              </h1>
-              <p className="text-sm text-purple-200/70">Discover something new!</p>
-            </div>
-          </div>
+      <div className="sticky top-0 z-50 backdrop-blur-md bg-black/40 border-b border-purple-500/20">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/dashboard" className="text-purple-400 hover:text-purple-300">
+            <FiArrowLeft size={24} />
+          </Link>
+          <h1 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-amber-400 bg-clip-text text-transparent">
+            🎰 Rating Roulette
+          </h1>
+          <div className="w-6" />
         </div>
       </div>
-
-      <div className="max-w-2xl mx-auto p-4 space-y-6">
-        {/* Spin Button Area */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass rounded-2xl p-8 text-center"
-        >
-          {!hasSpun ? (
-            <>
-              <motion.div
-                animate={spinning ? { rotate: 360 } : {}}
-                transition={{ duration: 1, repeat: spinning ? Infinity : 0, ease: "linear" }}
-                className="text-8xl mb-6"
-              >
-                🎰
-              </motion.div>
-              <h2 className="text-xl font-bold text-white mb-2">
-                Ready to discover?
-              </h2>
-              <p className="text-gray-400 mb-6">
-                Spin the wheel to get a random cigar recommendation from the community that you haven&apos;t tried yet!
-              </p>
-              <button
-                onClick={spin}
-                disabled={loading}
-                className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl text-lg hover:opacity-90 transition-all active:scale-95 disabled:opacity-50"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <FiRefreshCw className="animate-spin" />
-                    Spinning...
-                  </span>
-                ) : (
-                  "🎲 Spin the Wheel!"
+      
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <div className="text-center mb-8">
+          <div className="text-6xl mb-4 animate-bounce">🎰</div>
+          <h2 className="text-2xl font-bold mb-2">Discover Your Next Smoke</h2>
+          <p className="text-gray-400">
+            Spin the wheel and get a random highly-rated cigar from the community!
+          </p>
+          {spinCount > 0 && (
+            <p className="text-sm text-purple-400 mt-2">
+              Spins today: {spinCount}
+            </p>
+          )}
+        </div>
+        
+        {/* Spin Button */}
+        <div className="flex justify-center mb-8">
+          <button
+            onClick={spin}
+            disabled={spinning}
+            className={`
+              relative px-8 py-4 rounded-2xl font-bold text-xl
+              transition-all duration-300 transform
+              ${spinning 
+                ? 'bg-purple-800 text-purple-300 cursor-wait scale-95' 
+                : 'bg-gradient-to-r from-purple-600 to-amber-600 hover:from-purple-500 hover:to-amber-500 hover:scale-105 active:scale-95'
+              }
+              shadow-lg shadow-purple-500/30
+            `}
+          >
+            <span className={`flex items-center gap-3 ${spinning ? 'opacity-50' : ''}`}>
+              <FiRefreshCw 
+                size={24} 
+                className={spinning ? 'animate-spin' : ''} 
+              />
+              {spinning ? 'Spinning...' : 'Spin the Wheel!'}
+            </span>
+            
+            {/* Glow effect */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-400 to-amber-400 opacity-0 hover:opacity-20 transition-opacity" />
+          </button>
+        </div>
+        
+        {/* Result Card */}
+        {result && (
+          <div className={`
+            transition-all duration-500 transform
+            ${result.recommendation ? 'opacity-100 translate-y-0' : 'opacity-70'}
+          `}>
+            {result.recommendation ? (
+              <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl shadow-purple-500/10">
+                {/* Success Header */}
+                <div className="bg-gradient-to-r from-purple-600/30 to-amber-600/30 px-4 py-3 border-b border-purple-500/20">
+                  <p className="text-center text-sm font-medium text-purple-200">
+                    ✨ {result.message}
+                  </p>
+                </div>
+                
+                {/* Image */}
+                {result.recommendation.image_url && (
+                  <div className="relative aspect-video">
+                    <Image
+                      src={result.recommendation.image_url}
+                      alt={result.recommendation.brand}
+                      fill
+                      className="object-cover"
+                    />
+                    {/* Rating Badge */}
+                    <div className="absolute top-3 right-3 bg-amber-500 text-black px-3 py-1 rounded-full font-bold flex items-center gap-1">
+                      <FiStar fill="currentColor" size={16} />
+                      {result.recommendation.rating}
+                    </div>
+                  </div>
                 )}
-              </button>
-            </>
-          ) : (
-            <AnimatePresence mode="wait">
-              {spinning ? (
-                <motion.div
-                  key="spinning"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 0.5, repeat: Infinity, ease: "linear" }}
-                    className="text-8xl mb-4"
-                  >
-                    🎰
-                  </motion.div>
-                  <p className="text-purple-400 animate-pulse">Finding your destiny...</p>
-                </motion.div>
-              ) : data?.cigar ? (
-                <motion.div
-                  key="result"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "spring", damping: 15 }}
-                >
-                  {/* Message */}
-                  <p className="text-purple-400 text-sm mb-4">{data.message}</p>
-                  
-                  {/* Brand Name */}
-                  <motion.h2
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-3xl font-bold text-white mb-2"
-                  >
-                    {data.cigar.brand}
-                  </motion.h2>
-                  
-                  {/* Rating */}
-                  {data.cigar.avgRating && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                      className="flex items-center justify-center gap-1 text-amber-400 mb-4"
+                
+                {/* Content */}
+                <div className="p-5">
+                  {/* Brand & Product */}
+                  <div className="mb-4">
+                    <Link 
+                      href={`/cigar/${encodeURIComponent(result.recommendation.brand)}`}
+                      className="text-xl font-bold text-white hover:text-amber-400 transition-colors flex items-center gap-2"
                     >
-                      <FiStar fill="currentColor" />
-                      <span className="font-bold">{data.cigar.avgRating}</span>
-                      <span className="text-gray-400 text-sm">avg rating</span>
-                    </motion.div>
+                      {result.recommendation.brand}
+                      <FiExternalLink size={16} className="text-gray-500" />
+                    </Link>
+                    {result.recommendation.product && (
+                      <p className="text-amber-400">{result.recommendation.product}</p>
+                    )}
+                  </div>
+                  
+                  {/* Review */}
+                  {result.recommendation.review && (
+                    <p className="text-gray-300 mb-4 italic">
+                      &ldquo;{result.recommendation.review}&rdquo;
+                    </p>
                   )}
                   
-                  {/* Stats */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    className="flex justify-center gap-6 mb-6"
-                  >
-                    <div className="text-center">
-                      <div className="flex items-center gap-1 text-pink-400">
-                        <FiHash />
-                        <span className="font-bold">{data.cigar.totalCheckins}</span>
-                      </div>
-                      <div className="text-xs text-gray-400">check-ins</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center gap-1 text-purple-400">
-                        <FiUsers />
-                        <span className="font-bold">{data.cigar.uniqueSmokers}</span>
-                      </div>
-                      <div className="text-xs text-gray-400">smokers</div>
-                    </div>
-                  </motion.div>
-                  
-                  {/* Flavors */}
-                  {data.cigar.topFlavors.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                      className="flex flex-wrap justify-center gap-2 mb-6"
+                  {/* Meta */}
+                  <div className="flex items-center justify-between text-sm text-gray-400">
+                    <Link 
+                      href={`/profile/${result.recommendation.username}`}
+                      className="flex items-center gap-2 hover:text-white transition-colors"
                     >
-                      {data.cigar.topFlavors.map(flavor => {
-                        const tag = getFlavorTag(flavor);
-                        return tag ? (
-                          <span
-                            key={flavor}
-                            className="px-3 py-1 rounded-full text-xs bg-amber-500/20 text-amber-300"
-                          >
-                            {tag.emoji} {tag.label}
-                          </span>
-                        ) : null;
-                      })}
-                    </motion.div>
-                  )}
-                  
-                  {/* Recent Review */}
-                  {data.cigar.recentSmoker && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.6 }}
-                      className="bg-white/5 rounded-xl p-4 mb-6 text-left"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <FiMessageCircle className="text-gray-400" />
-                        <Link 
-                          href={`/user/${data.cigar.recentSmoker.username}`}
-                          className="text-sm text-purple-400 hover:underline"
-                        >
-                          @{data.cigar.recentSmoker.username}
-                        </Link>
-                        <span className="text-xs text-gray-500">
-                          {data.cigar.recentSmoker.timeAgo}
-                        </span>
-                        {data.cigar.recentSmoker.rating && (
-                          <span className="text-amber-400 text-sm ml-auto">
-                            {data.cigar.recentSmoker.rating}★
-                          </span>
-                        )}
-                      </div>
-                      {data.cigar.recentSmoker.review && (
-                        <p className="text-gray-300 text-sm italic">
-                          &quot;{data.cigar.recentSmoker.review}&quot;
-                        </p>
+                      {result.recommendation.avatar_url ? (
+                        <Image
+                          src={result.recommendation.avatar_url}
+                          alt={result.recommendation.username}
+                          width={24}
+                          height={24}
+                          className="rounded-full"
+                        />
+                      ) : (
+                        <FiUser className="w-6 h-6 p-1 bg-gray-700 rounded-full" />
                       )}
-                    </motion.div>
-                  )}
+                      @{result.recommendation.username}
+                    </Link>
+                    
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center gap-1">
+                        <FiHeart size={14} className="text-pink-400" />
+                        {result.recommendation.like_count}
+                      </span>
+                      <span>{formatDate(result.recommendation.created_at)}</span>
+                    </div>
+                  </div>
                   
-                  {/* Actions */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.7 }}
-                    className="flex gap-3 justify-center"
-                  >
+                  {/* CTA */}
+                  <div className="mt-4 pt-4 border-t border-gray-700 flex gap-3">
                     <Link
-                      href={`/cigar/${encodeURIComponent(data.cigar.brand)}`}
-                      className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-gray-900 font-semibold rounded-xl hover:opacity-90 transition-all"
+                      href={`/checkin/${result.recommendation.id}`}
+                      className="flex-1 text-center py-2 bg-purple-600/30 hover:bg-purple-600/50 rounded-lg text-purple-300 transition-colors"
                     >
-                      View Brand →
+                      View Check-in
                     </Link>
                     <button
                       onClick={spin}
-                      disabled={loading}
-                      className="px-6 py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all flex items-center gap-2"
+                      disabled={spinning}
+                      className="flex-1 py-2 bg-amber-600/30 hover:bg-amber-600/50 rounded-lg text-amber-300 transition-colors"
                     >
-                      <FiRefreshCw className={loading ? "animate-spin" : ""} />
                       Spin Again
                     </button>
-                  </motion.div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="no-result"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <div className="text-6xl mb-4">🏆</div>
-                  <h2 className="text-xl font-bold text-white mb-2">
-                    You&apos;ve tried them all!
-                  </h2>
-                  <p className="text-gray-400 mb-6">
-                    {data?.message || "Amazing! You've sampled every brand in our community. True connoisseur status!"}
-                  </p>
-                  <Link
-                    href="/discover"
-                    className="inline-block px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl"
-                  >
-                    Explore Community
-                  </Link>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          )}
-        </motion.div>
-
-        {/* Discovery Stats */}
-        {data && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="glass rounded-xl p-4"
-          >
-            <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
-              <FiTarget className="text-purple-400" />
-              Your Discovery Progress
-            </h3>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-400">Brands Explored</span>
-                  <span className="text-white font-semibold">
-                    {data.triedBrands.length} / {data.communityBrands}
-                  </span>
-                </div>
-                <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${data.discoveryPercentage}%` }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                    className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
-                  />
+                  </div>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 text-center">
-                You&apos;ve explored {data.discoveryPercentage}% of the community&apos;s brands!
+            ) : (
+              <div className="text-center py-12 bg-gray-800/50 rounded-2xl border border-gray-700">
+                <p className="text-xl text-gray-400">{result.message}</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Try spinning again or log a smoke to help others discover!
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Tips Section */}
+        {!result && !spinning && (
+          <div className="mt-8 grid gap-4">
+            <div className="bg-gray-800/40 rounded-xl p-4 border border-purple-500/20">
+              <h3 className="font-bold text-purple-300 mb-2">🎯 How it works</h3>
+              <ul className="text-sm text-gray-400 space-y-1">
+                <li>• Finds highly-rated cigars (4+ stars)</li>
+                <li>• Excludes your own check-ins</li>
+                <li>• Random selection each spin</li>
+                <li>• Discover cigars you might love!</li>
+              </ul>
+            </div>
+            
+            <div className="bg-gray-800/40 rounded-xl p-4 border border-amber-500/20">
+              <h3 className="font-bold text-amber-300 mb-2">💡 Pro tip</h3>
+              <p className="text-sm text-gray-400">
+                Found something good? Tap the brand name to see all check-ins for that cigar and learn more!
               </p>
             </div>
-          </motion.div>
+          </div>
         )}
-
-        {/* How it works */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="glass rounded-xl p-4"
-        >
-          <h3 className="text-sm font-semibold text-gray-400 mb-3">How Lucky Cigar Works</h3>
-          <ul className="space-y-2 text-sm text-gray-300">
-            <li className="flex items-start gap-2">
-              <span className="text-purple-400">🎰</span>
-              <span>Spin to get a random cigar you haven&apos;t tried yet</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-pink-400">⭐</span>
-              <span>See community ratings and recent reviews</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-amber-400">🎯</span>
-              <span>Track your discovery progress across all brands</span>
-            </li>
-          </ul>
-        </motion.div>
+        
+        {/* Stats Teaser */}
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-500">
+            Powered by community ratings from 36+ check-ins 🚬
+          </p>
+        </div>
       </div>
     </div>
   );

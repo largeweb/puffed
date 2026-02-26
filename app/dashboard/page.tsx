@@ -1169,6 +1169,13 @@ export default function DashboardPage() {
               <FiBarChart2 size={20} />
             </Link>
             <Link
+              href="/weekly-wrap"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-fuchsia-400 transition-all"
+              title="Weekly Wrap"
+            >
+              📊
+            </Link>
+            <Link
               href="/you-vs-community"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-blue-400 transition-all"
               title="You vs Community"
@@ -1360,7 +1367,7 @@ export default function DashboardPage() {
             <Link
               href="/roulette"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
-              title="Lucky Cigar"
+              title="Rating Roulette"
             >
               🎰
             </Link>
