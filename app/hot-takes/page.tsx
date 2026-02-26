@@ -107,7 +107,7 @@ export default function HotTakesPage() {
       });
 
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json() as { upvotes: number; downvotes: number; userVote: number };
         setTakes(prev => prev.map(t => 
           t.id === takeId 
             ? { ...t, upvotes: data.upvotes, downvotes: data.downvotes, user_vote: data.userVote }
