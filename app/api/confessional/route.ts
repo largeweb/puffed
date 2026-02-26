@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const body = await request.json();
+    const body = await request.json() as { confession?: string; mood?: string };
     const { confession, mood } = body;
 
     if (!confession || confession.trim().length === 0) {

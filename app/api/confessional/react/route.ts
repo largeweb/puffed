@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user_id;
-    const body = await request.json();
+    const body = await request.json() as { confessionId?: string };
     const { confessionId } = body;
 
     if (!confessionId) {
