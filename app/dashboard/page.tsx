@@ -1130,6 +1130,13 @@ export default function DashboardPage() {
               <FiBarChart2 size={20} />
             </Link>
             <Link
+              href="/you-vs-community"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-blue-400 transition-all"
+              title="You vs Community"
+            >
+              <FiUsers size={20} />
+            </Link>
+            <Link
               href="/verdict"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="The Verdict - Your Rating Style"
@@ -1156,6 +1163,13 @@ export default function DashboardPage() {
               title="Daily Trivia"
             >
               <FiHelpCircle size={20} />
+            </Link>
+            <Link
+              href="/throwback"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Throwback Thursday"
+            >
+              🔙
             </Link>
             <Link
               href="/milestones"

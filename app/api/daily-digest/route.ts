@@ -1,19 +1,33 @@
 import { getRequestContext } from '@cloudflare/next-on-pages';
 import { NextResponse } from 'next/server';
-import { verifySession } from '@/lib/auth';
+import { parseSessionCookie } from '@/lib/auth';
 
 export const runtime = 'edge';
 
 export async function GET(request: Request) {
   try {
-    const session = await verifySession(request);
+    const { env } = getRequestContext();
+    const db = env.DB;
+    
+    // Get current user from session
+    const cookieHeader = request.headers.get('cookie');
+    const sessionId = parseSessionCookie(cookieHeader);
+    
+    if (!sessionId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    const nowUnix = Math.floor(Date.now() / 1000);
+    const session = await db
+      .prepare('SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?')
+      .bind(sessionId, nowUnix)
+      .first<{ user_id: string }>();
+    
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { env } = getRequestContext();
-    const db = env.DB;
-    const userId = session.userId;
+    
+    const userId = session.user_id;
 
     // Get user info
     const user = await db.prepare(

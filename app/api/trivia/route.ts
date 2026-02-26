@@ -350,7 +350,7 @@ export async function POST(request: NextRequest) {
   try {
     const { env } = getRequestContext();
     const db = env.DB;
-    const body = await request.json();
+    const body = await request.json() as { userId: string; answerIndex: number };
     const { userId, answerIndex } = body;
     
     if (!userId || answerIndex === undefined) {
