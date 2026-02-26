@@ -2408,6 +2408,12 @@ export default function DashboardPage() {
                 >
                   🌃 Insomnia Club
                 </Link>
+                <Link 
+                  href="/confessional"
+                  className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+                >
+                  🕯️ Confessional
+                </Link>
               </div>
             </div>
           </motion.div>
