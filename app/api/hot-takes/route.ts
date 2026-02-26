@@ -82,14 +82,14 @@ export async function GET(request: NextRequest) {
       WHERE ht.created_at >= ?
       GROUP BY ht.id
       ORDER BY (COALESCE(SUM(CASE WHEN htv.vote = 1 THEN 1 ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN htv.vote = -1 THEN 1 ELSE 0 END), 0)) DESC, ht.created_at DESC
-    `).bind(weekStart).all();
+    `).bind(weekStart).all<HotTake>();
 
-    const results = takes.results || [];
+    const results = (takes.results || []) as HotTake[];
 
     // If user is logged in, get their votes
     let userVotes: Record<string, number> = {};
     if (currentUserId && results.length > 0) {
-      const takeIds = results.map(t => (t as HotTake).id);
+      const takeIds = results.map(t => t.id);
       const votes = await db.prepare(`
         SELECT take_id, vote FROM hot_take_votes 
         WHERE user_id = ? AND take_id IN (${takeIds.map(() => '?').join(',')})
