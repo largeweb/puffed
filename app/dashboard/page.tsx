@@ -1298,6 +1298,13 @@ export default function DashboardPage() {
               <FiCloud size={20} />
             </Link>
             <Link
+              href="/digest"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Daily Digest"
+            >
+              📋
+            </Link>
+            <Link
               href="/flavor-dna"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="Your Flavor DNA"
