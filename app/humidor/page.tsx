@@ -57,7 +57,7 @@ export default function HumidorPage() {
       }
 
       const res = await fetch("/api/humidor");
-      const data = await res.json();
+      const data = await res.json() as { items?: HumidorItem[]; stats?: HumidorStats };
       setItems(data.items || []);
       setStats(data.stats || null);
     } catch (error) {
