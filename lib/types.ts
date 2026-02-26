@@ -597,6 +597,42 @@ export interface HappyHourResponse {
   error?: string;
 }
 
+// Afternoon Break (2pm-4pm EST)
+export interface AfternoonSmoker {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  afternoon_smokes: number;
+  first_afternoon_smoke: number;
+}
+
+export interface AfternoonBreakResponse {
+  isAfternoonBreak: boolean;
+  currentHour: number;
+  vibeText: string;
+  isWeekday: boolean;
+  productivityTip: string;
+  todaySmokers: AfternoonSmoker[];
+  todayCount: number;
+  platformStats: {
+    totalAfternoonSmokes: number;
+    uniqueAfternoonSmokers: number;
+    afternoonDays: number;
+  };
+  leaderboard: Array<{
+    id: string;
+    username: string;
+    avatar_url: string | null;
+    total_afternoon_smokes: number;
+    favorite_brand: string | null;
+  }>;
+  personalStats: {
+    totalAfternoonSmokes: number;
+    favoriteAfternoonBrand: string | null;
+    percentile: number;
+  } | null;
+}
+
 // Trending Week (momentum tracking)
 export interface TrendingWeekBrand {
   brand: string;

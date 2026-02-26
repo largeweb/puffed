@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity, FiRss, FiTarget, FiMoon, FiMapPin, FiHeart, FiCloud, FiHelpCircle } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData, EveningLoungeResponse, EveningSmoker, TonightsPick, DailyTip, DailyChallengeData, LunchLoungeResponse, HappyHourResponse, HappyHourSmoker } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData, EveningLoungeResponse, EveningSmoker, TonightsPick, DailyTip, DailyChallengeData, LunchLoungeResponse, HappyHourResponse, HappyHourSmoker, AfternoonBreakResponse, AfternoonSmoker } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus, FiMenu } from "react-icons/fi";
 import MobileSidebar from "../components/MobileSidebar";
@@ -421,6 +421,7 @@ export default function DashboardPage() {
   const [eveningData, setEveningData] = useState<EveningLoungeResponse | null>(null);
   const [lunchData, setLunchData] = useState<LunchLoungeResponse | null>(null);
   const [happyHourData, setHappyHourData] = useState<HappyHourResponse | null>(null);
+  const [afternoonData, setAfternoonData] = useState<AfternoonBreakResponse | null>(null);
   const [midweekData, setMidweekData] = useState<{ isWednesday: boolean; weekProgress: number; communityStats: { smokesThisWeek: number; activeSmokersThisWeek: number }; motivationalMessage: string } | null>(null);
   const [firstSmokeData, setFirstSmokeData] = useState<{ claimed: boolean; winner?: { username: string; brand: string; time: string; timeAgo: string }; totalSmokesToday: number; dayOfWeek: string } | null>(null);
   const [nightThoughts, setNightThoughts] = useState<NightThought[]>([]);
@@ -676,6 +677,13 @@ export default function DashboardPage() {
         if (lunchRes.ok) {
           const lunchResData: LunchLoungeResponse = await lunchRes.json();
           setLunchData(lunchResData);
+        }
+
+        // Load afternoon break (shows 2 PM - 4 PM)
+        const afternoonRes = await fetch("/api/afternoon-break");
+        if (afternoonRes.ok) {
+          const afternoonResData: AfternoonBreakResponse = await afternoonRes.json();
+          setAfternoonData(afternoonResData);
         }
 
         // Load happy hour (shows 4 PM - 7 PM)
@@ -1312,6 +1320,13 @@ export default function DashboardPage() {
               title="Happy Hour - After Work Celebration"
             >
               🍻
+            </Link>
+            <Link
+              href="/weekend"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
+              title="Weekend Warmup"
+            >
+              🌴
             </Link>
             <Link
               href="/roulette"
@@ -2724,6 +2739,91 @@ export default function DashboardPage() {
                 className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
               >
                 View Lunch Break Lounge →
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Afternoon Break Section - Post-Lunch Reset ☕ */}
+        {afternoonData?.isAfternoonBreak && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.051 }}
+            className="glass rounded-2xl p-5 mb-6 border border-teal-500/30 bg-gradient-to-br from-teal-900/20 to-cyan-900/20"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="text-2xl">☕</span>
+                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-teal-400 rounded-full animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-medium text-teal-300">Afternoon Break</h2>
+                  <p className="text-xs text-cyan-400">{afternoonData.vibeText}</p>
+                </div>
+              </div>
+              <span className="text-xs text-teal-400/60">2 PM - 4 PM</span>
+            </div>
+
+            {/* Productivity tip */}
+            {afternoonData.productivityTip && (
+              <div className="bg-teal-500/10 rounded-lg p-3 mb-4 border border-teal-500/20">
+                <p className="text-xs text-teal-300">{afternoonData.productivityTip}</p>
+              </div>
+            )}
+
+            {/* Afternoon break stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-teal-300">{afternoonData.todayCount}</div>
+                <div className="text-[10px] text-gray-500">Today</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-cyan-300">{afternoonData.platformStats?.totalAfternoonSmokes || 0}</div>
+                <div className="text-[10px] text-gray-500">All-Time</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-teal-200">{afternoonData.personalStats?.totalAfternoonSmokes || 0}</div>
+                <div className="text-[10px] text-gray-500">Your Breaks</div>
+              </div>
+            </div>
+
+            {/* Today's afternoon breakers */}
+            {afternoonData.todaySmokers && afternoonData.todaySmokers.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-500 mb-2">☕ Taking an afternoon break:</p>
+                <div className="flex flex-wrap gap-2">
+                  {afternoonData.todaySmokers.slice(0, 6).map((smoker: AfternoonSmoker, idx: number) => (
+                    <Link
+                      key={smoker.user_id}
+                      href={`/user/${smoker.username}`}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-teal-500/10 hover:bg-teal-500/20 transition-colors"
+                    >
+                      {idx < 3 && <span className="text-xs">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>}
+                      <span className="text-xs text-teal-300">{smoker.username}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {afternoonData.todaySmokers?.length === 0 && (
+              <p className="text-xs text-gray-500 text-center py-2">
+                ☕ Be the first to take an afternoon break today!
+              </p>
+            )}
+
+            {/* Link to full page */}
+            <div className="mt-4 pt-4 border-t border-white/10 text-center">
+              <p className="text-xs text-teal-400/80 italic mb-2">
+                &quot;Beat the slump, you&apos;ve got this!&quot; 💪
+              </p>
+              <Link 
+                href="/afternoon"
+                className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
+              >
+                View Afternoon Break Lounge →
               </Link>
             </div>
           </motion.div>
