@@ -432,6 +432,7 @@ export default function DashboardPage() {
   const [tonightsPick, setTonightsPick] = useState<TonightsPick | null>(null);
   const [dailyTip, setDailyTip] = useState<DailyTip | null>(null);
   const [dailyChallenge, setDailyChallenge] = useState<DailyChallengeData | null>(null);
+  const [communityGoals, setCommunityGoals] = useState<{ goals: { id: string; name: string; icon: string; target: number; current: number }[]; summary: { overallProgress: number; completedGoals: number; totalGoals: number; daysRemaining: number; encouragement: string } } | null>(null);
   const router = useRouter();
 
   // Quick Smoke handler - one-tap to log your go-to brand
@@ -756,6 +757,13 @@ export default function DashboardPage() {
         if (milestonesRes.ok) {
           const milestonesData: CommunityMilestonesResponse = await milestonesRes.json();
           setCommunityMilestones(milestonesData);
+        }
+
+        // Load community goals
+        const communityGoalsRes = await fetch("/api/community-goals");
+        if (communityGoalsRes.ok) {
+          const communityGoalsData = await communityGoalsRes.json();
+          setCommunityGoals(communityGoalsData);
         }
 
         // Load suggested follows (People Like You)
@@ -1116,6 +1124,13 @@ export default function DashboardPage() {
               title="Milestones"
             >
               <FiTarget size={20} />
+            </Link>
+            <Link
+              href="/goals"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
+              title="Community Goals"
+            >
+              🎯
             </Link>
             <Link
               href="/personality"
@@ -1523,6 +1538,84 @@ export default function DashboardPage() {
                 </p>
                 <p className="text-xs text-gray-500">Per User</p>
               </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Community Goals 🎯🌐 */}
+        {communityGoals && communityGoals.summary && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.03 }}
+            className="glass rounded-2xl p-5 mb-6 border border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-cyan-500/5"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🎯</span>
+                <div>
+                  <h2 className="text-sm font-medium text-emerald-400">Community Goals</h2>
+                  <p className="text-xs text-gray-500">{communityGoals.summary.daysRemaining} days left this week</p>
+                </div>
+              </div>
+              <Link
+                href="/goals"
+                className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                View all →
+              </Link>
+            </div>
+
+            {/* Overall progress ring */}
+            <div className="flex items-center gap-4 mb-3">
+              <div className="relative w-16 h-16">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-zinc-800" />
+                  <circle
+                    cx="32" cy="32" r="28" stroke="url(#goalsGradient)" strokeWidth="4" fill="transparent"
+                    strokeDasharray={`${communityGoals.summary.overallProgress * 1.76} 176`}
+                    strokeLinecap="round"
+                    className="transition-all duration-1000"
+                  />
+                  <defs>
+                    <linearGradient id="goalsGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-lg font-bold text-white">{communityGoals.summary.overallProgress}%</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-emerald-400">{communityGoals.summary.encouragement}</p>
+                <p className="text-xs text-gray-500 mt-1">{communityGoals.summary.completedGoals}/{communityGoals.summary.totalGoals} goals complete</p>
+              </div>
+            </div>
+
+            {/* Mini goal cards */}
+            <div className="grid grid-cols-2 gap-2">
+              {communityGoals.goals.slice(0, 4).map((goal) => {
+                const progress = Math.min((goal.current / goal.target) * 100, 100);
+                const isComplete = goal.current >= goal.target;
+                return (
+                  <div key={goal.id} className={`rounded-lg p-2 ${isComplete ? 'bg-emerald-500/20 border border-emerald-500/30' : 'bg-white/5'}`}>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="text-sm">{goal.icon}</span>
+                      <span className="text-xs text-gray-300 truncate">{goal.name}</span>
+                      {isComplete && <span className="text-emerald-400">✓</span>}
+                    </div>
+                    <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 ${isComplete ? 'bg-emerald-500' : 'bg-gradient-to-r from-emerald-500 to-cyan-500'}`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">{goal.current}/{goal.target}</p>
+                  </div>
+                );
+              })}
             </div>
           </motion.div>
         )}
