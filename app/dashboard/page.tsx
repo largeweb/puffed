@@ -1186,6 +1186,13 @@ export default function DashboardPage() {
               <FiAward size={20} />
             </Link>
             <Link
+              href="/throne"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
+              title="Throne Room - Champions"
+            >
+              🏰
+            </Link>
+            <Link
               href="/achievements"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-500 transition-all"
               title="Achievement Showcase"

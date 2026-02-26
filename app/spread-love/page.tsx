@@ -41,7 +41,7 @@ export default function SpreadLovePage() {
         router.push("/");
         return;
       }
-      const data = await res.json();
+      const data = await res.json() as { lovedCheckin?: CheckinToLove; message?: string; lovesSpreadToday?: number };
       if (data.lovedCheckin) {
         setCheckin(data.lovedCheckin);
         setAllLoved(false);
