@@ -51,7 +51,7 @@ export default function MidweekMomentumPage() {
     try {
       const response = await fetch("/api/midweek-momentum");
       if (!response.ok) throw new Error("Failed to fetch");
-      const result = await response.json();
+      const result = await response.json() as MidweekData;
       setData(result);
     } catch (err) {
       setError("Failed to load midweek data");
