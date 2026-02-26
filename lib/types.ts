@@ -523,6 +523,80 @@ export interface EveningLoungeResponse {
   error?: string;
 }
 
+// Lunch Break Lounge (11am - 2pm)
+export interface LunchSmoker {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  lunch_smokes: number;
+  first_lunch_smoke: number;
+}
+
+export interface LunchLoungeResponse {
+  isLunchTime: boolean;
+  currentHour: number;
+  vibeText: string;
+  todaySmokers: LunchSmoker[];
+  todayCount: number;
+  platformStats: {
+    totalLunchSmokes: number;
+    uniqueLunchSmokers: number;
+    lunchDays: number;
+  };
+  leaderboard: Array<{
+    id: string;
+    username: string;
+    avatar_url: string | null;
+    total_lunch_smokes: number;
+  }>;
+  personalStats: {
+    totalLunchSmokes: number;
+    favoriteLunchBrand: string | null;
+    percentile: number;
+  } | null;
+  error?: string;
+}
+
+// Happy Hour (4pm-7pm EST)
+export interface HappyHourSmoker {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  happy_hour_smokes: number;
+  first_happy_hour_smoke: number;
+}
+
+export interface HappyHourResponse {
+  isHappyHour: boolean;
+  currentHour: number;
+  vibeText: string;
+  todaySmokers: HappyHourSmoker[];
+  todayCount: number;
+  platformStats: {
+    totalHappyHourSmokes: number;
+    uniqueHappyHourSmokers: number;
+    happyHourDays: number;
+  };
+  leaderboard: Array<{
+    id: string;
+    username: string;
+    avatar_url: string | null;
+    total_happy_hour_smokes: number;
+    favorite_brand: string | null;
+  }>;
+  personalStats: {
+    totalHappyHourSmokes: number;
+    favoriteHappyHourBrand: string | null;
+    percentile: number;
+  } | null;
+  popularBrands: Array<{
+    brand: string;
+    count: number;
+    avg_rating: number;
+  }>;
+  error?: string;
+}
+
 // Trending Week (momentum tracking)
 export interface TrendingWeekBrand {
   brand: string;

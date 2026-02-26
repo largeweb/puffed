@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity, FiRss, FiTarget, FiMoon, FiMapPin, FiHeart, FiCloud, FiHelpCircle } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData, EveningLoungeResponse, EveningSmoker, TonightsPick, DailyTip, DailyChallengeData } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData, EveningLoungeResponse, EveningSmoker, TonightsPick, DailyTip, DailyChallengeData, LunchLoungeResponse, HappyHourResponse, HappyHourSmoker } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus, FiMenu } from "react-icons/fi";
 import MobileSidebar from "../components/MobileSidebar";
@@ -419,6 +419,8 @@ export default function DashboardPage() {
   const [loungeData, setLoungeData] = useState<LoungeResponse | null>(null);
   const [morningData, setMorningData] = useState<MorningCoffeeResponse | null>(null);
   const [eveningData, setEveningData] = useState<EveningLoungeResponse | null>(null);
+  const [lunchData, setLunchData] = useState<LunchLoungeResponse | null>(null);
+  const [happyHourData, setHappyHourData] = useState<HappyHourResponse | null>(null);
   const [midweekData, setMidweekData] = useState<{ isWednesday: boolean; weekProgress: number; communityStats: { smokesThisWeek: number; activeSmokersThisWeek: number }; motivationalMessage: string } | null>(null);
   const [firstSmokeData, setFirstSmokeData] = useState<{ claimed: boolean; winner?: { username: string; brand: string; time: string; timeAgo: string }; totalSmokesToday: number; dayOfWeek: string } | null>(null);
   const [nightThoughts, setNightThoughts] = useState<NightThought[]>([]);
@@ -667,6 +669,20 @@ export default function DashboardPage() {
         if (eveningRes.ok) {
           const eveningResData: EveningLoungeResponse = await eveningRes.json();
           setEveningData(eveningResData);
+        }
+
+        // Load lunch lounge (shows 11 AM - 2 PM)
+        const lunchRes = await fetch("/api/lunch-lounge");
+        if (lunchRes.ok) {
+          const lunchResData: LunchLoungeResponse = await lunchRes.json();
+          setLunchData(lunchResData);
+        }
+
+        // Load happy hour (shows 4 PM - 7 PM)
+        const happyHourRes = await fetch("/api/happy-hour");
+        if (happyHourRes.ok) {
+          const happyHourResData: HappyHourResponse = await happyHourRes.json();
+          setHappyHourData(happyHourResData);
         }
 
         // Load midweek momentum (Wednesday celebration)
@@ -1289,6 +1305,13 @@ export default function DashboardPage() {
               title="First Light - First Smoke of the Day"
             >
               ☀️
+            </Link>
+            <Link
+              href="/happy-hour"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Happy Hour - After Work Celebration"
+            >
+              🍻
             </Link>
             <Link
               href="/roulette"
@@ -2623,6 +2646,162 @@ export default function DashboardPage() {
                 className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
               >
                 View Morning Coffee Lounge →
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Lunch Break Lounge Section - Midday Smokers (11am - 2pm) */}
+        {lunchData?.isLunchTime && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.054 }}
+            className="glass rounded-2xl p-5 mb-6 border border-orange-500/30 bg-gradient-to-br from-orange-900/20 to-amber-900/20"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="text-2xl">🍴</span>
+                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-medium text-orange-300">Lunch Break Lounge</h2>
+                  <p className="text-xs text-amber-400">{lunchData.vibeText}</p>
+                </div>
+              </div>
+              <span className="text-xs text-orange-400/60">11 AM - 2 PM</span>
+            </div>
+
+            {/* Lunch stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-orange-300">{lunchData.todayCount}</div>
+                <div className="text-[10px] text-gray-500">Lunchers Today</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-amber-300">{lunchData.platformStats?.totalLunchSmokes || 0}</div>
+                <div className="text-[10px] text-gray-500">All-Time Lunches</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-orange-200">{lunchData.personalStats?.totalLunchSmokes || 0}</div>
+                <div className="text-[10px] text-gray-500">Your Lunches</div>
+              </div>
+            </div>
+
+            {/* Today's lunch smokers */}
+            {lunchData.todaySmokers && lunchData.todaySmokers.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-500 mb-2">🍴 Taking a lunch break:</p>
+                <div className="flex flex-wrap gap-2">
+                  {lunchData.todaySmokers.slice(0, 6).map((smoker, idx) => (
+                    <Link
+                      key={smoker.user_id}
+                      href={`/user/${smoker.username}`}
+                      className="px-3 py-1.5 rounded-full text-xs bg-orange-600/20 text-orange-300 hover:bg-orange-600/30 transition-all"
+                    >
+                      {idx < 3 && <span className="mr-1">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>}
+                      @{smoker.username}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {lunchData.todaySmokers?.length === 0 && (
+              <p className="text-xs text-gray-500 text-center py-2">
+                🍴 Be the first to take a lunch break puff today!
+              </p>
+            )}
+
+            {/* Link to full page */}
+            <div className="mt-4 pt-4 border-t border-white/10 text-center">
+              <p className="text-xs text-orange-400/80 italic mb-2">
+                &quot;Take a break, you&apos;ve earned it&quot; 🍽️
+              </p>
+              <Link 
+                href="/lunch"
+                className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
+              >
+                View Lunch Break Lounge →
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Happy Hour Section - After Work Celebration 🍻 */}
+        {happyHourData?.isHappyHour && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.052 }}
+            className="glass rounded-2xl p-5 mb-6 border border-amber-500/30 bg-gradient-to-br from-amber-900/20 to-yellow-900/20"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="text-2xl">🍻</span>
+                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-medium text-amber-300">Happy Hour</h2>
+                  <p className="text-xs text-yellow-400">{happyHourData.vibeText}</p>
+                </div>
+              </div>
+              <span className="text-xs text-amber-400/60">4 PM - 7 PM</span>
+            </div>
+
+            {/* Happy Hour stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-amber-300">{happyHourData.todayCount}</div>
+                <div className="text-[10px] text-gray-500">Today</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-yellow-300">{happyHourData.platformStats?.totalHappyHourSmokes || 0}</div>
+                <div className="text-[10px] text-gray-500">All-Time</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-lg font-bold text-amber-200">{happyHourData.personalStats?.totalHappyHourSmokes || 0}</div>
+                <div className="text-[10px] text-gray-500">Your HH</div>
+              </div>
+            </div>
+
+            {/* Today's happy hour smokers */}
+            {happyHourData.todaySmokers && happyHourData.todaySmokers.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-500 mb-2">🍻 Celebrating after work:</p>
+                <div className="flex flex-wrap gap-2">
+                  {happyHourData.todaySmokers.slice(0, 6).map((smoker: HappyHourSmoker, idx: number) => (
+                    <Link
+                      key={smoker.user_id}
+                      href={`/user/${smoker.username}`}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-500/10 hover:bg-amber-500/20 transition-colors"
+                    >
+                      {idx < 3 && <span className="text-xs">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>}
+                      <span className="text-xs text-amber-300">{smoker.username}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {happyHourData.todaySmokers?.length === 0 && (
+              <p className="text-xs text-gray-500 text-center py-2">
+                🍻 Be the first to celebrate happy hour today!
+              </p>
+            )}
+
+            {/* Link to full page */}
+            <div className="mt-4 pt-4 border-t border-white/10 text-center">
+              <p className="text-xs text-amber-400/80 italic mb-2">
+                &quot;You made it through the day!&quot; 🎉
+              </p>
+              <Link 
+                href="/happy-hour"
+                className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                View Happy Hour Lounge →
               </Link>
             </div>
           </motion.div>
