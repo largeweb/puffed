@@ -1284,6 +1284,13 @@ export default function DashboardPage() {
               📰
             </Link>
             <Link
+              href="/victory-lap"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
+              title="Victory Lap - Your Weekly Wins"
+            >
+              🏆
+            </Link>
+            <Link
               href="/goodnight"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
               title="Goodnight Lounge - Last Smoke Before Bed"
@@ -1338,6 +1345,13 @@ export default function DashboardPage() {
               title="Weekend Forecast - Your Weekend Predictions"
             >
               🔮
+            </Link>
+            <Link
+              href="/weekend"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
+              title="Weekend Kickoff"
+            >
+              🎊
             </Link>
             <Link
               href="/time-capsule"
