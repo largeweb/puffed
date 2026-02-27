@@ -1179,6 +1179,13 @@ export default function DashboardPage() {
               🎉
             </Link>
             <Link
+              href="/tgif"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="TGIF Lounge - Friday Night Party!"
+            >
+              🍺
+            </Link>
+            <Link
               href="/happy-hour"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
               title="Happy Hour Club (5-8 PM)"
@@ -1268,6 +1275,13 @@ export default function DashboardPage() {
               title="Goodnight Lounge - Last Smoke Before Bed"
             >
               😴
+            </Link>
+            <Link
+              href="/midnight-society"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Midnight Society - 12 AM - 2 AM Club"
+            >
+              🌑
             </Link>
             <Link
               href="/roulette"
