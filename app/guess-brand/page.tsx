@@ -73,7 +73,7 @@ export default function GuessBrandPage() {
 
     try {
       const res = await fetch("/api/guess-brand");
-      const data = await res.json();
+      const data = await res.json() as { message?: string; error?: string; challenge?: any; stats?: any };
 
       if (!res.ok) {
         if (res.status === 401) {

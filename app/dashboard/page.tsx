@@ -1249,6 +1249,13 @@ export default function DashboardPage() {
               🏛️
             </Link>
             <Link
+              href="/victory-lap"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-500 transition-all"
+              title="Victory Lap"
+            >
+              🎖️
+            </Link>
+            <Link
               href="/achievements"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-500 transition-all"
               title="Achievement Showcase"
@@ -1375,6 +1382,13 @@ export default function DashboardPage() {
               🏆
             </Link>
             <Link
+              href="/friday-night-live"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-rose-400 transition-all"
+              title="Friday Night Live - Real-time Party"
+            >
+              🔴
+            </Link>
+            <Link
               href="/fortune"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Smoke Fortune - Daily Wisdom"
@@ -1408,6 +1422,13 @@ export default function DashboardPage() {
               title="Platform Pulse"
             >
               <FiActivity size={20} />
+            </Link>
+            <Link
+              href="/live"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-green-400 transition-all"
+              title="Live Smokers"
+            >
+              🟢
             </Link>
             <Link
               href="/gallery"

@@ -51,6 +51,13 @@ interface WeekendWarrior {
   favoriteBrand: string | null;
 }
 
+interface PlatformStats {
+  fridayCheckins: number;
+  activeSmokers: number;
+  avgRating: number;
+  trendingBrand: string | null;
+}
+
 export default function WeekendKickoffPage() {
   const [loading, setLoading] = useState(true);
   const [isFriday, setIsFriday] = useState(false);
@@ -83,7 +90,15 @@ export default function WeekendKickoffPage() {
       
       const res = await fetch(url);
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json() as {
+          isFriday: boolean;
+          fridaySmokers?: FridaySmoker[];
+          userHighlights?: WeekHighlight[];
+          userStats?: WeekendStats;
+          suggestions?: WeekendSuggestion[];
+          warriors?: WeekendWarrior[];
+          platformStats?: PlatformStats;
+        };
         setIsFriday(data.isFriday);
         setFridaySmokers(data.fridaySmokers || []);
         setUserHighlights(data.userHighlights || []);

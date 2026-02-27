@@ -74,6 +74,7 @@ const navGroups = [
     title: "Community",
     items: [
       { href: "/conversations", icon: <span>💬</span>, label: "Hot Conversations", color: "text-cyan-400" },
+      { href: "/friday-night-live", icon: <span>🔴</span>, label: "Friday Night Live", color: "text-rose-400" },
       { href: "/pulse", icon: <FiActivity size={20} />, label: "Platform Pulse", color: "text-pink-500" },
       { href: "/share", icon: <span>📸</span>, label: "Share Your Week", color: "text-amber-400" },
     ]
