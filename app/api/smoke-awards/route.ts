@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { verifyToken } from "@/lib/auth";
 
 export const runtime = "edge";
 
@@ -17,18 +16,12 @@ export async function GET(request: NextRequest) {
   try {
     const { env } = getRequestContext();
     const db = env.DB;
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
 
-    const token = request.cookies.get("token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "userId required" }, { status: 400 });
     }
-
-    const payload = await verifyToken(token, env.JWT_SECRET);
-    if (!payload) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-
-    const userId = payload.userId;
 
     // Get start of current week (Sunday)
     const now = new Date();
