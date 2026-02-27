@@ -1123,6 +1123,13 @@ export default function DashboardPage() {
               <FiBarChart2 size={20} />
             </Link>
             <Link
+              href="/weekly-scorecard"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
+              title="Weekly Scorecard - Your Week in Review"
+            >
+              📊
+            </Link>
+            <Link
               href="/smoke-oclock"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Smoke O'Clock - When You Smoke"
@@ -1401,6 +1408,13 @@ export default function DashboardPage() {
               title="Vibe Check - Community Vibes Right Now"
             >
               🔮
+            </Link>
+            <Link
+              href="/shoutouts"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
+              title="Friday Shoutouts - Give Props to Your Crew"
+            >
+              📣
             </Link>
             <Link
               href="/share"

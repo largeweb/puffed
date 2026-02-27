@@ -109,8 +109,9 @@ export async function GET() {
     };
 
     // Calculate collective vibe
-    const avgRating = vibeScoreData?.avg_rating || 0;
-    const totalToday = vibeScoreData?.total_checkins || 0;
+    const vibeData = vibeScoreData as { avg_rating?: number; total_checkins?: number } | null;
+    const avgRating = vibeData?.avg_rating ?? 0;
+    const totalToday = vibeData?.total_checkins ?? 0;
     
     let collectiveVibe = 'Chill';
     let vibeEmoji = '😌';
