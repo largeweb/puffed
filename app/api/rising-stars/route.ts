@@ -1,9 +1,10 @@
-import { getAuth } from "@/lib/auth";
+import { getRequestContext } from "@cloudflare/next-on-pages";
+import { headers } from "next/headers";
 
 export const runtime = "edge";
 
 interface RisingStar {
-  user_id: string;
+  user_id: number;
   username: string;
   joined_days_ago: number;
   checkins: number;
@@ -18,14 +19,26 @@ interface RisingStar {
   };
 }
 
-export async function GET(request: Request) {
-  const { env, session } = await getAuth(request);
-  
-  if (!session) {
+export async function GET() {
+  const headersList = await headers();
+  const sessionId = headersList.get("x-session-id");
+  if (!sessionId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const db = env.DB;
+  const db = getRequestContext().env.DB;
+
+  // Get current user
+  const session = await db
+    .prepare("SELECT user_id FROM sessions WHERE id = ?")
+    .bind(sessionId)
+    .first<{ user_id: number }>();
+
+  if (!session) {
+    return Response.json({ error: "Invalid session" }, { status: 401 });
+  }
+
+  const userId = session.user_id;
   const now = Math.floor(Date.now() / 1000);
   const thirtyDaysAgo = now - (30 * 24 * 60 * 60);
   const sevenDaysAgo = now - (7 * 24 * 60 * 60);
@@ -60,7 +73,7 @@ export async function GET(request: Request) {
   `).bind(now, thirtyDaysAgo).all<RisingStar>();
 
   // Get latest checkin for each rising star
-  const stars: RisingStar[] = [];
+  const stars: (RisingStar & { isFollowing: boolean; isMe: boolean })[] = [];
   for (const star of risingStars.results) {
     const latestCheckin = await db.prepare(`
       SELECT brand, rating, photo_url
@@ -70,18 +83,18 @@ export async function GET(request: Request) {
       LIMIT 1
     `).bind(star.user_id).first<{ brand: string; rating: number; photo_url?: string }>();
 
+    // Check if current user is following this star
+    const isFollowing = await db.prepare(`
+      SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?
+    `).bind(userId, star.user_id).first();
+
     stars.push({
       ...star,
       latest_checkin: latestCheckin || undefined,
+      isFollowing: !!isFollowing,
+      isMe: star.user_id === userId,
     });
   }
-
-  // Check who the current user is following
-  const following = await db.prepare(`
-    SELECT following_id FROM follows WHERE follower_id = ?
-  `).bind(session.userId).all<{ following_id: string }>();
-  
-  const followingSet = new Set(following.results.map(f => f.following_id));
 
   // Platform stats for context
   const platformStats = await db.prepare(`
@@ -96,11 +109,7 @@ export async function GET(request: Request) {
   }>();
 
   return Response.json({
-    risingStars: stars.map(star => ({
-      ...star,
-      isFollowing: followingSet.has(star.user_id),
-      isMe: star.user_id === session.userId,
-    })),
+    risingStars: stars,
     stats: platformStats,
   });
 }
