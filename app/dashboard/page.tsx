@@ -1263,6 +1263,13 @@ export default function DashboardPage() {
               ☀️
             </Link>
             <Link
+              href="/goodnight"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
+              title="Goodnight Lounge - Last Smoke Before Bed"
+            >
+              😴
+            </Link>
+            <Link
               href="/roulette"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="Lucky Cigar"
