@@ -1305,6 +1305,13 @@ export default function DashboardPage() {
               📰
             </Link>
             <Link
+              href="/weekend-kickoff"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-green-400 transition-all"
+              title="Weekend Kickoff - TGIF!"
+            >
+              🎊
+            </Link>
+            <Link
               href="/victory-lap"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
               title="Victory Lap - Your Weekly Wins"
