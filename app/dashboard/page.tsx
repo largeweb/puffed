@@ -1235,6 +1235,13 @@ export default function DashboardPage() {
               <FiAward size={20} />
             </Link>
             <Link
+              href="/council"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Smoke Council"
+            >
+              🏛️
+            </Link>
+            <Link
               href="/achievements"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-500 transition-all"
               title="Achievement Showcase"
@@ -1338,6 +1345,13 @@ export default function DashboardPage() {
               title="Cigar Slots - Spin to Win!"
             >
               💰
+            </Link>
+            <Link
+              href="/guess-brand"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Guess the Brand - Trivia Game"
+            >
+              🎯
             </Link>
             <Link
               href="/friday-spotlight"
