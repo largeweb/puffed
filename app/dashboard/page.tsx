@@ -1172,11 +1172,25 @@ export default function DashboardPage() {
               🍻
             </Link>
             <Link
+              href="/friday-eve"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
+              title="Friday Eve - Weekend Countdown!"
+            >
+              🎉
+            </Link>
+            <Link
               href="/happy-hour"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
               title="Happy Hour Club (5-8 PM)"
             >
               🕔
+            </Link>
+            <Link
+              href="/wind-down"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
+              title="Wind Down (9 PM - Midnight)"
+            >
+              🌙
             </Link>
             <Link
               href="/timer"
