@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { verifyAuth } from "@/lib/auth";
-import { cookies } from "next/headers";
+import { parseSessionCookie } from "@/lib/auth";
 
 export const runtime = "edge";
 
@@ -15,12 +14,6 @@ function isWindDownTime(unixTimestamp: number): boolean {
   return hour >= WIND_DOWN_START && hour < WIND_DOWN_END;
 }
 
-function isSameDay(ts1: number, ts2: number): boolean {
-  const d1 = new Date(ts1 * 1000);
-  const d2 = new Date(ts2 * 1000);
-  return d1.toDateString() === d2.toDateString();
-}
-
 interface CheckinRow {
   id: number;
   brand: string;
@@ -29,24 +22,28 @@ interface CheckinRow {
   image_url?: string;
   created_at: number;
   username?: string;
-  user_id: string;
+  user_id: number;
 }
 
 export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
-    
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
     const { env } = getRequestContext();
     const db = env.DB;
     
-    const user = await verifyAuth(token, db);
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Auth check
+    const cookieHeader = request.headers.get("cookie");
+    const sessionId = parseSessionCookie(cookieHeader);
+    
+    let userId: number | null = null;
+    if (sessionId) {
+      const now = Math.floor(Date.now() / 1000);
+      const session = await db
+        .prepare("SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?")
+        .bind(sessionId, now)
+        .first<{ user_id: number }>();
+      if (session) {
+        userId = session.user_id;
+      }
     }
     
     const now = Math.floor(Date.now() / 1000);
@@ -83,14 +80,22 @@ export async function GET(request: Request) {
     
     const tonightSmokers = new Set(tonightWindDown.map(c => c.user_id)).size;
     
-    // User's today smokes (all day, for recap)
+    // User's today smokes (all day, for recap) - only if logged in
     const allTodaySmokes = (todaySmokes.results || []) as unknown as CheckinRow[];
-    const yourTodaySmokes = allTodaySmokes.filter(c => c.user_id === user.id);
-    const yourTodayRatings = yourTodaySmokes.filter(c => c.rating).map(c => c.rating as number);
-    const yourTodayAvgRating = yourTodayRatings.length > 0
-      ? yourTodayRatings.reduce((a, b) => a + b, 0) / yourTodayRatings.length
-      : 0;
-    const yourTodayBrands = [...new Set(yourTodaySmokes.map(c => c.brand))];
+    let yourTodaySmokes = 0;
+    let yourTodayAvgRating = 0;
+    let yourTodayBrands: string[] = [];
+    let yourWindDownSmokes = 0;
+    
+    if (userId) {
+      const userTodaySmokes = allTodaySmokes.filter(c => c.user_id === userId);
+      yourTodaySmokes = userTodaySmokes.length;
+      const yourTodayRatings = userTodaySmokes.filter(c => c.rating).map(c => c.rating as number);
+      yourTodayAvgRating = yourTodayRatings.length > 0
+        ? yourTodayRatings.reduce((a, b) => a + b, 0) / yourTodayRatings.length
+        : 0;
+      yourTodayBrands = [...new Set(userTodaySmokes.map(c => c.brand))];
+    }
     
     // All-time wind down stats
     const allSmokes = await db.prepare(`
@@ -102,7 +107,9 @@ export async function GET(request: Request) {
     );
     
     const totalWindDownSmokes = allWindDownSmokes.length;
-    const yourWindDownSmokes = allWindDownSmokes.filter(c => c.user_id === user.id).length;
+    if (userId) {
+      yourWindDownSmokes = allWindDownSmokes.filter(c => c.user_id === userId).length;
+    }
     
     // Peak wind down hour
     const hourCounts: Record<number, number> = {};
@@ -135,7 +142,7 @@ export async function GET(request: Request) {
       tonightAvgRating,
       tonightTopBrand,
       tonightSmokers,
-      yourTodaySmokes: yourTodaySmokes.length,
+      yourTodaySmokes,
       yourTodayAvgRating,
       yourTodayBrands,
       totalWindDownSmokes,

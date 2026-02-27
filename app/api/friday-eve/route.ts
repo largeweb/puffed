@@ -1,31 +1,33 @@
-import { NextResponse } from 'next/server';
-import { getRequestContext } from '@cloudflare/next-on-pages';
-import { verifyToken } from '@/lib/auth';
-import { cookies } from 'next/headers';
+import { NextResponse } from "next/server";
+import { getRequestContext } from "@cloudflare/next-on-pages";
+import { parseSessionCookie } from "@/lib/auth";
 
-export const runtime = 'edge';
+export const runtime = "edge";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
-    
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const user = await verifyToken(token);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { env } = getRequestContext();
     const db = env.DB;
+
+    // Auth check
+    const cookieHeader = request.headers.get("cookie");
+    const sessionId = parseSessionCookie(cookieHeader);
+    
+    let userId: number | null = null;
+    if (sessionId) {
+      const now = Math.floor(Date.now() / 1000);
+      const session = await db
+        .prepare("SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?")
+        .bind(sessionId, now)
+        .first<{ user_id: number }>();
+      if (session) {
+        userId = session.user_id;
+      }
+    }
 
     const now = Date.now();
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const todayStartMs = todayStart.getTime();
     
     // Thursday evening window: 6 PM Thursday to 2 AM Friday
     const thursdayEveningStart = new Date();
@@ -68,7 +70,7 @@ export async function GET() {
       GROUP BY brand
       ORDER BY count DESC
       LIMIT 1
-    `).bind(thursdayEveningStartMs).first();
+    `).bind(thursdayEveningStartMs).first<{ brand: string }>();
 
     // All-time Thursday stats
     const thursdayStatsRes = await db.prepare(`
@@ -94,22 +96,35 @@ export async function GET() {
       LIMIT 10
     `).all();
 
-    // User's Thursday stats
-    const userThursdayRes = await db.prepare(`
-      SELECT 
-        COUNT(*) as count,
-        AVG(rating) as avgRating
-      FROM checkins
-      WHERE user_id = ?
-      AND strftime('%w', datetime(created_at/1000, 'unixepoch')) = '4'
-    `).bind(user.id).first();
+    // User's stats (if logged in)
+    let userStats = {
+      thursdaySmokes: 0,
+      thursdayAvgRating: "0.0",
+      tonightSmokes: 0
+    };
 
-    // User's tonight activity
-    const userTonightRes = await db.prepare(`
-      SELECT COUNT(*) as count
-      FROM checkins
-      WHERE user_id = ? AND created_at >= ?
-    `).bind(user.id, thursdayEveningStartMs).first();
+    if (userId) {
+      const userThursdayRes = await db.prepare(`
+        SELECT 
+          COUNT(*) as count,
+          AVG(rating) as avgRating
+        FROM checkins
+        WHERE user_id = ?
+        AND strftime('%w', datetime(created_at/1000, 'unixepoch')) = '4'
+      `).bind(userId).first<{ count: number; avgRating: number }>();
+
+      const userTonightRes = await db.prepare(`
+        SELECT COUNT(*) as count
+        FROM checkins
+        WHERE user_id = ? AND created_at >= ?
+      `).bind(userId, thursdayEveningStartMs).first<{ count: number }>();
+
+      userStats = {
+        thursdaySmokes: Number(userThursdayRes?.count || 0),
+        thursdayAvgRating: Number(userThursdayRes?.avgRating || 0).toFixed(1),
+        tonightSmokes: Number(userTonightRes?.count || 0)
+      };
+    }
 
     // Calculate time until Friday 5 PM (weekend kickoff!)
     const fridayFivePM = new Date();
@@ -127,7 +142,7 @@ export async function GET() {
       countdown: {
         hours: hoursUntilWeekend,
         minutes: minutesUntilWeekend,
-        label: 'until weekend!'
+        label: "until weekend!"
       },
       tonightStats: {
         count: Number(statsRes?.count || 0),
@@ -141,14 +156,10 @@ export async function GET() {
         uniqueSmokers: Number(thursdayStatsRes?.uniqueSmokers || 0)
       },
       leaders: leadersRes.results || [],
-      userStats: {
-        thursdaySmokes: Number(userThursdayRes?.count || 0),
-        thursdayAvgRating: Number(userThursdayRes?.avgRating || 0).toFixed(1),
-        tonightSmokes: Number(userTonightRes?.count || 0)
-      }
+      userStats
     });
   } catch (error) {
-    console.error('Friday Eve API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Friday Eve API error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
