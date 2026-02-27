@@ -47,7 +47,7 @@ export default function WindDownPage() {
           }
           throw new Error('Failed to fetch wind down stats');
         }
-        const data = await res.json();
+        const data = await res.json() as WindDownStats;
         setStats(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load');
