@@ -1291,6 +1291,13 @@ export default function DashboardPage() {
               🎰
             </Link>
             <Link
+              href="/bingo"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-fuchsia-400 transition-all"
+              title="Smoke Bingo - Weekly Challenges"
+            >
+              🎲
+            </Link>
+            <Link
               href="/pulse"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-500 transition-all"
               title="Platform Pulse"

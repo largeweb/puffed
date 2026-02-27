@@ -49,7 +49,7 @@ export default function RoastPage() {
         }
         throw new Error("Failed to fetch");
       }
-      const json = await res.json();
+      const json = await res.json() as RoastData;
       setData(json);
       setCurrentRoastIndex(0);
       setShowAllRoasts(false);

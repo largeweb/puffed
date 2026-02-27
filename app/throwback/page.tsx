@@ -58,7 +58,7 @@ export default function ThrowbackPage() {
         ? '/api/throwback-thursday'
         : '/api/throwback-thursday?user_id=me'
       const res = await fetch(url)
-      const json = await res.json()
+      const json = await res.json() as ThrowbackData
       setData(json)
     } catch (error) {
       console.error('Failed to load throwbacks:', error)

@@ -40,7 +40,7 @@ export default function RoulettePage() {
   useEffect(() => {
     // Get current user
     fetch('/api/auth/me')
-      .then(r => r.json())
+      .then(r => r.json() as Promise<{ user?: { id: string } }>)
       .then(data => {
         if (data.user) {
           setUserId(data.user.id);
@@ -62,7 +62,7 @@ export default function RoulettePage() {
       if (userId) params.set('userId', userId);
       
       const res = await fetch(`/api/rating-roulette?${params}`);
-      const data = await res.json();
+      const data = await res.json() as RouletteResult;
       setResult(data);
       setSpinCount(prev => prev + 1);
     } catch {

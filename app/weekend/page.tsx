@@ -46,7 +46,7 @@ export default function WeekendPage() {
         router.push("/login");
         return;
       }
-      const result = await res.json();
+      const result = await res.json() as WeekendData;
       setData(result);
     } catch (error) {
       console.error("Load error:", error);

@@ -54,7 +54,7 @@ export default function WeeklyWrapPage() {
 
   useEffect(() => {
     fetch("/api/weekly-wrap")
-      .then(res => res.json())
+      .then(res => res.json() as Promise<WeeklyWrapData & { error?: string }>)
       .then(d => {
         if (d.error) {
           router.push("/login");

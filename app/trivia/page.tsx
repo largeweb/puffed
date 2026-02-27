@@ -61,20 +61,20 @@ export default function TriviaPage() {
     const fetchData = async () => {
       try {
         const authRes = await fetch('/api/auth/me');
-        const authData = await authRes.json();
-        const uid = authData.user?.id || null;
+        const authData = await authRes.json() as { user?: { id: number } };
+        const uid = authData.user?.id ?? null;
         setUserId(uid);
 
         const url = uid ? `/api/trivia?userId=${uid}` : '/api/trivia';
         const res = await fetch(url);
-        const triviaData = await res.json();
+        const triviaData = await res.json() as TriviaData;
         setData(triviaData);
 
         if (triviaData.userAnswer) {
           setSelectedAnswer(triviaData.userAnswer.answerIndex);
           setResult({
             correct: triviaData.userAnswer.isCorrect,
-            fact: triviaData.question.fact || ''
+            fact: triviaData.question?.fact || ''
           });
         }
       } catch (error) {
@@ -98,12 +98,17 @@ export default function TriviaPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, answerIndex })
       });
-      const resData = await res.json();
+      const resData = await res.json() as {
+        correct?: boolean;
+        fact?: string;
+        correctAnswer?: number;
+        todayStats?: TriviaData['todayStats'];
+      };
 
       if (res.ok) {
         setResult({
-          correct: resData.correct,
-          fact: resData.fact
+          correct: resData.correct ?? false,
+          fact: resData.fact ?? ''
         });
         if (data) {
           setData({
@@ -112,7 +117,7 @@ export default function TriviaPage() {
               ...data.question,
               correct: resData.correctAnswer
             },
-            todayStats: resData.todayStats
+            todayStats: resData.todayStats ?? data.todayStats
           });
         }
       }
