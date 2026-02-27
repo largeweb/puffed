@@ -1305,6 +1305,13 @@ export default function DashboardPage() {
               🎲
             </Link>
             <Link
+              href="/friday-spotlight"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
+              title="Friday Spotlight - Weekly Awards"
+            >
+              🏆
+            </Link>
+            <Link
               href="/fortune"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Smoke Fortune - Daily Wisdom"
@@ -1387,6 +1394,13 @@ export default function DashboardPage() {
               title="Dawn Patrol - Early Bird Club (4-7 AM)"
             >
               🌅
+            </Link>
+            <Link
+              href="/vibe-check"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-fuchsia-400 transition-all"
+              title="Vibe Check - Community Vibes Right Now"
+            >
+              🔮
             </Link>
             <Link
               href="/share"
