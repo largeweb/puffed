@@ -1277,6 +1277,13 @@ export default function DashboardPage() {
               ☀️
             </Link>
             <Link
+              href="/morning-brief"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Morning Brief - Daily Digest"
+            >
+              📰
+            </Link>
+            <Link
               href="/goodnight"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
               title="Goodnight Lounge - Last Smoke Before Bed"
@@ -1324,6 +1331,13 @@ export default function DashboardPage() {
               title="Smoke Fortune - Daily Wisdom"
             >
               🥠
+            </Link>
+            <Link
+              href="/weekend-forecast"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-violet-400 transition-all"
+              title="Weekend Forecast - Your Weekend Predictions"
+            >
+              🔮
             </Link>
             <Link
               href="/time-capsule"

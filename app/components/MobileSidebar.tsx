@@ -54,6 +54,7 @@ const navGroups = [
   {
     title: "Your Stats",
     items: [
+      { href: "/morning-brief", icon: <span>📰</span>, label: "Morning Brief", color: "text-amber-400" },
       { href: "/mystats", icon: <FiBarChart2 size={20} />, label: "My Stats", color: "text-cyan-400" },
       { href: "/smoke-oclock", icon: <span>🕐</span>, label: "Smoke O'Clock", color: "text-amber-400" },
       { href: "/records", icon: <span>🏆</span>, label: "Personal Records", color: "text-yellow-400" },
