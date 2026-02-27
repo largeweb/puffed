@@ -1375,6 +1375,13 @@ export default function DashboardPage() {
               <FiShare2 size={20} />
             </Link>
             <Link
+              href="/rising-stars"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
+              title="Rising Stars - New Active Members"
+            >
+              🌟
+            </Link>
+            <Link
               href="/share"
               className="p-2 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-400 transition-all"
               title="Share Your Week"
