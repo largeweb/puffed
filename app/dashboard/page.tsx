@@ -1053,6 +1053,13 @@ export default function DashboardPage() {
               👯
             </Link>
             <Link
+              href="/this-or-that"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-fuchsia-400 transition-all"
+              title="This or That"
+            >
+              🤔
+            </Link>
+            <Link
               href="/following"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-cyan-400 transition-all"
               title="Following Feed"
