@@ -82,7 +82,7 @@ export default function MorningBriefPage() {
       
       const res = await fetch(url);
       if (res.ok) {
-        const briefData = await res.json();
+        const briefData = await res.json() as MorningBriefData;
         setData(briefData);
       }
     } catch (error) {
