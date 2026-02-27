@@ -49,7 +49,7 @@ export default function LunchLoungePage() {
   useEffect(() => {
     fetch('/api/lunch-lounge')
       .then(res => res.json())
-      .then(setData)
+      .then((result: LunchData) => setData(result))
       .finally(() => setLoading(false));
   }, []);
 
