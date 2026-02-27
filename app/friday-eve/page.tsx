@@ -102,7 +102,7 @@ export default function FridayEvePage() {
     try {
       const res = await fetch("/api/friday-eve");
       if (res.ok) {
-        const result = await res.json();
+        const result: FridayEveData = await res.json();
         setData(result);
       }
     } catch (error) {
