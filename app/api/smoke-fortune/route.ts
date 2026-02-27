@@ -1,210 +1,164 @@
-import { NextResponse } from "next/server";
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { cookies } from "next/headers";
 
 export const runtime = "edge";
 
-// Fortune categories with themed predictions
-const FORTUNE_TEMPLATES = {
-  flavor: [
-    { fortune: "The smoke gods favor bold flavors today. Seek out pepper and spice.", lucky: "Pepper", emoji: "🌶️" },
-    { fortune: "A creamy, smooth smoke will bring unexpected good fortune.", lucky: "Cream", emoji: "🍦" },
-    { fortune: "Woody notes will ground you and bring clarity to a difficult decision.", lucky: "Cedar", emoji: "🌲" },
-    { fortune: "Today calls for something sweet. Let honey and vanilla guide your choice.", lucky: "Honey", emoji: "🍯" },
-    { fortune: "Earth tones will connect you to ancient wisdom. Choose something rustic.", lucky: "Earth", emoji: "🌍" },
-    { fortune: "A chocolatey smoke will sweeten your evening and attract positive energy.", lucky: "Chocolate", emoji: "🍫" },
-    { fortune: "Coffee notes will sharpen your mind. Great ideas await after your smoke.", lucky: "Coffee", emoji: "☕" },
-    { fortune: "Leather and tobacco promise a classic, refined experience today.", lucky: "Leather", emoji: "🪶" },
-  ],
-  timing: [
-    { fortune: "The morning smoke brings fresh perspectives. Rise early tomorrow.", emoji: "🌅" },
-    { fortune: "Your peak smoking hour approaches. The stars align for a perfect session.", emoji: "✨" },
-    { fortune: "A late night smoke will reveal secrets hidden in the shadows.", emoji: "🌙" },
-    { fortune: "The afternoon holds promise. Take a break and light up.", emoji: "☀️" },
-    { fortune: "Weekend energies are strong. A celebratory smoke is destined.", emoji: "🎉" },
-  ],
-  social: [
-    { fortune: "Share a smoke with a friend this week. Good conversations await.", emoji: "👥" },
-    { fortune: "Your smoke photos will attract admirers. Post that check-in!", emoji: "📸" },
-    { fortune: "A fellow smoker will seek your wisdom. Be generous with recommendations.", emoji: "🎓" },
-    { fortune: "The community needs your voice. Leave a thoughtful comment today.", emoji: "💬" },
-    { fortune: "Your taste influences others. Your next review matters.", emoji: "⭐" },
-  ],
-  brand: [
-    { fortune: "Return to an old favorite. Nostalgia holds hidden treasures.", emoji: "💝" },
-    { fortune: "Venture into unexplored territory. A new brand calls to you.", emoji: "🗺️" },
-    { fortune: "Your go-to brand has more to teach you. Look deeper.", emoji: "🔍" },
-    { fortune: "A premium smoke is in your future. Treat yourself.", emoji: "👑" },
-    { fortune: "Simple pleasures await. Don't overlook the everyday favorites.", emoji: "🌟" },
-  ],
-  mystical: [
-    { fortune: "The smoke will clear, and with it, your doubts.", emoji: "💭" },
-    { fortune: "Every puff carries possibility. Inhale with intention.", emoji: "🌬️" },
-    { fortune: "Your palate evolves. What was bitter will become beautiful.", emoji: "🦋" },
-    { fortune: "The perfect smoke finds you when you stop searching.", emoji: "🎯" },
-    { fortune: "Trust the ash. It knows how long to hold on.", emoji: "⚪" },
-    { fortune: "Between the first light and final draw lies your answer.", emoji: "🔥" },
-    { fortune: "The ring you blow carries wishes to the universe.", emoji: "💫" },
-    { fortune: "In stillness and smoke, transformation happens.", emoji: "🧘" },
-  ],
-};
+// 50 unique smoke fortunes
+const FORTUNES = [
+  { fortune: "A rare find awaits you at the tobacconist.", emoji: "🎁", category: "discovery" },
+  { fortune: "Your next smoke will bring unexpected clarity.", emoji: "💡", category: "wisdom" },
+  { fortune: "Share a cigar with a stranger — they have stories to tell.", emoji: "🤝", category: "social" },
+  { fortune: "The perfect pairing is closer than you think.", emoji: "🥃", category: "pairing" },
+  { fortune: "Patience today leads to flavor tomorrow.", emoji: "⏳", category: "wisdom" },
+  { fortune: "A gift of tobacco will strengthen a friendship.", emoji: "💝", category: "social" },
+  { fortune: "Your humidor holds a forgotten treasure.", emoji: "📦", category: "discovery" },
+  { fortune: "Tonight's smoke will be your best this week.", emoji: "🌟", category: "fortune" },
+  { fortune: "The ash tells all — trust your instincts.", emoji: "🔮", category: "wisdom" },
+  { fortune: "A fellow enthusiast seeks your recommendation.", emoji: "💬", category: "social" },
+  { fortune: "Rest your cigars; rushed pleasures fade quickly.", emoji: "🛏️", category: "wisdom" },
+  { fortune: "Your palate is evolving — try something bold.", emoji: "🌶️", category: "discovery" },
+  { fortune: "The best conversations happen over slow burns.", emoji: "🔥", category: "social" },
+  { fortune: "A morning smoke will set the tone for greatness.", emoji: "🌅", category: "time" },
+  { fortune: "Cedar whispers secrets to those who listen.", emoji: "🌲", category: "wisdom" },
+  { fortune: "Your next five-star smoke is already in your collection.", emoji: "⭐", category: "fortune" },
+  { fortune: "A road trip calls for something special.", emoji: "🚗", category: "discovery" },
+  { fortune: "The wrapper tells the truth before the light.", emoji: "👀", category: "wisdom" },
+  { fortune: "Good company makes any cigar better.", emoji: "👥", category: "social" },
+  { fortune: "A new brand will surprise you pleasantly.", emoji: "🎊", category: "discovery" },
+  { fortune: "Smoke at midnight — the universe is listening.", emoji: "🌙", category: "time" },
+  { fortune: "Your streak brings good fortune this week.", emoji: "📈", category: "fortune" },
+  { fortune: "A vintage year holds unexpected depth.", emoji: "📅", category: "discovery" },
+  { fortune: "Take photos — these memories are worth keeping.", emoji: "📸", category: "social" },
+  { fortune: "The ring gauge of destiny chooses you.", emoji: "💫", category: "fortune" },
+  { fortune: "Coffee pairing reveals hidden notes.", emoji: "☕", category: "pairing" },
+  { fortune: "A robusto today keeps the stress away.", emoji: "😌", category: "wisdom" },
+  { fortune: "Your flavor notes inspire another smoker.", emoji: "✍️", category: "social" },
+  { fortune: "Retrohale to unlock the full experience.", emoji: "👃", category: "wisdom" },
+  { fortune: "The lounge awaits your presence.", emoji: "🛋️", category: "social" },
+  { fortune: "Box-pressed fortunes are in your future.", emoji: "📦", category: "discovery" },
+  { fortune: "A sunset smoke brings peace to the soul.", emoji: "🌇", category: "time" },
+  { fortune: "Your collection will grow in unexpected ways.", emoji: "📚", category: "fortune" },
+  { fortune: "Bourbon and tobacco — the stars align.", emoji: "🌟", category: "pairing" },
+  { fortune: "A fellow night owl shares your passion.", emoji: "🦉", category: "social" },
+  { fortune: "The perfect cut is an art worth mastering.", emoji: "✂️", category: "wisdom" },
+  { fortune: "Maduro magic awaits the patient.", emoji: "🪄", category: "discovery" },
+  { fortune: "Your next review will resonate with many.", emoji: "❤️", category: "social" },
+  { fortune: "The torch reveals what matches cannot.", emoji: "🔦", category: "wisdom" },
+  { fortune: "A celebratory smoke approaches on the horizon.", emoji: "🎉", category: "fortune" },
+  { fortune: "Connecticut shade hides smooth surprises.", emoji: "🌫️", category: "discovery" },
+  { fortune: "Rain and cigars make perfect partners.", emoji: "🌧️", category: "pairing" },
+  { fortune: "Your humidor humidity is just right.", emoji: "💧", category: "fortune" },
+  { fortune: "A Churchill for contemplation, a Corona for haste.", emoji: "🤔", category: "wisdom" },
+  { fortune: "The blend you seek is one recommendation away.", emoji: "🔍", category: "discovery" },
+  { fortune: "Early risers find the freshest smoke.", emoji: "🌄", category: "time" },
+  { fortune: "A porch smoke solves more than you know.", emoji: "🏠", category: "wisdom" },
+  { fortune: "Nicaragua calls to your palate.", emoji: "🇳🇮", category: "discovery" },
+  { fortune: "Tonight's ash is long — a sign of quality.", emoji: "🎯", category: "fortune" },
+  { fortune: "Share your journey — others want to follow.", emoji: "🗺️", category: "social" },
+];
 
-// Lucky numbers based on smoking patterns
-function generateLuckyNumbers(seed: number): number[] {
+// Get deterministic fortune for user + day
+function getFortuneForUserDay(userId: string, dayTimestamp: number): typeof FORTUNES[0] {
+  // Combine user ID and day to create a seed
+  const seed = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + dayTimestamp;
+  const index = seed % FORTUNES.length;
+  return FORTUNES[index];
+}
+
+// Lucky numbers based on user seed
+function getLuckyNumbers(userId: string, dayTimestamp: number): number[] {
+  const seed = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + dayTimestamp;
   const numbers: number[] = [];
   let current = seed;
   for (let i = 0; i < 3; i++) {
-    current = (current * 9301 + 49297) % 233280;
+    current = (current * 1103515245 + 12345) % (1 << 31);
     numbers.push((current % 99) + 1);
   }
-  return [...new Set(numbers)].slice(0, 3);
+  return numbers;
 }
 
-// Get deterministic daily seed
-function getDailySeed(userId: string): number {
-  const today = new Date().toISOString().split('T')[0];
-  const combined = `${userId}-${today}`;
-  let hash = 0;
-  for (let i = 0; i < combined.length; i++) {
-    const char = combined.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash);
+export interface SmokeFortune {
+  fortune: string;
+  emoji: string;
+  category: string;
+  luckyNumbers: number[];
+  luckyBrand: string;
+  todayDate: string;
+  nextFortuneIn: number; // hours until next fortune
+  streak: number;
+  fortuneNumber: number; // which fortune they got (1-50)
 }
 
-// Pick item from array using seed
-function seededPick<T>(arr: T[], seed: number, offset: number = 0): T {
-  return arr[(seed + offset) % arr.length];
-}
+const LUCKY_BRANDS = [
+  "Arturo Fuente", "Padron", "Oliva", "My Father", "Davidoff",
+  "Ashton", "Rocky Patel", "Perdomo", "Montecristo", "Romeo y Julieta",
+  "Cohiba", "Liga Privada", "Crowned Heads", "Foundation", "Tatuaje",
+  "Warped", "Illusione", "Aganorsa Leaf", "Dunbarton Tobacco", "RoMa Craft"
+];
 
-export async function GET(): Promise<Response> {
+export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const sessionId = cookieStore.get("session")?.value;
-
-    if (!sessionId) {
-      // Return generic fortune for non-logged-in users
-      const genericSeed = Date.now();
-      return NextResponse.json({
-        fortune: seededPick(FORTUNE_TEMPLATES.mystical, genericSeed).fortune,
-        emoji: "🔮",
-        luckyNumbers: generateLuckyNumbers(genericSeed),
-        category: "mystical",
-        personalized: false,
-      });
-    }
-
     const { env } = getRequestContext();
     const db = env.DB;
 
-    // Get user from session
-    const session = await db
-      .prepare("SELECT user_id FROM sessions WHERE id = ?")
-      .bind(sessionId)
-      .first<{ user_id: string }>();
-
-    if (!session) {
-      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    // Get auth from cookie
+    const cookieHeader = request.headers.get("cookie") || "";
+    const authMatch = cookieHeader.match(/puffed_auth=([^;]+)/);
+    if (!authMatch) {
+      return Response.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const userId = session.user_id;
-    const seed = getDailySeed(userId);
-
-    // Get user's smoking stats for personalization
-    const [userStats, recentSmokes, topFlavor] = await Promise.all([
-      db.prepare(`
-        SELECT 
-          COUNT(*) as total_smokes,
-          COUNT(DISTINCT brand) as unique_brands,
-          AVG(rating) as avg_rating
-        FROM checkins WHERE user_id = ?
-      `).bind(userId).first<{ total_smokes: number; unique_brands: number; avg_rating: number | null }>(),
-      
-      db.prepare(`
-        SELECT brand, flavors FROM checkins 
-        WHERE user_id = ? 
-        ORDER BY created_at DESC LIMIT 5
-      `).bind(userId).all(),
-      
-      db.prepare(`
-        SELECT flavors FROM checkins 
-        WHERE user_id = ? AND flavors IS NOT NULL AND flavors != ''
-        ORDER BY created_at DESC LIMIT 10
-      `).bind(userId).all(),
-    ]);
-
-    // Determine fortune category based on user behavior
-    const categories: (keyof typeof FORTUNE_TEMPLATES)[] = ['mystical'];
+    const userId = authMatch[1];
     
-    if (userStats && userStats.total_smokes > 0) {
-      categories.push('flavor', 'timing', 'brand');
-      if (userStats.total_smokes >= 5) {
-        categories.push('social');
-      }
+    // Verify user exists
+    const userResult = await db.prepare(
+      "SELECT id, username FROM users WHERE id = ?"
+    ).bind(userId).first<{ id: string; username: string }>();
+
+    if (!userResult) {
+      return Response.json({ error: "User not found" }, { status: 401 });
     }
 
-    const category = seededPick(categories, seed);
-    const fortuneData = seededPick(FORTUNE_TEMPLATES[category], seed, 1);
+    // Get current day (midnight UTC)
+    const now = new Date();
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const dayTimestamp = Math.floor(todayMidnight / 1000 / 86400); // Day number since epoch
 
-    // Build personalized response
-    const response: Record<string, unknown> = {
-      fortune: fortuneData.fortune,
-      emoji: fortuneData.emoji,
-      luckyNumbers: generateLuckyNumbers(seed),
-      category,
-      personalized: true,
+    // Get user's streak
+    const streakResult = await db.prepare(
+      "SELECT current_streak FROM user_stats WHERE user_id = ?"
+    ).bind(userId).first<{ current_streak: number }>();
+    const streak = streakResult?.current_streak || 0;
+
+    // Get deterministic fortune
+    const fortune = getFortuneForUserDay(userId, dayTimestamp);
+    const fortuneIndex = FORTUNES.indexOf(fortune) + 1;
+
+    // Get lucky numbers
+    const luckyNumbers = getLuckyNumbers(userId, dayTimestamp);
+
+    // Get lucky brand (deterministic for the day)
+    const brandSeed = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + dayTimestamp;
+    const luckyBrand = LUCKY_BRANDS[brandSeed % LUCKY_BRANDS.length];
+
+    // Calculate hours until next fortune (midnight)
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const hoursUntilNext = Math.ceil((nextMidnight.getTime() - now.getTime()) / (1000 * 60 * 60));
+
+    const response: SmokeFortune = {
+      fortune: fortune.fortune,
+      emoji: fortune.emoji,
+      category: fortune.category,
+      luckyNumbers,
+      luckyBrand,
+      todayDate: now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+      nextFortuneIn: hoursUntilNext,
+      streak,
+      fortuneNumber: fortuneIndex,
     };
 
-    // Add lucky flavor if flavor fortune
-    if ('lucky' in fortuneData) {
-      response.luckyFlavor = fortuneData.lucky;
-    }
-
-    // Add stats-based insights
-    if (userStats && userStats.total_smokes > 0) {
-      response.stats = {
-        totalSmokes: userStats.total_smokes,
-        uniqueBrands: userStats.unique_brands,
-        avgRating: userStats.avg_rating ? Number(userStats.avg_rating.toFixed(1)) : null,
-      };
-
-      // Add personalized twist based on user data
-      if (userStats.unique_brands === 1) {
-        response.insight = "🎯 Loyalty is your strength. But adventure beckons...";
-      } else if (userStats.unique_brands > 10) {
-        response.insight = "🗺️ A true explorer! Your palate knows no bounds.";
-      } else if (userStats.avg_rating && userStats.avg_rating >= 4.5) {
-        response.insight = "⭐ You have exquisite taste. Trust your instincts.";
-      }
-    }
-
-    // Get most common recent flavor for personalized tip
-    if (topFlavor.results && topFlavor.results.length > 0) {
-      const flavorCounts: Record<string, number> = {};
-      for (const row of topFlavor.results) {
-        const flavors = (row as { flavors: string }).flavors;
-        if (flavors) {
-          for (const f of flavors.split(',')) {
-            const trimmed = f.trim().toLowerCase();
-            if (trimmed) {
-              flavorCounts[trimmed] = (flavorCounts[trimmed] || 0) + 1;
-            }
-          }
-        }
-      }
-      const topFlavorName = Object.entries(flavorCounts)
-        .sort((a, b) => b[1] - a[1])[0]?.[0];
-      
-      if (topFlavorName) {
-        response.dominantFlavor = topFlavorName;
-      }
-    }
-
-    return NextResponse.json(response);
-
+    return Response.json(response);
   } catch (error) {
-    console.error("Smoke fortune error:", error);
-    return NextResponse.json({ error: "The smoke has clouded the vision..." }, { status: 500 });
+    console.error("Fortune error:", error);
+    return Response.json({ error: "Failed to read fortune" }, { status: 500 });
   }
 }

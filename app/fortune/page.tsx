@@ -1,351 +1,338 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiRefreshCw, FiStar, FiShare2, FiPlus } from "react-icons/fi";
+import Link from "next/link";
+import { FiHome, FiRefreshCw, FiClock, FiStar, FiHash, FiZap, FiGift } from "react-icons/fi";
+import type { SmokeFortune } from "../api/smoke-fortune/route";
 
-interface FortuneData {
-  fortune: string;
-  emoji: string;
-  luckyNumbers: number[];
-  luckyFlavor?: string;
-  category: string;
-  personalized: boolean;
-  insight?: string;
-  dominantFlavor?: string;
-  stats?: {
-    totalSmokes: number;
-    uniqueBrands: number;
-    avgRating: number | null;
-  };
-  error?: string;
+function FortuneCard({ fortune, revealed }: { fortune: SmokeFortune; revealed: boolean }) {
+  return (
+    <motion.div
+      initial={{ rotateY: 180, opacity: 0 }}
+      animate={{ rotateY: revealed ? 0 : 180, opacity: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="relative"
+      style={{ transformStyle: "preserve-3d" }}
+    >
+      <div className="bg-gradient-to-br from-amber-900/40 via-orange-800/30 to-amber-900/40 rounded-3xl p-8 border-2 border-amber-500/30 shadow-2xl shadow-amber-500/10">
+        {/* Fortune cookie emoji header */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+          className="text-center mb-6"
+        >
+          <span className="text-7xl">{fortune.emoji}</span>
+        </motion.div>
+
+        {/* Main fortune text */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-center mb-8"
+        >
+          <p className="text-2xl sm:text-3xl font-serif text-amber-100 leading-relaxed italic">
+            "{fortune.fortune}"
+          </p>
+        </motion.div>
+
+        {/* Fortune metadata */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="space-y-4"
+        >
+          {/* Lucky numbers */}
+          <div className="flex items-center justify-center gap-2">
+            <FiHash className="text-amber-500" />
+            <span className="text-gray-400 text-sm">Lucky Numbers:</span>
+            <div className="flex gap-2">
+              {fortune.luckyNumbers.map((num, i) => (
+                <motion.span
+                  key={i}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.8 + i * 0.1 }}
+                  className="bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-sm font-bold"
+                >
+                  {num}
+                </motion.span>
+              ))}
+            </div>
+          </div>
+
+          {/* Lucky brand */}
+          <div className="flex items-center justify-center gap-2">
+            <FiGift className="text-amber-500" />
+            <span className="text-gray-400 text-sm">Lucky Brand:</span>
+            <span className="text-amber-300 font-semibold">{fortune.luckyBrand}</span>
+          </div>
+
+          {/* Category badge */}
+          <div className="flex justify-center">
+            <span className="bg-amber-500/10 text-amber-400/80 px-4 py-1 rounded-full text-xs uppercase tracking-wider border border-amber-500/20">
+              {fortune.category}
+            </span>
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
+function CrackingAnimation({ onComplete }: { onComplete: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 1500);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
+  return (
+    <motion.div
+      initial={{ scale: 1 }}
+      animate={{ scale: [1, 1.1, 0.9, 1.05, 0] }}
+      transition={{ duration: 1.5, times: [0, 0.2, 0.4, 0.6, 1] }}
+      className="text-center"
+    >
+      <motion.span
+        className="text-9xl block"
+        animate={{ rotate: [0, -10, 10, -5, 0] }}
+        transition={{ duration: 0.5, repeat: 2 }}
+      >
+        🥠
+      </motion.span>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 1, 0] }}
+        transition={{ duration: 1.5 }}
+        className="text-amber-400 text-xl mt-4"
+      >
+        Cracking your fortune...
+      </motion.p>
+    </motion.div>
+  );
 }
 
 export default function FortunePage() {
   const router = useRouter();
-  const [fortune, setFortune] = useState<FortuneData | null>(null);
+  const [fortune, setFortune] = useState<SmokeFortune | null>(null);
   const [loading, setLoading] = useState(true);
-  const [revealing, setRevealing] = useState(false);
+  const [cracking, setCracking] = useState(false);
   const [revealed, setRevealed] = useState(false);
-  const [shareStatus, setShareStatus] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchFortune();
-  }, []);
-
-  const fetchFortune = async () => {
-    setLoading(true);
+  const fetchFortune = useCallback(async () => {
     try {
       const res = await fetch("/api/smoke-fortune");
-      const data = await res.json() as FortuneData;
-      if (data.error) {
-        router.push("/login");
+      if (res.status === 401) {
+        router.push("/");
         return;
       }
+      const data = await res.json() as SmokeFortune;
       setFortune(data);
     } catch (error) {
-      console.error("Fortune error:", error);
+      console.error("Failed to load fortune:", error);
     } finally {
       setLoading(false);
     }
+  }, [router]);
+
+  useEffect(() => {
+    fetchFortune();
+  }, [fetchFortune]);
+
+  const handleCrack = () => {
+    setCracking(true);
   };
 
-  const revealFortune = () => {
-    setRevealing(true);
-    // Dramatic reveal after animation
-    setTimeout(() => {
-      setRevealed(true);
-      setRevealing(false);
-    }, 1500);
+  const handleCrackComplete = () => {
+    setCracking(false);
+    setRevealed(true);
   };
 
-  const handleShare = async () => {
-    if (!fortune) return;
-    
-    const shareText = `🔮 My Smoke Fortune: "${fortune.fortune}"\n\n🍀 Lucky Numbers: ${fortune.luckyNumbers.join(", ")}\n${fortune.luckyFlavor ? `🌿 Lucky Flavor: ${fortune.luckyFlavor}\n` : ""}\n#Puffed #SmokeFortune`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Smoke Fortune - Puffed",
-          text: shareText,
-        });
-        setShareStatus("Shared!");
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          copyToClipboard(shareText);
-        }
-      }
-    } else {
-      copyToClipboard(shareText);
-    }
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setShareStatus("Copied!");
-      setTimeout(() => setShareStatus(null), 2000);
-    } catch {
-      setShareStatus("Failed");
-      setTimeout(() => setShareStatus(null), 2000);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-amber-950/20 to-black text-white p-4">
+        <div className="max-w-lg mx-auto">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-700 rounded w-2/3 mx-auto"></div>
+            <div className="h-64 bg-gray-700/50 rounded-3xl"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-950/50 via-gray-900 to-gray-900">
-      {/* Mystical background effects */}
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-amber-950/20 to-black text-white">
+      {/* Mystical particles background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-purple-500/5 to-transparent rounded-full" />
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-amber-500/30 rounded-full"
+            initial={{
+              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 400),
+              y: typeof window !== 'undefined' ? window.innerHeight + 10 : 800,
+            }}
+            animate={{
+              y: -10,
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: 4 + Math.random() * 4,
+              repeat: Infinity,
+              delay: Math.random() * 4,
+              ease: "linear",
+            }}
+          />
+        ))}
       </div>
 
       {/* Header */}
-      <header className="glass border-b border-white/5 sticky top-0 z-50">
-        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
-            <FiArrowLeft />
-            <span>Back</span>
-          </button>
-          <h1 className="text-lg font-semibold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
-            🔮 Smoke Fortune
-          </h1>
-          <div className="w-16" />
-        </div>
-      </header>
-
-      <main className="max-w-lg mx-auto px-4 py-8 relative">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="text-6xl"
-            >
-              🔮
-            </motion.div>
+      <div className="sticky top-0 z-40 bg-gray-900/80 backdrop-blur-lg border-b border-amber-500/10">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/dashboard" className="p-2 hover:bg-white/5 rounded-xl transition-colors">
+            <FiHome className="text-xl text-gray-400" />
+          </Link>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🥠</span>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
+              Smoke Fortune
+            </h1>
           </div>
-        ) : fortune ? (
-          <div className="space-y-6">
-            {/* Crystal Ball */}
+          <div className="w-10" /> {/* Spacer */}
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="max-w-lg mx-auto px-4 py-8">
+        {/* Date header */}
+        {fortune && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-8"
+          >
+            <p className="text-gray-400 text-sm">{fortune.todayDate}</p>
+            {fortune.streak > 0 && (
+              <p className="text-amber-500 text-sm mt-1 flex items-center justify-center gap-1">
+                <FiZap /> {fortune.streak} day streak amplifies your fortune!
+              </p>
+            )}
+          </motion.div>
+        )}
+
+        {/* Fortune display */}
+        <AnimatePresence mode="wait">
+          {cracking ? (
+            <CrackingAnimation key="cracking" onComplete={handleCrackComplete} />
+          ) : revealed && fortune ? (
+            <motion.div key="revealed">
+              <FortuneCard fortune={fortune} revealed={revealed} />
+              
+              {/* Next fortune timer */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                className="mt-8 text-center"
+              >
+                <div className="inline-flex items-center gap-2 bg-gray-800/50 px-4 py-2 rounded-full text-gray-400 text-sm">
+                  <FiClock />
+                  <span>Next fortune in {fortune.nextFortuneIn}h</span>
+                </div>
+                <p className="text-gray-500 text-xs mt-2">
+                  Fortune #{fortune.fortuneNumber} of 50
+                </p>
+              </motion.div>
+            </motion.div>
+          ) : (
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="flex justify-center"
+              key="initial"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center"
             >
-              <div className="relative">
-                <motion.div
-                  animate={revealing ? { scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] } : {}}
-                  transition={{ duration: 1.5 }}
-                  className="text-8xl filter drop-shadow-[0_0_40px_rgba(147,51,234,0.5)]"
-                >
-                  🔮
-                </motion.div>
-                {revealing && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: [0, 2, 0] }}
-                    transition={{ duration: 1.5 }}
-                    className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl"
-                  />
-                )}
+              {/* Unopened fortune cookie */}
+              <motion.div
+                animate={{ 
+                  y: [0, -10, 0],
+                  rotate: [0, 2, -2, 0],
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                className="mb-8"
+              >
+                <span className="text-9xl">🥠</span>
+              </motion.div>
+
+              <h2 className="text-2xl font-bold text-amber-100 mb-4">
+                Your Daily Smoke Fortune Awaits
+              </h2>
+              <p className="text-gray-400 mb-8 max-w-xs mx-auto">
+                Crack open your fortune cookie to reveal today's mystical cigar wisdom
+              </p>
+
+              <motion.button
+                onClick={handleCrack}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gradient-to-r from-amber-600 to-orange-600 px-8 py-4 rounded-2xl font-bold text-lg shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 transition-shadow"
+              >
+                🔮 Reveal Your Fortune
+              </motion.button>
+
+              {/* Teaser stats */}
+              <div className="mt-12 grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-amber-400">50</p>
+                  <p className="text-xs text-gray-500">Unique Fortunes</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-amber-400">6</p>
+                  <p className="text-xs text-gray-500">Categories</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-amber-400">∞</p>
+                  <p className="text-xs text-gray-500">Wisdom</p>
+                </div>
               </div>
             </motion.div>
+          )}
+        </AnimatePresence>
 
-            {/* Reveal Button or Fortune */}
-            <AnimatePresence mode="wait">
-              {!revealed ? (
-                <motion.div
-                  key="reveal"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="text-center space-y-6"
+        {/* Category legend (shown after reveal) */}
+        {revealed && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2 }}
+            className="mt-12 bg-gray-800/30 rounded-2xl p-4"
+          >
+            <h3 className="text-sm font-semibold text-gray-400 mb-3 text-center">Fortune Categories</h3>
+            <div className="flex flex-wrap justify-center gap-2">
+              {['discovery', 'wisdom', 'social', 'pairing', 'fortune', 'time'].map((cat) => (
+                <span
+                  key={cat}
+                  className={`px-3 py-1 rounded-full text-xs ${
+                    fortune?.category === cat 
+                      ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50' 
+                      : 'bg-gray-700/50 text-gray-500'
+                  }`}
                 >
-                  <p className="text-gray-400 text-sm">The smoke swirls with ancient wisdom...</p>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={revealFortune}
-                    disabled={revealing}
-                    className="px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full text-white font-semibold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all disabled:opacity-50"
-                  >
-                    {revealing ? (
-                      <span className="flex items-center gap-2">
-                        <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity }}>✨</motion.span>
-                        Consulting the smoke...
-                      </span>
-                    ) : (
-                      "Reveal Your Fortune"
-                    )}
-                  </motion.button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="fortune"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-6"
-                >
-                  {/* Main Fortune Card */}
-                  <motion.div
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    className="glass rounded-2xl p-6 border border-purple-500/20 bg-gradient-to-br from-purple-900/20 to-indigo-900/20"
-                  >
-                    <div className="text-center space-y-4">
-                      <span className="text-4xl">{fortune.emoji}</span>
-                      <p className="text-xl text-white font-medium leading-relaxed">
-                        &ldquo;{fortune.fortune}&rdquo;
-                      </p>
-                      {fortune.insight && (
-                        <p className="text-purple-300 text-sm italic">{fortune.insight}</p>
-                      )}
-                    </div>
-                  </motion.div>
-
-                  {/* Lucky Numbers & Flavor */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="glass rounded-xl p-4 text-center"
-                    >
-                      <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">Lucky Numbers</p>
-                      <div className="flex justify-center gap-2">
-                        {fortune.luckyNumbers.map((num, i) => (
-                          <motion.span
-                            key={i}
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.3 + i * 0.1 }}
-                            className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg"
-                          >
-                            {num}
-                          </motion.span>
-                        ))}
-                      </div>
-                    </motion.div>
-
-                    {fortune.luckyFlavor && (
-                      <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="glass rounded-xl p-4 text-center"
-                      >
-                        <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">Lucky Flavor</p>
-                        <div className="flex flex-col items-center">
-                          <span className="text-2xl mb-1">🌿</span>
-                          <span className="text-white font-semibold">{fortune.luckyFlavor}</span>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {!fortune.luckyFlavor && fortune.dominantFlavor && (
-                      <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="glass rounded-xl p-4 text-center"
-                      >
-                        <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">Your Aura</p>
-                        <div className="flex flex-col items-center">
-                          <span className="text-2xl mb-1">✨</span>
-                          <span className="text-white font-semibold capitalize">{fortune.dominantFlavor}</span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </div>
-
-                  {/* Stats if personalized */}
-                  {fortune.personalized && fortune.stats && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                      className="glass rounded-xl p-4"
-                    >
-                      <p className="text-gray-400 text-xs uppercase tracking-wider mb-3 text-center">Your Smoking Spirit</p>
-                      <div className="flex justify-around text-center">
-                        <div>
-                          <p className="text-2xl font-bold text-white">{fortune.stats.totalSmokes}</p>
-                          <p className="text-gray-500 text-xs">Smokes</p>
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold text-white">{fortune.stats.uniqueBrands}</p>
-                          <p className="text-gray-500 text-xs">Brands</p>
-                        </div>
-                        {fortune.stats.avgRating && (
-                          <div>
-                            <p className="text-2xl font-bold text-white flex items-center justify-center gap-1">
-                              {fortune.stats.avgRating} <FiStar className="text-amber-500" size={16} />
-                            </p>
-                            <p className="text-gray-500 text-xs">Avg Rating</p>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Actions */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="flex justify-center gap-4"
-                  >
-                    <button
-                      onClick={handleShare}
-                      className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 rounded-full text-white transition-colors relative"
-                    >
-                      <FiShare2 />
-                      <span>Share Fortune</span>
-                      {shareStatus && (
-                        <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs bg-purple-500 px-2 py-1 rounded whitespace-nowrap">
-                          {shareStatus}
-                        </span>
-                      )}
-                    </button>
-                  </motion.div>
-
-                  {/* CTA */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="text-center pt-4"
-                  >
-                    <p className="text-gray-500 text-sm mb-4">
-                      The stars say it&apos;s time for a smoke...
-                    </p>
-                    <Link
-                      href="/dashboard"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 rounded-full text-white font-semibold shadow-lg hover:shadow-amber-500/25 transition-all"
-                    >
-                      <FiPlus />
-                      Log a Smoke
-                    </Link>
-                  </motion.div>
-
-                  {/* Return tomorrow */}
-                  <p className="text-center text-gray-600 text-xs">
-                    🌙 New fortune available at midnight
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        ) : (
-          <div className="text-center py-20 text-gray-400">
-            The smoke has cleared... refresh to try again.
-          </div>
+                  {cat}
+                </span>
+              ))}
+            </div>
+          </motion.div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

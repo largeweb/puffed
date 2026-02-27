@@ -1284,6 +1284,13 @@ export default function DashboardPage() {
               🌑
             </Link>
             <Link
+              href="/dead-of-night"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
+              title="Dead of Night Diary - 2-5 AM"
+            >
+              📓
+            </Link>
+            <Link
               href="/roulette"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="Lucky Cigar"
@@ -1296,6 +1303,20 @@ export default function DashboardPage() {
               title="Smoke Bingo - Weekly Challenges"
             >
               🎲
+            </Link>
+            <Link
+              href="/fortune"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Smoke Fortune - Daily Wisdom"
+            >
+              🥠
+            </Link>
+            <Link
+              href="/time-capsule"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-violet-400 transition-all"
+              title="Time Capsule - Messages to Future You"
+            >
+              📦
             </Link>
             <Link
               href="/pulse"
