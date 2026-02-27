@@ -1172,6 +1172,13 @@ export default function DashboardPage() {
               <FiCalendar size={20} />
             </Link>
             <Link
+              href="/monthly-recap"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-fuchsia-400 transition-all"
+              title="February Recap"
+            >
+              📅
+            </Link>
+            <Link
               href="/thursday-hub"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-violet-400 transition-all"
               title="Thursday Hub"
@@ -1326,6 +1333,13 @@ export default function DashboardPage() {
               🎲
             </Link>
             <Link
+              href="/slots"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
+              title="Cigar Slots - Spin to Win!"
+            >
+              💰
+            </Link>
+            <Link
               href="/friday-spotlight"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
               title="Friday Spotlight - Weekly Awards"
@@ -1443,6 +1457,13 @@ export default function DashboardPage() {
               title="Friday Shoutouts - Give Props to Your Crew"
             >
               📣
+            </Link>
+            <Link
+              href="/quotes"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Smoke Quotes - Daily Inspiration"
+            >
+              💬
             </Link>
             <Link
               href="/share"

@@ -24,7 +24,7 @@ export default function VibeCheckPage() {
     try {
       const res = await fetch('/api/vibe-check');
       if (res.ok) {
-        const json = await res.json();
+        const json = await res.json() as VibeData;
         setData(json);
       }
     } catch (error) {
