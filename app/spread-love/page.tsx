@@ -41,7 +41,11 @@ export default function SpreadLovePage() {
         router.push("/");
         return;
       }
-      const data = await res.json();
+      const data: {
+        lovedCheckin?: LovedCheckin;
+        lovesSpreadToday?: number;
+        message?: string;
+      } = await res.json();
       if (data.lovedCheckin) {
         setCheckin(data.lovedCheckin);
         setAllLoved(false);
@@ -67,11 +71,16 @@ export default function SpreadLovePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ checkinId: checkin.id }),
       });
-      const data = await res.json();
+      const data: {
+        success?: boolean;
+        lovesSpreadToday?: number;
+        message?: string;
+        error?: string;
+      } = await res.json();
       if (data.success) {
         setJustLoved(true);
-        setLovesSpreadToday(data.lovesSpreadToday);
-        setMessage(data.message);
+        setLovesSpreadToday(data.lovesSpreadToday || 0);
+        setMessage(data.message || "");
         // Auto-fetch next after a moment
         setTimeout(() => {
           fetchRandomCheckin();

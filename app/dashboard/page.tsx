@@ -1165,6 +1165,20 @@ export default function DashboardPage() {
               <FiCalendar size={20} />
             </Link>
             <Link
+              href="/thursday-hub"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-violet-400 transition-all"
+              title="Thursday Hub"
+            >
+              🍻
+            </Link>
+            <Link
+              href="/happy-hour"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
+              title="Happy Hour Club (5-8 PM)"
+            >
+              🕔
+            </Link>
+            <Link
               href="/timer"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-rose-400 transition-all"
               title="Smoke Timer"
@@ -1196,6 +1210,13 @@ export default function DashboardPage() {
               href="/brand-loyalty"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Brand Loyalty"
+            >
+              💎
+            </Link>
+            <Link
+              href="/throne"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Throne Room"
             >
               👑
             </Link>
