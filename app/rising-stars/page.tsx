@@ -36,14 +36,19 @@ export default function RisingStarsPage() {
   const [followingInProgress, setFollowingInProgress] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    fetch("/api/rising-stars")
-      .then((res) => res.json())
-      .then((data: { risingStars?: RisingStar[]; stats?: Stats }) => {
+    const loadData = async () => {
+      try {
+        const res = await fetch("/api/rising-stars");
+        const data = await res.json() as { risingStars?: RisingStar[]; stats?: Stats };
         setRisingStars(data.risingStars || []);
         setStats(data.stats || null);
+      } catch {
+        // ignore errors
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    };
+    loadData();
   }, []);
 
   const handleFollow = async (userId: number) => {
