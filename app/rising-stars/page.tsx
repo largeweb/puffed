@@ -6,7 +6,7 @@ import { FiHome, FiStar, FiHeart, FiMessageCircle, FiUsers, FiTrendingUp, FiUser
 import Link from "next/link";
 
 interface RisingStar {
-  user_id: string;
+  user_id: number;
   username: string;
   joined_days_ago: number;
   checkins: number;
@@ -33,12 +33,12 @@ export default function RisingStarsPage() {
   const [risingStars, setRisingStars] = useState<RisingStar[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [followingInProgress, setFollowingInProgress] = useState<Set<string>>(new Set());
+  const [followingInProgress, setFollowingInProgress] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetch("/api/rising-stars")
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: { risingStars?: RisingStar[]; stats?: Stats }) => {
         setRisingStars(data.risingStars || []);
         setStats(data.stats || null);
         setLoading(false);
@@ -46,7 +46,7 @@ export default function RisingStarsPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  const handleFollow = async (userId: string) => {
+  const handleFollow = async (userId: number) => {
     setFollowingInProgress(prev => new Set(prev).add(userId));
     
     try {
