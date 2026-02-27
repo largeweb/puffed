@@ -1152,6 +1152,13 @@ export default function DashboardPage() {
               🏆
             </Link>
             <Link
+              href="/throne"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Throne Room"
+            >
+              👑
+            </Link>
+            <Link
               href="/conversations"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-cyan-400 transition-all"
               title="Hot Conversations"
