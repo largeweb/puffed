@@ -1151,6 +1151,13 @@ export default function DashboardPage() {
               <FiTarget size={20} />
             </Link>
             <Link
+              href="/awards"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Weekly Awards"
+            >
+              🏅
+            </Link>
+            <Link
               href="/goals"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
               title="Community Goals"

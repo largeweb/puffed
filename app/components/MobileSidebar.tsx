@@ -62,6 +62,7 @@ const navGroups = [
       { href: "/records", icon: <span>🏆</span>, label: "Personal Records", color: "text-yellow-400" },
       { href: "/personal-bests", icon: <span>🥇</span>, label: "Personal Bests", color: "text-yellow-400" },
       { href: "/milestones", icon: <FiTarget size={20} />, label: "Milestones", color: "text-orange-400" },
+      { href: "/awards", icon: <span>🏅</span>, label: "Weekly Awards", color: "text-amber-400" },
       { href: "/personality", icon: <span>🔮</span>, label: "Smoke Personality", color: "text-purple-400" },
       { href: "/fortune", icon: <span>✨</span>, label: "Smoke Fortune", color: "text-violet-400" },
       { href: "/flavor-dna", icon: <span>🧬</span>, label: "Flavor DNA", color: "text-purple-400" },
