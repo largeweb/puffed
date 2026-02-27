@@ -1382,6 +1382,13 @@ export default function DashboardPage() {
               🌟
             </Link>
             <Link
+              href="/dawn-patrol"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
+              title="Dawn Patrol - Early Bird Club (4-7 AM)"
+            >
+              🌅
+            </Link>
+            <Link
               href="/share"
               className="p-2 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-400 transition-all"
               title="Share Your Week"
