@@ -3,9 +3,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity, FiRss, FiTarget, FiMoon, FiMapPin, FiHeart, FiCloud, FiHelpCircle } from "react-icons/fi";
+import { FiPlus, FiLogOut, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiCompass, FiCamera, FiX, FiTrash2, FiSettings, FiBell, FiAward, FiShare2, FiSearch, FiBarChart2, FiBookmark, FiZap, FiLayers, FiCalendar, FiUsers, FiActivity, FiRss, FiTarget, FiMoon, FiMapPin, FiHeart } from "react-icons/fi";
 import Link from "next/link";
-import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData, EveningLoungeResponse, EveningSmoker, TonightsPick, DailyTip, DailyChallengeData, LunchLoungeResponse, HappyHourResponse, HappyHourSmoker, AfternoonBreakResponse, AfternoonSmoker } from "@/lib/types";
+import type { User, Checkin, MeResponse, CheckinsResponse, UploadResponse, NotificationCountResponse, BadgesResponse, Badge, StreakResponse, WeeklyInsights, FeedResponse, Activity, ActivityResponse, DailyPrompt, PromptResponse, DailyPromptResponse, RecentBrand, RecentBrandsResponse, ActiveSmoker, ActiveSmokersResponse, WeeklyRecap, WeeklyGoal, WeeklyGoalsResponse, BrandOfWeek, FlavorRecommendation, FlavorRecsResponse, OnboardingTask, OnboardingResponse, CommunityMilestonesResponse, LoungeResponse, NightOwlUser, NightThought, NightThoughtsResponse, MorningCoffeeResponse, EarlyBirdUser, OnThisDayResponse, OnThisDayMemory, SuggestedUser, SuggestedFollowsResponse, CommunityChallenge, DailyPollData, EveningLoungeResponse, EveningSmoker, TonightsPick, DailyTip, DailyChallengeData } from "@/lib/types";
 import { FiRepeat } from "react-icons/fi";
 import { FiTrendingUp, FiTrendingDown, FiMinus, FiMenu } from "react-icons/fi";
 import MobileSidebar from "../components/MobileSidebar";
@@ -419,10 +419,6 @@ export default function DashboardPage() {
   const [loungeData, setLoungeData] = useState<LoungeResponse | null>(null);
   const [morningData, setMorningData] = useState<MorningCoffeeResponse | null>(null);
   const [eveningData, setEveningData] = useState<EveningLoungeResponse | null>(null);
-  const [lunchData, setLunchData] = useState<LunchLoungeResponse | null>(null);
-  const [happyHourData, setHappyHourData] = useState<HappyHourResponse | null>(null);
-  const [hotTakesData, setHotTakesData] = useState<{ takes: { id: string; username: string; take: string; upvotes: number; downvotes: number }[]; isThursday: boolean; stats: { totalTakes: number; totalVotes: number } } | null>(null);
-  const [afternoonData, setAfternoonData] = useState<AfternoonBreakResponse | null>(null);
   const [midweekData, setMidweekData] = useState<{ isWednesday: boolean; weekProgress: number; communityStats: { smokesThisWeek: number; activeSmokersThisWeek: number }; motivationalMessage: string } | null>(null);
   const [firstSmokeData, setFirstSmokeData] = useState<{ claimed: boolean; winner?: { username: string; brand: string; time: string; timeAgo: string }; totalSmokesToday: number; dayOfWeek: string } | null>(null);
   const [nightThoughts, setNightThoughts] = useState<NightThought[]>([]);
@@ -671,34 +667,6 @@ export default function DashboardPage() {
         if (eveningRes.ok) {
           const eveningResData: EveningLoungeResponse = await eveningRes.json();
           setEveningData(eveningResData);
-        }
-
-        // Load lunch lounge (shows 11 AM - 2 PM)
-        const lunchRes = await fetch("/api/lunch-lounge");
-        if (lunchRes.ok) {
-          const lunchResData: LunchLoungeResponse = await lunchRes.json();
-          setLunchData(lunchResData);
-        }
-
-        // Load afternoon break (shows 2 PM - 4 PM)
-        const afternoonRes = await fetch("/api/afternoon-break");
-        if (afternoonRes.ok) {
-          const afternoonResData: AfternoonBreakResponse = await afternoonRes.json();
-          setAfternoonData(afternoonResData);
-        }
-
-        // Load happy hour (shows 4 PM - 7 PM)
-        const happyHourRes = await fetch("/api/happy-hour");
-        if (happyHourRes.ok) {
-          const happyHourResData: HappyHourResponse = await happyHourRes.json();
-          setHappyHourData(happyHourResData);
-        }
-
-        // Load hot takes (shows on Thursdays)
-        const hotTakesRes = await fetch("/api/hot-takes");
-        if (hotTakesRes.ok) {
-          const hotTakesResData = await hotTakesRes.json() as { takes: { id: string; username: string; take: string; upvotes: number; downvotes: number }[]; isThursday: boolean; stats: { totalTakes: number; totalVotes: number } };
-          setHotTakesData(hotTakesResData);
         }
 
         // Load midweek momentum (Wednesday celebration)
@@ -1071,25 +1039,11 @@ export default function DashboardPage() {
               <FiUsers size={20} />
             </Link>
             <Link
-              href="/soulmate"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
-              title="Cigar Soulmates"
-            >
-              💘
-            </Link>
-            <Link
               href="/spread-love"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-rose-400 transition-all"
               title="Spread the Love"
             >
               <FiHeart size={20} />
-            </Link>
-            <Link
-              href="/unsung"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
-              title="Unsung Heroes"
-            >
-              👏
             </Link>
             <Link
               href="/twins"
@@ -1169,27 +1123,6 @@ export default function DashboardPage() {
               <FiBarChart2 size={20} />
             </Link>
             <Link
-              href="/weekly-wrap"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-fuchsia-400 transition-all"
-              title="Weekly Wrap"
-            >
-              📊
-            </Link>
-            <Link
-              href="/you-vs-community"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-blue-400 transition-all"
-              title="You vs Community"
-            >
-              <FiUsers size={20} />
-            </Link>
-            <Link
-              href="/verdict"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
-              title="The Verdict - Your Rating Style"
-            >
-              ⚖️
-            </Link>
-            <Link
               href="/smoke-oclock"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Smoke O'Clock - When You Smoke"
@@ -1202,27 +1135,6 @@ export default function DashboardPage() {
               title="Personal Records"
             >
               🏆
-            </Link>
-            <Link
-              href="/trivia"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
-              title="Daily Trivia"
-            >
-              <FiHelpCircle size={20} />
-            </Link>
-            <Link
-              href="/throwback"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
-              title="Throwback Thursday"
-            >
-              🔙
-            </Link>
-            <Link
-              href="/hot-takes"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
-              title="Hot Take Thursday"
-            >
-              🔥
             </Link>
             <Link
               href="/milestones"
@@ -1253,11 +1165,39 @@ export default function DashboardPage() {
               <FiCalendar size={20} />
             </Link>
             <Link
-              href="/tier-list"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
-              title="Brand Tier List"
+              href="/thursday-hub"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-violet-400 transition-all"
+              title="Thursday Hub"
             >
-              🎮
+              🍻
+            </Link>
+            <Link
+              href="/friday-eve"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
+              title="Friday Eve - Weekend Countdown!"
+            >
+              🎉
+            </Link>
+            <Link
+              href="/tgif"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="TGIF Lounge - Friday Night Party!"
+            >
+              🍺
+            </Link>
+            <Link
+              href="/happy-hour"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
+              title="Happy Hour Club (5-8 PM)"
+            >
+              🕔
+            </Link>
+            <Link
+              href="/wind-down"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
+              title="Wind Down (9 PM - Midnight)"
+            >
+              🌙
             </Link>
             <Link
               href="/timer"
@@ -1281,20 +1221,6 @@ export default function DashboardPage() {
               <FiAward size={20} />
             </Link>
             <Link
-              href="/legends"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
-              title="Smoke Legends - Hall of Fame"
-            >
-              🏛️
-            </Link>
-            <Link
-              href="/throne"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
-              title="Throne Room - Champions"
-            >
-              🏰
-            </Link>
-            <Link
               href="/achievements"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-500 transition-all"
               title="Achievement Showcase"
@@ -1302,23 +1228,16 @@ export default function DashboardPage() {
               🏆
             </Link>
             <Link
-              href="/smoke-score"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-cyan-400 transition-all"
-              title="Smoke Score"
-            >
-              🎯
-            </Link>
-            <Link
-              href="/personal-bests"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
-              title="Personal Bests"
-            >
-              🥇
-            </Link>
-            <Link
               href="/brand-loyalty"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Brand Loyalty"
+            >
+              💎
+            </Link>
+            <Link
+              href="/throne"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Throne Room"
             >
               👑
             </Link>
@@ -1351,23 +1270,23 @@ export default function DashboardPage() {
               ☀️
             </Link>
             <Link
-              href="/happy-hour"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
-              title="Happy Hour - After Work Celebration"
+              href="/goodnight"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
+              title="Goodnight Lounge - Last Smoke Before Bed"
             >
-              🍻
+              😴
             </Link>
             <Link
-              href="/weekend"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
-              title="Weekend Warmup"
+              href="/midnight-society"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Midnight Society - 12 AM - 2 AM Club"
             >
-              🌴
+              🌑
             </Link>
             <Link
               href="/roulette"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
-              title="Rating Roulette"
+              title="Lucky Cigar"
             >
               🎰
             </Link>
@@ -1384,20 +1303,6 @@ export default function DashboardPage() {
               title="Photo Gallery"
             >
               <FiCamera size={20} />
-            </Link>
-            <Link
-              href="/weather"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-cyan-400 transition-all"
-              title="Smoke Weather"
-            >
-              <FiCloud size={20} />
-            </Link>
-            <Link
-              href="/digest"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
-              title="Daily Digest"
-            >
-              📋
             </Link>
             <Link
               href="/flavor-dna"
@@ -1419,13 +1324,6 @@ export default function DashboardPage() {
               title="Mood Analytics"
             >
               🎭
-            </Link>
-            <Link
-              href="/roast"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-red-400 transition-all"
-              title="Smoke Roast"
-            >
-              🔥
             </Link>
             <Link
               href="/fortune"
@@ -1825,7 +1723,7 @@ export default function DashboardPage() {
               <p className="text-xs text-gray-400">Avg Rating</p>
             </div>
             {/* Streak */}
-            <Link href="/activity-streak" className="ml-auto text-right hover:opacity-80 transition-opacity cursor-pointer">
+            <div className="ml-auto text-right">
               <div className="flex items-center justify-end gap-1.5">
                 <span className={`text-3xl font-bold ${streak.active ? 'text-orange-500' : 'text-gray-500'}`}>
                   {streak.current}
@@ -1838,7 +1736,7 @@ export default function DashboardPage() {
               {streak.best > 0 && streak.best > streak.current && (
                 <p className="text-xs text-gray-500">Best: {streak.best} days</p>
               )}
-            </Link>
+            </div>
           </div>
           {/* Time Since Last Smoke */}
           {(() => {
@@ -2514,7 +2412,7 @@ export default function DashboardPage() {
               )}
               
               {/* View all link */}
-              <div className="mt-3 pt-3 border-t border-white/5 flex justify-center gap-4 flex-wrap">
+              <div className="mt-3 pt-3 border-t border-white/5 flex justify-center gap-4">
                 <Link 
                   href="/night-thoughts"
                   className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
@@ -2532,24 +2430,6 @@ export default function DashboardPage() {
                   className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
                   🌌 Twilight Zone
-                </Link>
-                <Link 
-                  href="/nightcap"
-                  className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
-                >
-                  🌙 Nightcap Club
-                </Link>
-                <Link 
-                  href="/insomnia"
-                  className="text-xs text-gray-400 hover:text-gray-300 transition-colors"
-                >
-                  🌃 Insomnia Club
-                </Link>
-                <Link 
-                  href="/confessional"
-                  className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
-                >
-                  🕯️ Confessional
                 </Link>
               </div>
             </div>
@@ -2704,305 +2584,6 @@ export default function DashboardPage() {
                 className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
               >
                 View Morning Coffee Lounge →
-              </Link>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Lunch Break Lounge Section - Midday Smokers (11am - 2pm) */}
-        {lunchData?.isLunchTime && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.054 }}
-            className="glass rounded-2xl p-5 mb-6 border border-orange-500/30 bg-gradient-to-br from-orange-900/20 to-amber-900/20"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <span className="text-2xl">🍴</span>
-                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-medium text-orange-300">Lunch Break Lounge</h2>
-                  <p className="text-xs text-amber-400">{lunchData.vibeText}</p>
-                </div>
-              </div>
-              <span className="text-xs text-orange-400/60">11 AM - 2 PM</span>
-            </div>
-
-            {/* Lunch stats */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-lg font-bold text-orange-300">{lunchData.todayCount}</div>
-                <div className="text-[10px] text-gray-500">Lunchers Today</div>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-lg font-bold text-amber-300">{lunchData.platformStats?.totalLunchSmokes || 0}</div>
-                <div className="text-[10px] text-gray-500">All-Time Lunches</div>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-lg font-bold text-orange-200">{lunchData.personalStats?.totalLunchSmokes || 0}</div>
-                <div className="text-[10px] text-gray-500">Your Lunches</div>
-              </div>
-            </div>
-
-            {/* Today's lunch smokers */}
-            {lunchData.todaySmokers && lunchData.todaySmokers.length > 0 && (
-              <div>
-                <p className="text-xs text-gray-500 mb-2">🍴 Taking a lunch break:</p>
-                <div className="flex flex-wrap gap-2">
-                  {lunchData.todaySmokers.slice(0, 6).map((smoker, idx) => (
-                    <Link
-                      key={smoker.user_id}
-                      href={`/user/${smoker.username}`}
-                      className="px-3 py-1.5 rounded-full text-xs bg-orange-600/20 text-orange-300 hover:bg-orange-600/30 transition-all"
-                    >
-                      {idx < 3 && <span className="mr-1">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>}
-                      @{smoker.username}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {lunchData.todaySmokers?.length === 0 && (
-              <p className="text-xs text-gray-500 text-center py-2">
-                🍴 Be the first to take a lunch break puff today!
-              </p>
-            )}
-
-            {/* Link to full page */}
-            <div className="mt-4 pt-4 border-t border-white/10 text-center">
-              <p className="text-xs text-orange-400/80 italic mb-2">
-                &quot;Take a break, you&apos;ve earned it&quot; 🍽️
-              </p>
-              <Link 
-                href="/lunch"
-                className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
-              >
-                View Lunch Break Lounge →
-              </Link>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Afternoon Break Section - Post-Lunch Reset ☕ */}
-        {afternoonData?.isAfternoonBreak && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.051 }}
-            className="glass rounded-2xl p-5 mb-6 border border-teal-500/30 bg-gradient-to-br from-teal-900/20 to-cyan-900/20"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <span className="text-2xl">☕</span>
-                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-teal-400 rounded-full animate-pulse" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-medium text-teal-300">Afternoon Break</h2>
-                  <p className="text-xs text-cyan-400">{afternoonData.vibeText}</p>
-                </div>
-              </div>
-              <span className="text-xs text-teal-400/60">2 PM - 4 PM</span>
-            </div>
-
-            {/* Productivity tip */}
-            {afternoonData.productivityTip && (
-              <div className="bg-teal-500/10 rounded-lg p-3 mb-4 border border-teal-500/20">
-                <p className="text-xs text-teal-300">{afternoonData.productivityTip}</p>
-              </div>
-            )}
-
-            {/* Afternoon break stats */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-lg font-bold text-teal-300">{afternoonData.todayCount}</div>
-                <div className="text-[10px] text-gray-500">Today</div>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-lg font-bold text-cyan-300">{afternoonData.platformStats?.totalAfternoonSmokes || 0}</div>
-                <div className="text-[10px] text-gray-500">All-Time</div>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-lg font-bold text-teal-200">{afternoonData.personalStats?.totalAfternoonSmokes || 0}</div>
-                <div className="text-[10px] text-gray-500">Your Breaks</div>
-              </div>
-            </div>
-
-            {/* Today's afternoon breakers */}
-            {afternoonData.todaySmokers && afternoonData.todaySmokers.length > 0 && (
-              <div>
-                <p className="text-xs text-gray-500 mb-2">☕ Taking an afternoon break:</p>
-                <div className="flex flex-wrap gap-2">
-                  {afternoonData.todaySmokers.slice(0, 6).map((smoker: AfternoonSmoker, idx: number) => (
-                    <Link
-                      key={smoker.user_id}
-                      href={`/user/${smoker.username}`}
-                      className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-teal-500/10 hover:bg-teal-500/20 transition-colors"
-                    >
-                      {idx < 3 && <span className="text-xs">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>}
-                      <span className="text-xs text-teal-300">{smoker.username}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {afternoonData.todaySmokers?.length === 0 && (
-              <p className="text-xs text-gray-500 text-center py-2">
-                ☕ Be the first to take an afternoon break today!
-              </p>
-            )}
-
-            {/* Link to full page */}
-            <div className="mt-4 pt-4 border-t border-white/10 text-center">
-              <p className="text-xs text-teal-400/80 italic mb-2">
-                &quot;Beat the slump, you&apos;ve got this!&quot; 💪
-              </p>
-              <Link 
-                href="/afternoon"
-                className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
-              >
-                View Afternoon Break Lounge →
-              </Link>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Happy Hour Section - After Work Celebration 🍻 */}
-        {happyHourData?.isHappyHour && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.052 }}
-            className="glass rounded-2xl p-5 mb-6 border border-amber-500/30 bg-gradient-to-br from-amber-900/20 to-yellow-900/20"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <span className="text-2xl">🍻</span>
-                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-medium text-amber-300">Happy Hour</h2>
-                  <p className="text-xs text-yellow-400">{happyHourData.vibeText}</p>
-                </div>
-              </div>
-              <span className="text-xs text-amber-400/60">4 PM - 7 PM</span>
-            </div>
-
-            {/* Happy Hour stats */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-lg font-bold text-amber-300">{happyHourData.todayCount}</div>
-                <div className="text-[10px] text-gray-500">Today</div>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-lg font-bold text-yellow-300">{happyHourData.platformStats?.totalHappyHourSmokes || 0}</div>
-                <div className="text-[10px] text-gray-500">All-Time</div>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-lg font-bold text-amber-200">{happyHourData.personalStats?.totalHappyHourSmokes || 0}</div>
-                <div className="text-[10px] text-gray-500">Your HH</div>
-              </div>
-            </div>
-
-            {/* Today's happy hour smokers */}
-            {happyHourData.todaySmokers && happyHourData.todaySmokers.length > 0 && (
-              <div>
-                <p className="text-xs text-gray-500 mb-2">🍻 Celebrating after work:</p>
-                <div className="flex flex-wrap gap-2">
-                  {happyHourData.todaySmokers.slice(0, 6).map((smoker: HappyHourSmoker, idx: number) => (
-                    <Link
-                      key={smoker.user_id}
-                      href={`/user/${smoker.username}`}
-                      className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-500/10 hover:bg-amber-500/20 transition-colors"
-                    >
-                      {idx < 3 && <span className="text-xs">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>}
-                      <span className="text-xs text-amber-300">{smoker.username}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {happyHourData.todaySmokers?.length === 0 && (
-              <p className="text-xs text-gray-500 text-center py-2">
-                🍻 Be the first to celebrate happy hour today!
-              </p>
-            )}
-
-            {/* Link to full page */}
-            <div className="mt-4 pt-4 border-t border-white/10 text-center">
-              <p className="text-xs text-amber-400/80 italic mb-2">
-                &quot;You made it through the day!&quot; 🎉
-              </p>
-              <Link 
-                href="/happy-hour"
-                className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
-              >
-                View Happy Hour Lounge →
-              </Link>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Hot Take Thursday Section 🔥 */}
-        {hotTakesData?.isThursday && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.053 }}
-            className="glass rounded-2xl p-5 mb-6 border border-orange-500/30 bg-gradient-to-br from-orange-900/20 to-red-900/20"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <span className="text-2xl">🔥</span>
-                  <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-medium text-orange-300">Hot Take Thursday</h2>
-                  <p className="text-xs text-red-400">Share your spiciest opinions!</p>
-                </div>
-              </div>
-              <span className="text-xs text-orange-400/60">🌶️ Weekly</span>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-lg font-bold text-orange-300">{hotTakesData.stats?.totalTakes || 0}</div>
-                <div className="text-[10px] text-gray-500">Hot Takes</div>
-              </div>
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-lg font-bold text-red-300">{hotTakesData.stats?.totalVotes || 0}</div>
-                <div className="text-[10px] text-gray-500">Votes</div>
-              </div>
-            </div>
-
-            {/* Top hot take preview */}
-            {hotTakesData.takes && hotTakesData.takes.length > 0 && (
-              <div className="bg-black/20 rounded-xl p-3 mb-3">
-                <p className="text-xs text-gray-500 mb-1">🔥 Top hot take:</p>
-                <p className="text-sm text-white line-clamp-2">&quot;{hotTakesData.takes[0].take}&quot;</p>
-                <p className="text-xs text-orange-400/60 mt-1">— {hotTakesData.takes[0].username}</p>
-              </div>
-            )}
-
-            {/* CTA */}
-            <div className="mt-4 pt-4 border-t border-white/10 text-center">
-              <p className="text-xs text-orange-400/80 italic mb-2">
-                &quot;Controversy drives engagement!&quot; 🌶️
-              </p>
-              <Link 
-                href="/hot-takes"
-                className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
-              >
-                Join the Debate →
               </Link>
             </div>
           </motion.div>
