@@ -112,7 +112,7 @@ export default function MonthlyRecapPage() {
       params.set("year", "2026");
       
       const res = await fetch(`/api/monthly-recap?${params}`);
-      const json = await res.json();
+      const json = await res.json() as RecapData;
       setData(json);
     } catch (err) {
       console.error("Failed to fetch recap:", err);
