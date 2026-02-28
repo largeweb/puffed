@@ -1438,6 +1438,13 @@ export default function DashboardPage() {
               <FiActivity size={20} />
             </Link>
             <Link
+              href="/radio"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-fuchsia-400 transition-all"
+              title="Smoke Radio - What's Playing"
+            >
+              📻
+            </Link>
+            <Link
               href="/live"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-green-400 transition-all"
               title="Live Smokers"
