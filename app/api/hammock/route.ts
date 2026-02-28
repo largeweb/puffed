@@ -1,6 +1,6 @@
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { NextResponse, NextRequest } from "next/server";
-import { getUserFromRequest } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export const runtime = "edge";
 
@@ -35,10 +35,25 @@ const CHILL_ACTIVITIES = [
   "🍃 Feeling the wind",
 ];
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get("session")?.value;
+    
     const { env } = getRequestContext();
-    const user = await getUserFromRequest(request, env);
+    const db = env.DB;
+    
+    // Get user from session if logged in
+    let userId: string | null = null;
+    if (sessionId) {
+      const session = await db
+        .prepare("SELECT user_id FROM sessions WHERE id = ?")
+        .bind(sessionId)
+        .first<{ user_id: string }>();
+      if (session) {
+        userId = session.user_id;
+      }
+    }
     
     // Get current time info
     const now = new Date();
@@ -85,7 +100,7 @@ export async function GET(request: NextRequest) {
     const nowTs = Math.floor(Date.now() / 1000);
     
     // Get current hammock occupants (people who smoked 12-5 PM today on weekend)
-    const currentOccupants = isWeekend ? await env.DB.prepare(`
+    const currentOccupants = isWeekend ? await db.prepare(`
       SELECT c.id, u.username, c.brand, c.product, c.rating, c.photo_url as photoUrl,
              datetime(c.created_at, 'unixepoch') as time
       FROM checkins c
@@ -97,7 +112,7 @@ export async function GET(request: NextRequest) {
     `).bind(todayNoonTs, Math.min(todayEveningTs, nowTs + 3600)).all() : { results: [] };
     
     // Get all-time weekend afternoon stats
-    const allTimeStats = await env.DB.prepare(`
+    const allTimeStats = await db.prepare(`
       SELECT 
         COUNT(*) as totalSmokes,
         COUNT(DISTINCT user_id) as uniqueChillers,
@@ -114,7 +129,7 @@ export async function GET(request: NextRequest) {
     `).first<{ totalSmokes: number; uniqueChillers: number; avgRating: number; topBrand: string | null }>();
     
     // Leaderboard - most weekend afternoon smokes
-    const leaderboard = await env.DB.prepare(`
+    const leaderboard = await db.prepare(`
       SELECT u.username, 
              COUNT(*) as hammockSmokes,
              AVG(c.rating) as avgRating,
@@ -136,8 +151,8 @@ export async function GET(request: NextRequest) {
     
     // User's personal hammock stats
     let myStats = null;
-    if (user) {
-      const userStats = await env.DB.prepare(`
+    if (userId) {
+      const userStats = await db.prepare(`
         SELECT COUNT(*) as totalSmokes,
                AVG(rating) as avgRating,
                (SELECT brand FROM checkins 
@@ -151,7 +166,7 @@ export async function GET(request: NextRequest) {
           AND strftime('%H', created_at, 'unixepoch') >= '12' 
           AND strftime('%H', created_at, 'unixepoch') < '17'
           AND (strftime('%w', created_at, 'unixepoch') = '0' OR strftime('%w', created_at, 'unixepoch') = '6')
-      `).bind(user.id, user.id).first<{ totalSmokes: number; avgRating: number; favoriteBrand: string | null }>();
+      `).bind(userId, userId).first<{ totalSmokes: number; avgRating: number; favoriteBrand: string | null }>();
       
       if (userStats && userStats.totalSmokes > 0) {
         myStats = userStats;
