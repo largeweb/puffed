@@ -1389,6 +1389,20 @@ export default function DashboardPage() {
               📺
             </Link>
             <Link
+              href="/weekend-scoreboard"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Weekend Scoreboard - Live Competition"
+            >
+              🏆
+            </Link>
+            <Link
+              href="/wake-bake"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
+              title="Wake & Bake - Weekend Morning Ritual"
+            >
+              🌞
+            </Link>
+            <Link
               href="/wishes"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="Smoke Wishes - 1-4 AM Wishing Well"
@@ -1485,6 +1499,13 @@ export default function DashboardPage() {
               title="The Observatory - Watch the Cosmos"
             >
               🔭
+            </Link>
+            <Link
+              href="/directory"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
+              title="Feature Directory - Explore All Features"
+            >
+              📚
             </Link>
             <Link
               href="/sunrise"

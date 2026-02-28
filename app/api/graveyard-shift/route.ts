@@ -132,7 +132,7 @@ export async function GET() {
       // Calculate percentile
       const totalWorkers = (statsResult as Record<string, number>)?.unique_workers || 1;
       const userRank = shiftLeaderboard.results.findIndex(
-        (w) => (w as ShiftWorker).username === currentUserId
+        (w) => (w as Record<string, unknown>).username === currentUserId
       );
       const percentile = userRank >= 0 
         ? Math.round(((totalWorkers - userRank) / totalWorkers) * 100)
