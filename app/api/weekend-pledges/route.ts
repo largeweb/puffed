@@ -4,6 +4,21 @@ import { cookies } from "next/headers";
 
 export const runtime = "edge";
 
+interface PledgeRow {
+  id: number;
+  user_id: number;
+  pledge_type: string;
+  weekend_start: number;
+  created_at: number;
+  username: string;
+}
+
+interface PledgeWithStatus extends PledgeRow {
+  completed: boolean;
+  emoji: string;
+  label: string;
+}
+
 // Pledge types with emojis and descriptions
 const PLEDGE_TYPES = [
   { id: "new_brand", emoji: "🆕", label: "Try a new brand", desc: "Log a brand you've never tried before" },
@@ -201,12 +216,12 @@ export async function GET(): Promise<Response> {
     `).bind(weekend.start).all();
 
     // Check completion status for each pledge
-    const pledgesWithStatus = await Promise.all(
-      (pledges.results || []).map(async (p: Record<string, unknown>) => {
+    const pledgesWithStatus: PledgeWithStatus[] = await Promise.all(
+      ((pledges.results || []) as PledgeRow[]).map(async (p) => {
         const completed = await checkPledgeCompletion(
           db,
-          p.user_id as number,
-          p.pledge_type as string,
+          p.user_id,
+          p.pledge_type,
           weekend.start,
           weekend.end
         );
@@ -221,7 +236,7 @@ export async function GET(): Promise<Response> {
     );
 
     // Get user's pledges if authenticated
-    let myPledges: typeof pledgesWithStatus = [];
+    let myPledges: PledgeWithStatus[] = [];
     if (userId) {
       myPledges = pledgesWithStatus.filter((p) => p.user_id === userId);
     }
@@ -234,7 +249,7 @@ export async function GET(): Promise<Response> {
     // Leaderboard: users with most completed pledges
     const userCompletions: Record<string, { username: string; completed: number; total: number }> = {};
     for (const p of pledgesWithStatus) {
-      const username = p.username as string;
+      const username = p.username;
       if (!userCompletions[username]) {
         userCompletions[username] = { username, completed: 0, total: 0 };
       }
