@@ -86,6 +86,8 @@ const navGroups = [
       { href: "/saturday-cartoons", icon: <span>📺</span>, label: "Saturday Cartoons", color: "text-yellow-400" },
       { href: "/backyard-bbq", icon: <span>🍖</span>, label: "Backyard BBQ", color: "text-amber-400" },
       { href: "/hammock", icon: <span>🏖️</span>, label: "The Hammock", color: "text-teal-400" },
+      { href: "/the-deck", icon: <span>🪑</span>, label: "The Deck", color: "text-amber-400" },
+      { href: "/sports-den", icon: <span>🏈</span>, label: "The Sports Den", color: "text-green-400" },
       { href: "/weekend-scoreboard", icon: <span>🏆</span>, label: "Weekend Scoreboard", color: "text-amber-400" },
       { href: "/wake-bake", icon: <span>🌞</span>, label: "Wake & Bake", color: "text-orange-400" },
       { href: "/cinema", icon: <span>🎬</span>, label: "Smoke Cinema", color: "text-amber-400" },
