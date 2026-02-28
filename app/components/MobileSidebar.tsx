@@ -34,6 +34,7 @@ const navGroups = [
       { href: "/following", icon: <FiRss size={20} />, label: "Following Feed", color: "text-cyan-400" },
       { href: "/leaderboard", icon: <FiAward size={20} />, label: "Leaderboard", color: "text-amber-500" },
       { href: "/council", icon: <span>🏛️</span>, label: "Smoke Council", color: "text-amber-400" },
+      { href: "/weekly-recap", icon: <span>📊</span>, label: "Weekly Recap", color: "text-purple-400" },
       { href: "/smoke-score", icon: <span>🎯</span>, label: "Smoke Score", color: "text-cyan-400" },
       { href: "/invite", icon: <FiShare2 size={20} />, label: "Invite Friends", color: "text-green-400" },
     ]

@@ -1249,6 +1249,13 @@ export default function DashboardPage() {
               <FiAward size={20} />
             </Link>
             <Link
+              href="/weekly-recap"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Weekly Recap"
+            >
+              📊
+            </Link>
+            <Link
               href="/council"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Smoke Council"
