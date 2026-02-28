@@ -69,7 +69,7 @@ export default function WeekendWeatherPage() {
   async function loadWeather() {
     try {
       const res = await fetch("/api/weekend-weather");
-      const data = await res.json();
+      const data = await res.json() as WeekendWeather;
       setWeather(data);
     } catch (error) {
       console.error("Failed to load weather:", error);
