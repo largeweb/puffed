@@ -1375,6 +1375,20 @@ export default function DashboardPage() {
               🕳️
             </Link>
             <Link
+              href="/graveyard-shift"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-gray-500 transition-all"
+              title="Graveyard Shift - 3-6 AM Club"
+            >
+              💀
+            </Link>
+            <Link
+              href="/saturday-cartoons"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
+              title="Saturday Morning Cartoons - Sat 6 AM-12 PM"
+            >
+              📺
+            </Link>
+            <Link
               href="/wishes"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="Smoke Wishes - 1-4 AM Wishing Well"
@@ -1471,6 +1485,13 @@ export default function DashboardPage() {
               title="The Observatory - Watch the Cosmos"
             >
               🔭
+            </Link>
+            <Link
+              href="/sunrise"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
+              title="Sunrise Watch - Countdown to Dawn"
+            >
+              🌅
             </Link>
             <Link
               href="/horoscope"

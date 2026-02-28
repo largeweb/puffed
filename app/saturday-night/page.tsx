@@ -42,8 +42,8 @@ export default function SaturdayNightPage() {
 
   useEffect(() => {
     fetch('/api/saturday-night')
-      .then(res => res.json())
-      .then((data: SaturdayData) => setData(data))
+      .then(res => res.json() as Promise<SaturdayData>)
+      .then((data) => setData(data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
