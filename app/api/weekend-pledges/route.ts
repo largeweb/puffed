@@ -217,7 +217,7 @@ export async function GET(): Promise<Response> {
 
     // Check completion status for each pledge
     const pledgesWithStatus: PledgeWithStatus[] = await Promise.all(
-      ((pledges.results || []) as PledgeRow[]).map(async (p) => {
+      ((pledges.results || []) as unknown as PledgeRow[]).map(async (p) => {
         const completed = await checkPledgeCompletion(
           db,
           p.user_id,
@@ -302,7 +302,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await request.json() as { pledgeType?: string };
     const { pledgeType } = body;
 
     if (!pledgeType || !PLEDGE_TYPES.find((pt) => pt.id === pledgeType)) {

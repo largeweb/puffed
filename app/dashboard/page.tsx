@@ -1389,11 +1389,25 @@ export default function DashboardPage() {
               📺
             </Link>
             <Link
+              href="/brunch"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Weekend Brunch Club - Sat/Sun 9 AM-2 PM"
+            >
+              🥞
+            </Link>
+            <Link
               href="/weekend-scoreboard"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Weekend Scoreboard - Live Competition"
             >
               🏆
+            </Link>
+            <Link
+              href="/weekend-weather"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-sky-400 transition-all"
+              title="Weekend Weather Report - Activity Forecast"
+            >
+              🌤️
             </Link>
             <Link
               href="/pledges"
