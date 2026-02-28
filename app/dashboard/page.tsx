@@ -1221,6 +1221,13 @@ export default function DashboardPage() {
               🕔
             </Link>
             <Link
+              href="/bonfire"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-red-400 transition-all"
+              title="The Bonfire - Weekend Evenings (5-11 PM)"
+            >
+              🔥
+            </Link>
+            <Link
               href="/wind-down"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
               title="Wind Down (9 PM - Midnight)"
@@ -1415,6 +1422,13 @@ export default function DashboardPage() {
               title="The Sports Den - Weekend Game Day (12-6 PM)"
             >
               🏈
+            </Link>
+            <Link
+              href="/tailgate"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-green-400 transition-all"
+              title="The Tailgate - Game Day Party (Sat/Sun 12pm+)"
+            >
+              🎪
             </Link>
             <Link
               href="/weekend-scoreboard"

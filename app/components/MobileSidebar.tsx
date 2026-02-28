@@ -82,6 +82,7 @@ const navGroups = [
       { href: "/radio", icon: <span>📻</span>, label: "Smoke Radio", color: "text-fuchsia-400" },
       { href: "/observatory", icon: <span>🔭</span>, label: "The Observatory", color: "text-purple-400" },
       { href: "/saturday-night", icon: <span>💜</span>, label: "Saturday Night Social", color: "text-fuchsia-400" },
+      { href: "/bonfire", icon: <span>🔥</span>, label: "The Bonfire", color: "text-orange-400" },
       { href: "/graveyard-shift", icon: <span>💀</span>, label: "Graveyard Shift", color: "text-gray-400" },
       { href: "/saturday-cartoons", icon: <span>📺</span>, label: "Saturday Cartoons", color: "text-yellow-400" },
       { href: "/backyard-bbq", icon: <span>🍖</span>, label: "Backyard BBQ", color: "text-amber-400" },
