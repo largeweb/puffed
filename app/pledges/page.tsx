@@ -94,11 +94,11 @@ export default function WeekendPledgesPage() {
         setShowPledgeModal(false);
         fetchData();
       } else {
-        const error = await res.json();
-        alert(error.error || "Failed to make pledge");
+        const errorData = await res.json() as { error?: string };
+        alert(errorData.error || "Failed to make pledge");
       }
-    } catch (error) {
-      console.error("Failed to make pledge:", error);
+    } catch (err) {
+      console.error("Failed to make pledge:", err);
     } finally {
       setSubmitting(false);
     }
