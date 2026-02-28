@@ -1396,6 +1396,13 @@ export default function DashboardPage() {
               🏆
             </Link>
             <Link
+              href="/pledges"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
+              title="Weekend Pledges - Set Your Goals"
+            >
+              🎯
+            </Link>
+            <Link
               href="/wake-bake"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
               title="Wake & Bake - Weekend Morning Ritual"
