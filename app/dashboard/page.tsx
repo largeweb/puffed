@@ -1368,6 +1368,13 @@ export default function DashboardPage() {
               📓
             </Link>
             <Link
+              href="/void"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-gray-300 transition-all"
+              title="The Void - 12-4 AM Zen Space"
+            >
+              🕳️
+            </Link>
+            <Link
               href="/roulette"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="Lucky Cigar"
@@ -1457,6 +1464,13 @@ export default function DashboardPage() {
               title="The Observatory - Watch the Cosmos"
             >
               🔭
+            </Link>
+            <Link
+              href="/horoscope"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
+              title="Smoke Horoscope - Daily Reading"
+            >
+              ⭐
             </Link>
             <Link
               href="/saturday-night"
