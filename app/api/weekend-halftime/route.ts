@@ -1,4 +1,4 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
@@ -89,7 +89,7 @@ function getSundayPrediction(saturdayCheckins: number, fridayCheckins: number, a
 
 export async function GET(request: Request) {
   try {
-    const { env } = await getCloudflareContext();
+    const { env } = getRequestContext();
     const db = env.DB;
     
     const url = new URL(request.url);
