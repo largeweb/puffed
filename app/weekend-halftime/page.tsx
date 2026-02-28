@@ -96,7 +96,7 @@ export default function WeekendHalftimePage() {
           ? `/api/weekend-halftime?userId=${userId}`
           : "/api/weekend-halftime";
         const res = await fetch(url);
-        const json = await res.json();
+        const json = await res.json() as HalftimeStats;
         setData(json);
       } catch (error) {
         console.error("Failed to load halftime stats:", error);
