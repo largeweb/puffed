@@ -1228,6 +1228,13 @@ export default function DashboardPage() {
               🔥
             </Link>
             <Link
+              href="/speakeasy"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="The Speakeasy - Members Only"
+            >
+              🗝️
+            </Link>
+            <Link
               href="/wind-down"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
               title="Wind Down (9 PM - Midnight)"
@@ -1247,6 +1254,13 @@ export default function DashboardPage() {
               title="Activity Heatmap"
             >
               🔥
+            </Link>
+            <Link
+              href="/weekend-recap"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-violet-400 transition-all"
+              title="Weekend Recap - Your Week in Smoke"
+            >
+              📊
             </Link>
             <Link
               href="/leaderboard"
