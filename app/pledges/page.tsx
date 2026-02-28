@@ -68,7 +68,7 @@ export default function WeekendPledgesPage() {
     try {
       const res = await fetch("/api/weekend-pledges");
       if (res.ok) {
-        const json = await res.json();
+        const json: PledgesData = await res.json();
         setData(json);
       }
     } catch (error) {
