@@ -1389,6 +1389,20 @@ export default function DashboardPage() {
               📺
             </Link>
             <Link
+              href="/backyard-bbq"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Backyard BBQ Lounge - Sat 12-6 PM"
+            >
+              🍖
+            </Link>
+            <Link
+              href="/hammock"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-teal-400 transition-all"
+              title="The Hammock - Weekend Chill Zone (12-5 PM)"
+            >
+              🏖️
+            </Link>
+            <Link
               href="/weekend-scoreboard"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Weekend Scoreboard - Live Competition"

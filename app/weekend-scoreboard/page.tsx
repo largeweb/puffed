@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FiTrophy, FiSun, FiMoon, FiLayers, FiStar, FiClock, FiUsers, FiArrowLeft, FiAward, FiZap } from "react-icons/fi";
+import { FiSun, FiMoon, FiLayers, FiStar, FiClock, FiUsers, FiArrowLeft, FiAward, FiZap } from "react-icons/fi";
 
 interface WeekendUser {
   username: string;
@@ -142,7 +142,7 @@ export default function WeekendScoreboardPage() {
   const dateRange = `${weekendStartDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} - ${weekendEndDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`;
 
   const tabs = [
-    { id: "volume" as const, label: "Most Smokes", icon: <FiTrophy /> },
+    { id: "volume" as const, label: "Most Smokes", icon: <FiAward /> },
     { id: "earlybird" as const, label: "Early Birds", icon: <FiSun /> },
     { id: "nightowl" as const, label: "Night Owls", icon: <FiMoon /> },
     { id: "variety" as const, label: "Variety", icon: <FiLayers /> },
