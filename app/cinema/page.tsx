@@ -87,7 +87,7 @@ export default function SmokeCinemaPage() {
     try {
       const res = await fetch("/api/smoke-cinema", { credentials: "include" });
       if (res.ok) {
-        const json = await res.json();
+        const json = await res.json() as CinemaData;
         setData(json);
       }
     } catch (err) {
