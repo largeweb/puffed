@@ -76,9 +76,11 @@ const navGroups = [
     items: [
       { href: "/conversations", icon: <span>💬</span>, label: "Hot Conversations", color: "text-cyan-400" },
       { href: "/friday-night-live", icon: <span>🔴</span>, label: "Friday Night Live", color: "text-rose-400" },
+      { href: "/last-puff", icon: <span>🌙</span>, label: "Last Puff Club", color: "text-purple-400" },
       { href: "/pulse", icon: <FiActivity size={20} />, label: "Platform Pulse", color: "text-pink-500" },
       { href: "/radio", icon: <span>📻</span>, label: "Smoke Radio", color: "text-fuchsia-400" },
       { href: "/observatory", icon: <span>🔭</span>, label: "The Observatory", color: "text-purple-400" },
+      { href: "/saturday-night", icon: <span>💜</span>, label: "Saturday Night Social", color: "text-fuchsia-400" },
       { href: "/cinema", icon: <span>🎬</span>, label: "Smoke Cinema", color: "text-amber-400" },
       { href: "/share", icon: <span>📸</span>, label: "Share Your Week", color: "text-amber-400" },
     ]

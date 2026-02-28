@@ -1347,6 +1347,13 @@ export default function DashboardPage() {
               😴
             </Link>
             <Link
+              href="/last-puff"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Last Puff Club - Last Smoke of the Day"
+            >
+              🌙
+            </Link>
+            <Link
               href="/midnight-society"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="Midnight Society - 12 AM - 2 AM Club"
@@ -1450,6 +1457,13 @@ export default function DashboardPage() {
               title="The Observatory - Watch the Cosmos"
             >
               🔭
+            </Link>
+            <Link
+              href="/saturday-night"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-fuchsia-400 transition-all"
+              title="Saturday Night Social"
+            >
+              💜
             </Link>
             <Link
               href="/cinema"
