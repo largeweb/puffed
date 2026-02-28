@@ -47,7 +47,7 @@ export default function SmokeAwardsPage() {
       try {
         const params = userId ? `?userId=${userId}` : '';
         const res = await fetch(`/api/smoke-awards${params}`);
-        const json = await res.json();
+        const json = await res.json() as AwardsData;
         setData(json);
       } catch (err) {
         console.error('Failed to load awards:', err);
