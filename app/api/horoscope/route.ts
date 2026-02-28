@@ -1,5 +1,5 @@
 import { getRequestContext } from '@cloudflare/next-on-pages';
-import { cookies } from 'next/headers';
+import { parseSessionCookie } from '@/lib/auth';
 
 export const runtime = 'edge';
 
@@ -76,19 +76,19 @@ function getDayOfYear(date: Date): number {
 }
 
 export async function GET(request: Request) {
-  const { env } = getRequestContext();
-  const db = env.DB;
+  const ctx = getRequestContext();
+  const db = ctx.env.DB;
   
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get('session')?.value;
+  const cookieHeader = request.headers.get('cookie') || '';
+  const sessionId = parseSessionCookie(cookieHeader);
   
-  if (!sessionToken) {
+  if (!sessionId) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const session = await db.prepare(
-    'SELECT user_id FROM sessions WHERE token = ? AND expires_at > ?'
-  ).bind(sessionToken, Date.now()).first<{ user_id: string }>();
+    'SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?'
+  ).bind(sessionId, Date.now()).first<{ user_id: string }>();
 
   if (!session) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -182,19 +182,19 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { env } = getRequestContext();
-  const db = env.DB;
+  const ctx = getRequestContext();
+  const db = ctx.env.DB;
   
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get('session')?.value;
+  const cookieHeader = request.headers.get('cookie') || '';
+  const sessionId = parseSessionCookie(cookieHeader);
   
-  if (!sessionToken) {
+  if (!sessionId) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const session = await db.prepare(
-    'SELECT user_id FROM sessions WHERE token = ? AND expires_at > ?'
-  ).bind(sessionToken, Date.now()).first<{ user_id: string }>();
+    'SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?'
+  ).bind(sessionId, Date.now()).first<{ user_id: string }>();
 
   if (!session) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });

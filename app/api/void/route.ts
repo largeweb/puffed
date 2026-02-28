@@ -1,5 +1,5 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { cookies } from "next/headers";
+import { getRequestContext } from "@cloudflare/next-on-pages";
+import { parseSessionCookie } from "@/lib/auth";
 
 export const runtime = "edge";
 
@@ -43,22 +43,23 @@ const zenMessages = [
   "Between midnight and dawn, we are all the same.",
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const { env } = await getCloudflareContext();
-    const db = env.DB;
+    const ctx = getRequestContext();
+    const db = ctx.env.DB;
 
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("session")?.value;
+    // Auth check
+    const cookieHeader = request.headers.get("cookie") || "";
+    const sessionId = parseSessionCookie(cookieHeader);
 
-    if (!sessionToken) {
+    if (!sessionId) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await db
-      .prepare("SELECT user_id FROM sessions WHERE token = ?")
-      .bind(sessionToken)
-      .first<{ user_id: string }>();
+    // Verify session and get user
+    const session = await db.prepare(`
+      SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?
+    `).bind(sessionId, Date.now()).first<{ user_id: string }>();
 
     if (!session) {
       return Response.json({ error: "Invalid session" }, { status: 401 });
