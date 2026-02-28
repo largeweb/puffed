@@ -47,9 +47,9 @@ export default function WeeklyRecapPage() {
     fetch('/api/weekly-recap', { credentials: 'include' })
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load');
-        return res.json();
+        return res.json() as Promise<WeeklyRecap & { error?: string }>;
       })
-      .then((data: WeeklyRecap & { error?: string }) => {
+      .then((data) => {
         if (data.error) {
           setError(data.error);
         } else {
