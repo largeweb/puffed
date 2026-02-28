@@ -77,7 +77,7 @@ export default function TheDeckPage() {
     try {
       const res = await fetch("/api/the-deck");
       if (res.ok) {
-        const result = await res.json();
+        const result = await res.json() as DeckData;
         setData(result);
       }
     } catch (err) {

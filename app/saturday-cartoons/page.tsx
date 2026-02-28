@@ -80,7 +80,7 @@ export default function SaturdayCartoonsPage() {
       if (res.ok) {
         setTvStatic(true);
         setTimeout(() => setTvStatic(false), 300);
-        const json = await res.json();
+        const json = await res.json() as CartoonData;
         setData(json);
       }
     } catch (err) {
