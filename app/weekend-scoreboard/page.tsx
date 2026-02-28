@@ -110,7 +110,7 @@ export default function WeekendScoreboardPage() {
           ? `/api/weekend-scoreboard?userId=${userId}`
           : "/api/weekend-scoreboard";
         const res = await fetch(url);
-        const json = await res.json();
+        const json = (await res.json()) as WeekendScoreboard;
         setData(json);
       } catch (error) {
         console.error("Failed to load weekend scoreboard:", error);

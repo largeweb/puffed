@@ -1403,6 +1403,20 @@ export default function DashboardPage() {
               🏖️
             </Link>
             <Link
+              href="/the-deck"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="The Deck - Afternoon Smoking (12-7 PM)"
+            >
+              🪑
+            </Link>
+            <Link
+              href="/sports-den"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-green-400 transition-all"
+              title="The Sports Den - Weekend Game Day (12-6 PM)"
+            >
+              🏈
+            </Link>
+            <Link
               href="/weekend-scoreboard"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Weekend Scoreboard - Live Competition"
