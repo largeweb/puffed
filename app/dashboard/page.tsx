@@ -1445,6 +1445,20 @@ export default function DashboardPage() {
               📻
             </Link>
             <Link
+              href="/observatory"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="The Observatory - Watch the Cosmos"
+            >
+              🔭
+            </Link>
+            <Link
+              href="/cinema"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Smoke Cinema - Movie Recommendations"
+            >
+              🎬
+            </Link>
+            <Link
               href="/live"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-green-400 transition-all"
               title="Live Smokers"

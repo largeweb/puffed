@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseSessionCookie } from "@/lib/auth";
 import { getRequestContext } from "@cloudflare/next-on-pages";
+import { cookies } from "next/headers";
 
 export const runtime = "edge";
 
@@ -116,13 +116,24 @@ function getTopGenre(brands: string[]): string {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await parseSessionCookie(request);
-  if (!session) {
+  const { env } = getRequestContext();
+  const db = env.DB;
+
+  // Get session from cookies
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("session")?.value;
+  
+  if (!sessionId) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { env } = getRequestContext();
-  const db = env.DB;
+  const session = await db.prepare(
+    "SELECT u.id as user_id, u.username FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = ? AND s.expires_at > ?"
+  ).bind(sessionId, Math.floor(Date.now() / 1000)).first();
+
+  if (!session) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
 
   const now = Math.floor(Date.now() / 1000);
   const currentHour = new Date().getHours();
