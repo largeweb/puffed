@@ -1417,6 +1417,13 @@ export default function DashboardPage() {
               🏆
             </Link>
             <Link
+              href="/weekend-halftime"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
+              title="Weekend Halftime - Mid-Weekend Checkpoint"
+            >
+              🏈
+            </Link>
+            <Link
               href="/weekend-weather"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-sky-400 transition-all"
               title="Weekend Weather Report - Activity Forecast"
@@ -1457,6 +1464,13 @@ export default function DashboardPage() {
               title="Smoke Bingo - Weekly Challenges"
             >
               🎲
+            </Link>
+            <Link
+              href="/smoke-gym"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
+              title="Smoke Gym - Track Your Reps!"
+            >
+              💪
             </Link>
             <Link
               href="/slots"
