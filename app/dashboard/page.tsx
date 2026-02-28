@@ -1389,6 +1389,20 @@ export default function DashboardPage() {
               📺
             </Link>
             <Link
+              href="/lazy-saturday"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Lazy Saturday Lounge - Sat 12 PM-6 PM"
+            >
+              🛋️
+            </Link>
+            <Link
+              href="/shop-saturday"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
+              title="Smoke Shop Saturday - Sat 9 AM-6 PM"
+            >
+              🏪
+            </Link>
+            <Link
               href="/brunch"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="Weekend Brunch Club - Sat/Sun 9 AM-2 PM"
