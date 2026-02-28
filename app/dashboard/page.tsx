@@ -1389,25 +1389,18 @@ export default function DashboardPage() {
               📺
             </Link>
             <Link
-              href="/lazy-saturday"
+              href="/backyard-bbq"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
-              title="Lazy Saturday Lounge - Sat 12 PM-6 PM"
+              title="Backyard BBQ Lounge - Sat 12-6 PM"
             >
-              🛋️
+              🍖
             </Link>
             <Link
-              href="/shop-saturday"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
-              title="Smoke Shop Saturday - Sat 9 AM-6 PM"
+              href="/hammock"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-teal-400 transition-all"
+              title="The Hammock - Weekend Chill Zone (12-5 PM)"
             >
-              🏪
-            </Link>
-            <Link
-              href="/brunch"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
-              title="Weekend Brunch Club - Sat/Sun 9 AM-2 PM"
-            >
-              🥞
+              🏖️
             </Link>
             <Link
               href="/weekend-scoreboard"
@@ -1415,27 +1408,6 @@ export default function DashboardPage() {
               title="Weekend Scoreboard - Live Competition"
             >
               🏆
-            </Link>
-            <Link
-              href="/weekend-halftime"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
-              title="Weekend Halftime - Mid-Weekend Checkpoint"
-            >
-              🏈
-            </Link>
-            <Link
-              href="/weekend-weather"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-sky-400 transition-all"
-              title="Weekend Weather Report - Activity Forecast"
-            >
-              🌤️
-            </Link>
-            <Link
-              href="/pledges"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
-              title="Weekend Pledges - Set Your Goals"
-            >
-              🎯
             </Link>
             <Link
               href="/wake-bake"
@@ -1464,13 +1436,6 @@ export default function DashboardPage() {
               title="Smoke Bingo - Weekly Challenges"
             >
               🎲
-            </Link>
-            <Link
-              href="/smoke-gym"
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
-              title="Smoke Gym - Track Your Reps!"
-            >
-              💪
             </Link>
             <Link
               href="/slots"
