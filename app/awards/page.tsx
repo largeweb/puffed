@@ -1,274 +1,234 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { FiArrowLeft, FiAward, FiCalendar, FiTrendingUp } from "react-icons/fi";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { FiArrowLeft, FiAward, FiCalendar, FiTrendingUp, FiUser } from 'react-icons/fi';
+
+interface AwardWinner {
+  username: string;
+  value: number | string;
+  subtitle?: string;
+}
 
 interface Award {
   id: string;
   title: string;
   emoji: string;
   description: string;
-  value?: string | number;
-  tier: 'gold' | 'silver' | 'bronze' | 'special';
+  winner: AwardWinner | null;
 }
 
-interface AwardsResponse {
+interface AwardsData {
   awards: Award[];
+  userAwards: string[];
   weekStart: string;
-  totalCheckinsThisWeek: number;
+  weekEnd: string;
+  totalAwards: number;
+  claimedAwards: number;
 }
 
-const tierColors = {
-  gold: 'from-yellow-400 via-amber-300 to-yellow-500 text-yellow-900',
-  silver: 'from-gray-300 via-slate-200 to-gray-400 text-gray-800',
-  bronze: 'from-orange-400 via-amber-600 to-orange-500 text-orange-900',
-  special: 'from-purple-400 via-fuchsia-400 to-purple-500 text-purple-900'
-};
-
-const tierBorders = {
-  gold: 'border-yellow-400 shadow-yellow-400/30',
-  silver: 'border-gray-300 shadow-gray-400/30',
-  bronze: 'border-orange-400 shadow-orange-400/30',
-  special: 'border-purple-400 shadow-purple-400/30'
-};
-
-const tierGlow = {
-  gold: 'shadow-[0_0_20px_rgba(251,191,36,0.4)]',
-  silver: 'shadow-[0_0_20px_rgba(156,163,175,0.4)]',
-  bronze: 'shadow-[0_0_20px_rgba(251,146,60,0.4)]',
-  special: 'shadow-[0_0_20px_rgba(192,132,252,0.4)]'
-};
-
-export default function AwardsPage() {
-  const router = useRouter();
+export default function SmokeAwardsPage() {
+  const [data, setData] = useState<AwardsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [awards, setAwards] = useState<Award[]>([]);
-  const [weekStart, setWeekStart] = useState<string>("");
-  const [totalCheckins, setTotalCheckins] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadAwards();
+    const stored = localStorage.getItem('puffed_user');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setUserId(parsed.id);
+      } catch {}
+    }
   }, []);
 
-  const loadAwards = async () => {
-    try {
-      const res = await fetch("/api/smoke-awards");
-      if (!res.ok) {
-        if (res.status === 401) {
-          router.push("/");
-          return;
-        }
-        throw new Error("Failed to load");
+  useEffect(() => {
+    const fetchAwards = async () => {
+      try {
+        const params = userId ? `?userId=${userId}` : '';
+        const res = await fetch(`/api/smoke-awards${params}`);
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        console.error('Failed to load awards:', err);
+      } finally {
+        setLoading(false);
       }
-      const data: AwardsResponse = await res.json();
-      setAwards(data.awards);
-      setWeekStart(data.weekStart);
-      setTotalCheckins(data.totalCheckinsThisWeek);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
-    }
+    };
+    fetchAwards();
+  }, [userId]);
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const formatWeekRange = (startDate: string) => {
-    const start = new Date(startDate);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    
-    const formatDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    return `${formatDate(start)} - ${formatDate(end)}`;
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-900 via-yellow-900 to-orange-900 flex items-center justify-center">
+        <div className="text-amber-200 text-xl animate-pulse">Loading awards...</div>
+      </div>
+    );
+  }
 
-  const goldAwards = awards.filter(a => a.tier === 'gold');
-  const silverAwards = awards.filter(a => a.tier === 'silver');
-  const bronzeAwards = awards.filter(a => a.tier === 'bronze');
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-900 via-yellow-900 to-orange-900 flex items-center justify-center">
+        <div className="text-amber-200 text-xl">Failed to load awards</div>
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-amber-950/20 to-gray-900 text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-gray-900/80 border-b border-amber-800/30">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
-              <FiArrowLeft className="text-xl" />
-            </Link>
-            <div>
-              <h1 className="text-lg font-bold flex items-center gap-2">
-                <FiAward className="text-amber-400" />
-                Smoke Awards
-              </h1>
-              <p className="text-xs text-gray-400">Your Weekly Achievements</p>
+    <div className="min-h-screen bg-gradient-to-br from-amber-900 via-yellow-900 to-orange-900">
+      {/* Decorative elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 text-6xl opacity-10 animate-pulse">🏆</div>
+        <div className="absolute top-40 right-20 text-5xl opacity-10 animate-pulse" style={{ animationDelay: '0.5s' }}>⭐</div>
+        <div className="absolute bottom-40 left-20 text-5xl opacity-10 animate-pulse" style={{ animationDelay: '1s' }}>🎖️</div>
+        <div className="absolute bottom-20 right-10 text-6xl opacity-10 animate-pulse" style={{ animationDelay: '1.5s' }}>👑</div>
+      </div>
+
+      <div className="relative z-10 max-w-2xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <Link href="/dashboard" className="text-amber-200 hover:text-white transition-colors">
+            <FiArrowLeft size={24} />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+              <FiAward className="text-yellow-400" />
+              Smoke Awards
+            </h1>
+            <p className="text-amber-200/80 text-sm">Weekly superlatives</p>
+          </div>
+        </div>
+
+        {/* Week Info Card */}
+        <div className="bg-amber-800/30 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-amber-600/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-200">
+              <FiCalendar />
+              <span className="font-medium">
+                Week of {formatDate(data.weekStart)} - {formatDate(data.weekEnd)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-yellow-400">
+              <FiTrendingUp />
+              <span className="font-bold">{data.claimedAwards}/{data.totalAwards}</span>
+              <span className="text-amber-200/60 text-sm">claimed</span>
             </div>
           </div>
         </div>
-      </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-amber-500 border-t-transparent" />
-          </div>
-        ) : (
-          <>
-            {/* Week Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-amber-600/30 to-orange-600/30 rounded-xl p-4 border border-amber-500/30"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FiCalendar className="text-2xl text-amber-400" />
-                  <div>
-                    <p className="text-sm text-amber-300/80">This Week</p>
-                    <p className="font-bold">{weekStart ? formatWeekRange(weekStart) : '...'}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-amber-300/80">Total Smokes</p>
-                  <p className="text-2xl font-bold text-amber-400">{totalCheckins}</p>
-                </div>
-              </div>
-            </motion.div>
-
-            {awards.length === 0 ? (
-              /* No Awards Yet */
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-12"
-              >
-                <div className="text-6xl mb-4">🏆</div>
-                <h2 className="text-xl font-bold text-gray-300 mb-2">No Awards Yet</h2>
-                <p className="text-gray-500 mb-6">
-                  Log some smokes this week to earn your first awards!
-                </p>
-                <Link 
-                  href="/dashboard"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-500 rounded-lg font-medium transition-colors"
-                >
-                  <FiTrendingUp /> Start Logging
-                </Link>
-              </motion.div>
-            ) : (
-              <>
-                {/* Trophy Count */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="flex justify-center gap-6"
-                >
-                  <div className="text-center">
-                    <span className="text-3xl">🥇</span>
-                    <p className="font-bold text-yellow-400">{goldAwards.length}</p>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-3xl">🥈</span>
-                    <p className="font-bold text-gray-300">{silverAwards.length}</p>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-3xl">🥉</span>
-                    <p className="font-bold text-orange-400">{bronzeAwards.length}</p>
-                  </div>
-                </motion.div>
-
-                {/* Awards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {awards.map((award, index) => (
-                    <motion.div
-                      key={award.id}
-                      initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ delay: 0.1 + index * 0.05 }}
-                      className={`relative overflow-hidden rounded-xl border-2 ${tierBorders[award.tier]} ${tierGlow[award.tier]}`}
-                    >
-                      {/* Gradient Background */}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${tierColors[award.tier]} opacity-10`} />
-                      
-                      {/* Content */}
-                      <div className="relative p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="text-4xl">{award.emoji}</div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-white truncate">{award.title}</h3>
-                              {award.tier === 'gold' && <span className="text-xs">🥇</span>}
-                              {award.tier === 'silver' && <span className="text-xs">🥈</span>}
-                              {award.tier === 'bronze' && <span className="text-xs">🥉</span>}
-                            </div>
-                            <p className="text-sm text-gray-400 truncate">{award.description}</p>
-                            {award.value && (
-                              <p className={`text-lg font-bold mt-1 ${
-                                award.tier === 'gold' ? 'text-yellow-400' :
-                                award.tier === 'silver' ? 'text-gray-300' :
-                                award.tier === 'bronze' ? 'text-orange-400' :
-                                'text-purple-400'
-                              }`}>
-                                {award.value}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Shine Effect for Gold */}
-                      {award.tier === 'gold' && (
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-                          initial={{ x: '-100%' }}
-                          animate={{ x: '200%' }}
-                          transition={{ 
-                            duration: 2,
-                            repeat: Infinity,
-                            repeatDelay: 3
-                          }}
-                        />
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Motivational Footer */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="text-center py-6"
-                >
-                  <p className="text-gray-500 text-sm">
-                    {goldAwards.length >= 3 
-                      ? "🏆 Legendary week! You're on fire!" 
-                      : goldAwards.length >= 1 
-                        ? "⭐ Great work! Keep chasing gold!"
-                        : "📈 Keep logging to earn gold awards!"}
-                  </p>
-                </motion.div>
-              </>
-            )}
-
-            {/* Quick Links */}
-            <div className="flex gap-3 justify-center pt-4">
-              <Link
-                href="/achievements"
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-              >
-                🏅 All-Time Badges
-              </Link>
-              <Link
-                href="/mystats"
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-              >
-                📊 My Stats
-              </Link>
+        {/* User's Awards Banner */}
+        {data.userAwards.length > 0 && (
+          <div className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 rounded-2xl p-4 mb-6 border border-yellow-400/40">
+            <div className="flex items-center gap-2 text-yellow-300 mb-2">
+              <span className="text-xl">🎉</span>
+              <span className="font-bold">You won {data.userAwards.length} award{data.userAwards.length > 1 ? 's' : ''} this week!</span>
             </div>
-          </>
+            <div className="flex flex-wrap gap-2">
+              {data.awards.filter(a => data.userAwards.includes(a.id)).map(award => (
+                <span key={award.id} className="bg-yellow-400/20 px-3 py-1 rounded-full text-yellow-200 text-sm">
+                  {award.emoji} {award.title}
+                </span>
+              ))}
+            </div>
+          </div>
         )}
+
+        {/* Awards Grid */}
+        <div className="grid gap-4">
+          {data.awards.map((award, index) => (
+            <div
+              key={award.id}
+              className={`
+                relative overflow-hidden rounded-2xl p-4 border transition-all duration-300
+                ${award.winner 
+                  ? 'bg-gradient-to-r from-amber-800/50 to-yellow-900/50 border-amber-500/40 hover:border-yellow-400/60' 
+                  : 'bg-gray-800/30 border-gray-600/30 opacity-60'
+                }
+              `}
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              {/* Award Badge */}
+              <div className="flex items-start gap-4">
+                <div className={`
+                  w-16 h-16 rounded-xl flex items-center justify-center text-3xl
+                  ${award.winner 
+                    ? 'bg-gradient-to-br from-yellow-400/20 to-amber-500/20' 
+                    : 'bg-gray-700/30'
+                  }
+                `}>
+                  {award.emoji}
+                </div>
+                
+                <div className="flex-1">
+                  <h3 className={`font-bold text-lg ${award.winner ? 'text-white' : 'text-gray-400'}`}>
+                    {award.title}
+                  </h3>
+                  <p className={`text-sm ${award.winner ? 'text-amber-200/70' : 'text-gray-500'}`}>
+                    {award.description}
+                  </p>
+                  
+                  {award.winner ? (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Link 
+                        href={`/user/${award.winner.username}`}
+                        className="flex items-center gap-1.5 bg-amber-600/30 hover:bg-amber-600/50 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        <FiUser size={14} className="text-yellow-400" />
+                        <span className="text-yellow-200 font-medium">{award.winner.username}</span>
+                      </Link>
+                      {award.winner.subtitle && (
+                        <span className="text-amber-300/60 text-sm">{award.winner.subtitle}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-gray-500 text-sm italic">
+                      No winner yet this week
+                    </div>
+                  )}
+                </div>
+
+                {/* Rank indicator for top awards */}
+                {index < 3 && award.winner && (
+                  <div className={`
+                    absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold
+                    ${index === 0 ? 'bg-yellow-400 text-yellow-900' : 
+                      index === 1 ? 'bg-gray-300 text-gray-700' : 
+                      'bg-amber-600 text-amber-100'}
+                  `}>
+                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <p className="text-amber-200/60 text-sm">
+            Awards reset every Monday. Keep smoking to climb the ranks! 🚬
+          </p>
+          <div className="mt-4 flex justify-center gap-4">
+            <Link 
+              href="/leaderboard"
+              className="text-amber-300 hover:text-white transition-colors text-sm flex items-center gap-1"
+            >
+              <FiTrendingUp /> View Leaderboard
+            </Link>
+            <Link 
+              href="/achievements"
+              className="text-amber-300 hover:text-white transition-colors text-sm flex items-center gap-1"
+            >
+              <FiAward /> View Badges
+            </Link>
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
