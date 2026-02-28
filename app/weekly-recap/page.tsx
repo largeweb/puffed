@@ -49,7 +49,7 @@ export default function WeeklyRecapPage() {
         if (!res.ok) throw new Error('Failed to load');
         return res.json();
       })
-      .then((data) => {
+      .then((data: WeeklyRecap & { error?: string }) => {
         if (data.error) {
           setError(data.error);
         } else {
