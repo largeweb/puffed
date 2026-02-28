@@ -93,7 +93,7 @@ export default function WeekendRecapPage() {
         }
         throw new Error("Failed to fetch recap");
       }
-      const json = await res.json();
+      const json = await res.json() as RecapData;
       setData(json);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
