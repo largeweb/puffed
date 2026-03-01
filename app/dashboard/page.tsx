@@ -1305,6 +1305,13 @@ export default function DashboardPage() {
               🌅
             </Link>
             <Link
+              href="/sunday-zen"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
+              title="Sunday Morning Zen - Peaceful 6-10 AM"
+            >
+              🧘
+            </Link>
+            <Link
               href="/sunday-paper"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-stone-400 transition-all"
               title="The Sunday Paper - Classic Sunday Read"
