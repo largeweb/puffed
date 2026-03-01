@@ -1,6 +1,6 @@
 import { getRequestContext } from '@cloudflare/next-on-pages';
 import { NextResponse } from 'next/server';
-import { verifyAuth } from '../../../lib/auth';
+import { parseSessionCookie } from '../../../lib/auth';
 
 export const runtime = 'edge';
 
@@ -8,8 +8,19 @@ export async function GET(request: Request) {
   const { env } = getRequestContext();
   const db = env.DB;
   
-  const authResult = await verifyAuth(request, db);
-  const userId = authResult?.userId || null;
+  // Get user from session
+  const cookieHeader = request.headers.get('cookie');
+  const sessionId = parseSessionCookie(cookieHeader);
+  let userId: number | null = null;
+  
+  if (sessionId) {
+    const now = Math.floor(Date.now() / 1000);
+    const session = await db
+      .prepare('SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?')
+      .bind(sessionId, now)
+      .first<{ user_id: number }>();
+    userId = session?.user_id || null;
+  }
 
   // Get current week start (Sunday)
   const now = new Date();

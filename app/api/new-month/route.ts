@@ -1,6 +1,5 @@
 import { getRequestContext } from '@cloudflare/next-on-pages';
 import { NextResponse } from 'next/server';
-import { verifyToken } from '../../../lib/auth';
 import { cookies } from 'next/headers';
 
 export const runtime = 'edge';
@@ -11,8 +10,17 @@ export async function GET() {
   
   // Get current user if logged in
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
-  const user = token ? await verifyToken(token, ctx.env.JWT_SECRET) : null;
+  const sessionToken = cookieStore.get('session')?.value;
+  let user: { id: number } | null = null;
+  
+  if (sessionToken) {
+    const session = await db.prepare(
+      'SELECT user_id FROM sessions WHERE token = ? AND expires_at > datetime("now")'
+    ).bind(sessionToken).first<{ user_id: number }>();
+    if (session) {
+      user = { id: session.user_id };
+    }
+  }
   
   const now = new Date();
   const currentMonth = now.getMonth();
