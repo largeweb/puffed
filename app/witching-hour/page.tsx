@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiHome, FiRefreshCw, FiStar, FiClock, FiUsers, FiAward, FiMoon } from "react-icons/fi";
+import { FiHome, FiRefreshCw, FiStar, FiUsers, FiMoon, FiPlus } from "react-icons/fi";
 
-interface WitchingHourSmoker {
+interface CovenMember {
   username: string;
   brand: string;
   product?: string;
@@ -16,32 +16,51 @@ interface WitchingHourSmoker {
   imageUrl?: string;
 }
 
-interface WitchingHourStats {
-  totalWitchingHourSmokes: number;
-  uniqueWitchingHourSmokers: number;
-  witchingHourPercent: number;
-  yourWitchingHourCount: number;
-  yourWitchingHourPercent: number;
+interface WitchingStats {
+  totalWitchingSmokes: number;
+  uniqueWitches: number;
+  yourWitchingCount: number;
+  yourMysticTitle: string;
   isWitchingHour: boolean;
   currentHour: number;
+  mostCommonOffering?: string;
+  darkestHour?: number;
 }
 
-interface Leader {
+interface MysticLeader {
   username: string;
   count: number;
+  mysticTitle: string;
+  favoriteHour: string;
 }
 
-interface WitchingHourData {
-  tonightsSmokers: WitchingHourSmoker[];
-  stats: WitchingHourStats;
-  leaders: Leader[];
+interface TarotReading {
+  card: string;
+  emoji: string;
+  meaning: string;
+}
+
+interface WitchingData {
+  covenMembers: CovenMember[];
+  stats: WitchingStats;
+  mysticLeaders: MysticLeader[];
+  tarotReading: TarotReading;
+}
+
+function formatHour(hour: number): string {
+  if (hour === 0) return "Midnight";
+  if (hour === 1) return "1 AM";
+  if (hour === 2) return "2 AM";
+  return `${hour} AM`;
 }
 
 export default function WitchingHourPage() {
   const router = useRouter();
-  const [data, setData] = useState<WitchingHourData | null>(null);
+  const [data, setData] = useState<WitchingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"coven" | "mystics">("coven");
+  const [showTarot, setShowTarot] = useState(false);
 
   const fetchData = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -51,7 +70,7 @@ export default function WitchingHourPage() {
         router.push("/");
         return;
       }
-      const result = await res.json() as WitchingHourData;
+      const result = await res.json() as WitchingData;
       setData(result);
     } catch (error) {
       console.error("Failed to load:", error);
@@ -63,291 +82,365 @@ export default function WitchingHourPage() {
 
   useEffect(() => {
     fetchData();
-    // Refresh every 2 minutes
     const interval = setInterval(() => fetchData(), 120000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-violet-950/30 to-black text-white p-4">
-        <div className="max-w-lg mx-auto">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-700 rounded w-2/3"></div>
-            <div className="h-40 bg-gray-700/50 rounded-xl"></div>
-            <div className="h-32 bg-gray-700/50 rounded-xl"></div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-b from-black via-purple-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="text-4xl"
+        >
+          🔮
+        </motion.div>
       </div>
     );
   }
 
-  const stats = data?.stats;
-  const isWitchingHour = stats?.isWitchingHour;
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-black via-purple-950/30 to-black flex items-center justify-center text-white">
+        <p>The spirits are silent...</p>
+      </div>
+    );
+  }
+
+  const { covenMembers, stats, mysticLeaders, tarotReading } = data;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-violet-950/30 to-black text-white">
-      {/* Animated background for witching hour */}
-      {isWitchingHour && (
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="min-h-screen bg-gradient-to-b from-black via-purple-950/30 to-black text-white p-4 pb-20 relative overflow-hidden">
+      {/* Animated stars background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {[...Array(30)].map((_, i) => (
           <motion.div
-            className="absolute top-20 left-10 w-2 h-2 bg-violet-400 rounded-full"
-            animate={{ opacity: [0.3, 1, 0.3], scale: [1, 1.5, 1] }}
-            transition={{ duration: 3, repeat: Infinity }}
+            key={i}
+            className="absolute w-1 h-1 bg-purple-300/40 rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              opacity: [0.2, 0.8, 0.2],
+              scale: [1, 1.5, 1],
+            }}
+            transition={{
+              duration: 2 + Math.random() * 3,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
           />
-          <motion.div
-            className="absolute top-40 right-20 w-1.5 h-1.5 bg-purple-400 rounded-full"
-            animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.3, 1] }}
-            transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
-          />
-          <motion.div
-            className="absolute bottom-32 left-1/4 w-2 h-2 bg-indigo-400 rounded-full"
-            animate={{ opacity: [0.4, 1, 0.4], scale: [1, 1.4, 1] }}
-            transition={{ duration: 4, repeat: Infinity, delay: 1 }}
-          />
-        </div>
-      )}
+        ))}
+      </div>
 
-      <div className="relative max-w-lg mx-auto p-4 pb-24">
+      <div className="max-w-lg mx-auto relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <Link href="/dashboard" className="p-2 rounded-lg hover:bg-white/10 transition">
-            <FiHome className="w-5 h-5" />
-          </Link>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            🕯️ Witching Hour
-          </h1>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard" className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+              <FiHome size={20} />
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <motion.span 
+                  className="text-3xl"
+                  animate={{ rotateY: [0, 360] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                >
+                  🔮
+                </motion.span> 
+                Witching Hour
+              </h1>
+              <p className="text-sm text-purple-400/70">The mystical hours • 12 AM - 3 AM</p>
+            </div>
+          </div>
           <button
             onClick={() => fetchData(true)}
-            disabled={refreshing}
-            className="p-2 rounded-lg hover:bg-white/10 transition"
+            className={`p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all ${refreshing ? "animate-spin" : ""}`}
           >
-            <FiRefreshCw className={`w-5 h-5 ${refreshing ? "animate-spin" : ""}`} />
+            <FiRefreshCw size={20} />
           </button>
         </div>
 
-        {/* Status Banner */}
+        {/* Witching Hour Status */}
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`rounded-xl p-4 mb-6 border ${
-            isWitchingHour
-              ? "bg-gradient-to-r from-violet-600/30 to-purple-600/30 border-violet-500/50"
-              : "bg-gradient-to-r from-gray-700/30 to-gray-600/30 border-gray-500/30"
+          className={`mb-4 p-4 rounded-xl border ${
+            stats.isWitchingHour 
+              ? "bg-gradient-to-r from-purple-950/50 via-violet-900/30 to-purple-950/50 border-purple-500/40"
+              : "bg-gray-900/50 border-gray-800/50"
           }`}
         >
-          <div className="flex items-center gap-3">
-            <div className={`text-3xl ${isWitchingHour ? "animate-pulse" : ""}`}>
-              {isWitchingHour ? "🕯️" : "💤"}
+          {stats.isWitchingHour ? (
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <motion.span 
+                  className="text-3xl"
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  🌙
+                </motion.span>
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full animate-pulse"></span>
+              </div>
+              <div>
+                <p className="font-semibold text-purple-300">The Veil Is Thin</p>
+                <p className="text-sm text-purple-400/60">Magic flows through the smoke...</p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-bold text-lg">
-                {isWitchingHour ? "The Witching Hour is NOW" : "The Veil is Closed"}
-              </h2>
-              <p className="text-sm text-gray-400">
-                {isWitchingHour
-                  ? "2-4 AM — The deepest night. Only true insomniacs smoke now."
-                  : `Come back between 2-4 AM to join the Witching Hour`}
-              </p>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="text-3xl opacity-50">🕯️</span>
+              <div>
+                <p className="font-semibold text-gray-400">The Hour Has Not Come</p>
+                <p className="text-sm text-gray-600">Return when the clock strikes midnight</p>
+              </div>
             </div>
-          </div>
-          {isWitchingHour && (
-            <Link
-              href="/checkin"
-              className="mt-3 block w-full py-2 px-4 bg-violet-600 hover:bg-violet-500 rounded-lg text-center font-medium transition"
-            >
-              🔥 Log a Smoke to Join
-            </Link>
           )}
         </motion.div>
 
-        {/* Your Stats */}
+        {/* Your Mystic Status */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass rounded-xl p-4 mb-6"
+          className="mb-4 p-4 rounded-xl bg-gradient-to-br from-violet-950/40 to-purple-950/40 border border-purple-700/30"
         >
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <FiMoon className="text-violet-400" />
-            Your Witching Hour Stats
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
-              <div className="text-2xl font-bold text-violet-400">
-                {stats?.yourWitchingHourCount || 0}
-              </div>
-              <div className="text-xs text-gray-400">Deep Night Smokes</div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-purple-400/70">Your Mystic Title</p>
+              <p className="text-xl font-bold text-purple-200">{stats.yourMysticTitle}</p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
-              <div className="text-2xl font-bold text-purple-400">
-                {stats?.yourWitchingHourPercent || 0}%
-              </div>
-              <div className="text-xs text-gray-400">Of Your Smokes</div>
+            <div className="text-right">
+              <p className="text-sm text-purple-400/70">Witching Smokes</p>
+              <p className="text-2xl font-bold text-purple-300">{stats.yourWitchingCount}</p>
             </div>
           </div>
-          {(stats?.yourWitchingHourCount || 0) === 0 && (
-            <p className="text-sm text-gray-500 mt-3 text-center italic">
-              You haven&apos;t joined the Witching Hour yet... 👻
-            </p>
+          {stats.isWitchingHour && (
+            <Link 
+              href="/checkin"
+              className="mt-3 flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 text-sm transition-colors"
+            >
+              <FiPlus size={16} /> Perform a Ritual Smoke
+            </Link>
           )}
         </motion.div>
 
-        {/* Tonight's Smokers */}
+        {/* Tarot Reading Card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="glass rounded-xl p-4 mb-6"
+          transition={{ delay: 0.15 }}
+          className="mb-4"
         >
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <FiUsers className="text-violet-400" />
-            {isWitchingHour ? "Smoking Now" : "Last Witching Hour"}
-          </h3>
-          {data?.tonightsSmokers && data.tonightsSmokers.length > 0 ? (
-            <div className="space-y-3">
-              <AnimatePresence mode="popLayout">
-                {data.tonightsSmokers.map((smoker, i) => (
+          <button
+            onClick={() => setShowTarot(!showTarot)}
+            className="w-full p-4 rounded-xl bg-gradient-to-br from-violet-900/30 to-fuchsia-950/30 border border-purple-600/30 hover:border-purple-500/50 transition-colors"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{tarotReading.emoji}</span>
+                <div className="text-left">
+                  <p className="text-sm text-purple-400/70">Tonight&apos;s Reading</p>
+                  <p className="font-semibold text-purple-200">{tarotReading.card}</p>
+                </div>
+              </div>
+              <motion.span
+                animate={{ rotate: showTarot ? 180 : 0 }}
+                className="text-purple-400"
+              >
+                ▼
+              </motion.span>
+            </div>
+          </button>
+          <AnimatePresence>
+            {showTarot && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-2 p-4 rounded-xl bg-black/40 border border-purple-800/30"
+              >
+                <p className="text-purple-200/80 italic text-center">&quot;{tarotReading.meaning}&quot;</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setActiveTab("coven")}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "coven"
+                ? "bg-purple-600/40 text-purple-200"
+                : "bg-white/5 text-gray-400 hover:bg-white/10"
+            }`}
+          >
+            <FiUsers className="inline mr-2" /> The Coven
+          </button>
+          <button
+            onClick={() => setActiveTab("mystics")}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "mystics"
+                ? "bg-purple-600/40 text-purple-200"
+                : "bg-white/5 text-gray-400 hover:bg-white/10"
+            }`}
+          >
+            <FiMoon className="inline mr-2" /> Mystics
+          </button>
+        </div>
+
+        {/* Coven Members */}
+        <AnimatePresence mode="wait">
+          {activeTab === "coven" && (
+            <motion.div
+              key="coven"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="space-y-3"
+            >
+              {covenMembers.length === 0 ? (
+                <div className="text-center py-8 text-purple-400/60">
+                  <span className="text-4xl mb-2 block">🕯️</span>
+                  <p>The coven awaits its first member tonight...</p>
+                  {stats.isWitchingHour && (
+                    <Link href="/checkin" className="mt-3 inline-block text-purple-400 hover:text-purple-300 text-sm">
+                      Be the first to light the flame →
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                covenMembers.map((member, i) => (
                   <motion.div
-                    key={`${smoker.username}-${smoker.checkedAt}`}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
+                    key={`${member.username}-${i}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition"
+                    className="p-3 rounded-lg bg-purple-950/30 border border-purple-800/30"
                   >
-                    {smoker.imageUrl ? (
-                      <img
-                        src={smoker.imageUrl}
-                        alt=""
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-violet-500/30 to-purple-500/30 flex items-center justify-center">
-                        🕯️
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        href={`/user/${smoker.username}`}
-                        className="font-medium hover:text-violet-400 transition"
-                      >
-                        @{smoker.username}
-                      </Link>
-                      <p className="text-sm text-gray-400 truncate">
-                        {smoker.brand}
-                        {smoker.product && ` • ${smoker.product}`}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      {smoker.rating && (
-                        <div className="flex items-center gap-1 text-amber-400 text-sm">
-                          <FiStar size={12} />
-                          {smoker.rating}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">🔮</span>
+                        <div>
+                          <Link href={`/u/${member.username}`} className="font-medium text-purple-200 hover:text-purple-100">
+                            @{member.username}
+                          </Link>
+                          <p className="text-sm text-purple-400/60">{member.brand} {member.product || ""}</p>
                         </div>
-                      )}
-                      <div className="text-xs text-gray-500 flex items-center gap-1">
-                        <FiClock size={10} />
-                        {smoker.timeAgo}
+                      </div>
+                      <div className="text-right">
+                        {member.rating && (
+                          <div className="flex items-center gap-1 text-purple-300">
+                            <FiStar size={12} /> {member.rating}
+                          </div>
+                        )}
+                        <p className="text-xs text-purple-500/60">{member.timeAgo}</p>
                       </div>
                     </div>
                   </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          ) : (
-            <div className="text-center py-6 text-gray-500">
-              <div className="text-4xl mb-2">🌙</div>
-              <p>No one braved the witching hour yet...</p>
-              {isWitchingHour && (
-                <p className="text-sm mt-1">Be the first! 👻</p>
+                ))
               )}
-            </div>
+            </motion.div>
           )}
-        </motion.div>
 
-        {/* All-Time Leaders */}
-        {data?.leaders && data.leaders.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="glass rounded-xl p-4 mb-6"
-          >
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <FiAward className="text-violet-400" />
-              Witching Hour Masters
-            </h3>
-            <div className="space-y-2">
-              {data.leaders.map((leader, i) => (
-                <div
-                  key={leader.username}
-                  className="flex items-center gap-3 p-2 rounded-lg bg-white/5"
-                >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500/30 to-purple-500/30 flex items-center justify-center text-sm font-bold">
-                    {i === 0 ? "👑" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
-                  </div>
-                  <Link
-                    href={`/user/${leader.username}`}
-                    className="flex-1 font-medium hover:text-violet-400 transition"
-                  >
-                    @{leader.username}
-                  </Link>
-                  <div className="text-violet-400 font-bold">
-                    {leader.count}
-                  </div>
+          {activeTab === "mystics" && (
+            <motion.div
+              key="mystics"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-3"
+            >
+              {mysticLeaders.length === 0 ? (
+                <div className="text-center py-8 text-purple-400/60">
+                  <span className="text-4xl mb-2 block">🌙</span>
+                  <p>No mystics have been initiated yet...</p>
                 </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+              ) : (
+                mysticLeaders.map((leader, i) => (
+                  <motion.div
+                    key={leader.username}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="p-3 rounded-lg bg-purple-950/30 border border-purple-800/30"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl font-bold text-purple-400/70">
+                          {i === 0 ? "👑" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
+                        </span>
+                        <div>
+                          <Link href={`/u/${leader.username}`} className="font-medium text-purple-200 hover:text-purple-100">
+                            @{leader.username}
+                          </Link>
+                          <p className="text-sm text-purple-400/60">{leader.mysticTitle}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-purple-300">{leader.count}</p>
+                        <p className="text-xs text-purple-500/60">Peak: {leader.favoriteHour}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Platform Stats */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="glass rounded-xl p-4"
+          transition={{ delay: 0.3 }}
+          className="mt-6 p-4 rounded-xl bg-black/30 border border-purple-900/30"
         >
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            📊 Platform Stats
+          <h3 className="text-sm font-semibold text-purple-400/70 mb-3 flex items-center gap-2">
+            <span>🌙</span> Dark Arts Statistics
           </h3>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="p-3 rounded-lg bg-white/5">
-              <div className="text-xl font-bold text-violet-400">
-                {stats?.totalWitchingHourSmokes || 0}
-              </div>
-              <div className="text-xs text-gray-500">Total Smokes</div>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="p-2 rounded-lg bg-purple-950/30">
+              <p className="text-purple-400/60 text-xs">Total Rituals</p>
+              <p className="text-purple-200 font-bold">{stats.totalWitchingSmokes}</p>
             </div>
-            <div className="p-3 rounded-lg bg-white/5">
-              <div className="text-xl font-bold text-purple-400">
-                {stats?.uniqueWitchingHourSmokers || 0}
-              </div>
-              <div className="text-xs text-gray-500">Brave Souls</div>
+            <div className="p-2 rounded-lg bg-purple-950/30">
+              <p className="text-purple-400/60 text-xs">Initiated Witches</p>
+              <p className="text-purple-200 font-bold">{stats.uniqueWitches}</p>
             </div>
-            <div className="p-3 rounded-lg bg-white/5">
-              <div className="text-xl font-bold text-indigo-400">
-                {stats?.witchingHourPercent || 0}%
+            {stats.mostCommonOffering && (
+              <div className="p-2 rounded-lg bg-purple-950/30">
+                <p className="text-purple-400/60 text-xs">Favored Offering</p>
+                <p className="text-purple-200 font-bold truncate">{stats.mostCommonOffering}</p>
               </div>
-              <div className="text-xs text-gray-500">Of Users</div>
-            </div>
+            )}
+            {stats.darkestHour !== undefined && (
+              <div className="p-2 rounded-lg bg-purple-950/30">
+                <p className="text-purple-400/60 text-xs">Darkest Hour</p>
+                <p className="text-purple-200 font-bold">{formatHour(stats.darkestHour)}</p>
+              </div>
+            )}
           </div>
         </motion.div>
 
-        {/* Lore */}
+        {/* Navigation Links */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-6 p-4 rounded-xl border border-violet-500/20 bg-violet-950/20"
+          transition={{ delay: 0.4 }}
+          className="mt-6 text-center text-sm text-purple-500/60"
         >
-          <p className="text-sm text-gray-400 italic text-center">
-            &ldquo;In the depths of night, between 2 and 4, the veil thins. 
-            Those who smoke in these hours know a different kind of peace.&rdquo;
-          </p>
-          <p className="text-xs text-gray-600 text-center mt-2">
-            — The Witching Hour Society
-          </p>
+          <p>More dark explorations:</p>
+          <div className="flex flex-wrap justify-center gap-3 mt-2">
+            <Link href="/midnight-society" className="hover:text-purple-400">🌑 Midnight Society</Link>
+            <Link href="/graveyard-shift" className="hover:text-purple-400">☠️ Graveyard</Link>
+            <Link href="/dead-of-night" className="hover:text-purple-400">📓 Dead of Night</Link>
+          </div>
         </motion.div>
       </div>
     </div>

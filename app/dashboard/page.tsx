@@ -1270,6 +1270,13 @@ export default function DashboardPage() {
               🍻
             </Link>
             <Link
+              href="/witching-hour"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Witching Hour - Mystical 12 AM - 3 AM"
+            >
+              🔮
+            </Link>
+            <Link
               href="/poker-night"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
               title="Poker Night - Fri/Sat 7 PM - 2 AM"
