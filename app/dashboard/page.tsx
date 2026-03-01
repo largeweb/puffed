@@ -1123,6 +1123,13 @@ export default function DashboardPage() {
               🕹️
             </Link>
             <Link
+              href="/march-madness"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
+              title="March Madness - Brand Battle Bracket"
+            >
+              🏀
+            </Link>
+            <Link
               href="/mood-match"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
               title="Mood Match - Cigars for your vibe"

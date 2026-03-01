@@ -52,6 +52,7 @@ const navGroups = [
       { href: "/suggest", icon: <FiZap size={20} />, label: "What to Smoke?", color: "text-purple-400" },
       { href: "/roulette", icon: <span>🎰</span>, label: "Smoke Roulette", color: "text-fuchsia-400" },
       { href: "/arcade", icon: <span>🕹️</span>, label: "Smoke Arcade", color: "text-cyan-400" },
+      { href: "/march-madness", icon: <span>🏀</span>, label: "March Madness", color: "text-orange-400" },
       { href: "/slots", icon: <span>💰</span>, label: "Cigar Slots", color: "text-yellow-400" },
     ]
   },
