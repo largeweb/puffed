@@ -76,7 +76,7 @@ export default function SpringGardenPage() {
           router.push('/');
           return null;
         }
-        return res.json();
+        return res.json() as Promise<GardenData>;
       })
       .then(result => {
         if (result) setData(result);

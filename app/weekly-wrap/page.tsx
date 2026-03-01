@@ -62,7 +62,7 @@ export default function WeeklyWrapPage() {
       if (!res.ok) {
         throw new Error('Failed to fetch');
       }
-      const data = await res.json();
+      const data = await res.json() as WeeklyStats;
       setStats(data);
     } catch (err) {
       console.error('Error fetching weekly stats:', err);

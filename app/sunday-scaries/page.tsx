@@ -46,8 +46,8 @@ export default function SundayScariesPage() {
 
   useEffect(() => {
     fetch('/api/sunday-scaries')
-      .then(res => res.json())
-      .then(setData)
+      .then(res => res.json() as Promise<ScariesData>)
+      .then(data => setData(data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

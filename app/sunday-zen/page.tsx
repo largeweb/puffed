@@ -70,7 +70,7 @@ export default function SundayZenPage() {
           router.push('/');
           return null;
         }
-        return res.json();
+        return res.json() as Promise<ZenData>;
       })
       .then(result => {
         if (result) setData(result);

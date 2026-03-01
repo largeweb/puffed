@@ -35,7 +35,7 @@ export default function NewMonthPage() {
 
   useEffect(() => {
     fetch('/api/new-month')
-      .then(res => res.json())
+      .then(res => res.json() as Promise<MonthStats>)
       .then(data => {
         setStats(data);
         setLoading(false);

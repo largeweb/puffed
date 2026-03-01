@@ -53,7 +53,7 @@ export default function SundaySunrisePage() {
           router.push('/');
           return null;
         }
-        return res.json();
+        return res.json() as Promise<SunriseData>;
       })
       .then(result => {
         if (result) setData(result);

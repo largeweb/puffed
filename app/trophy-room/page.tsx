@@ -59,8 +59,8 @@ export default function TrophyRoomPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/trophy-room").then((r) => r.json()),
-      fetch("/api/badges").then((r) => r.json()),
+      fetch("/api/trophy-room").then((r) => r.json() as Promise<TrophyData & { error?: string }>),
+      fetch("/api/badges").then((r) => r.json() as Promise<{ badges: Badge[] }>),
     ])
       .then(([trophyData, badgesData]) => {
         if (trophyData.error) {

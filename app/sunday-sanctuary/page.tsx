@@ -33,7 +33,7 @@ export default function SundaySanctuaryPage() {
 
   useEffect(() => {
     fetch('/api/sunday-sanctuary')
-      .then(res => res.json())
+      .then(res => res.json() as Promise<SanctuaryStats>)
       .then(data => {
         setStats(data);
         setLoading(false);
