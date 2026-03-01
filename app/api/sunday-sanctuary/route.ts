@@ -1,11 +1,11 @@
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { getRequestContext } from '@cloudflare/next-on-pages';
 import { NextResponse } from 'next/server';
 import { verifyAuth } from '../../../lib/auth';
 
 export const runtime = 'edge';
 
 export async function GET(request: Request) {
-  const { env } = await getCloudflareContext();
+  const { env } = getRequestContext();
   const db = env.DB;
   
   const authResult = await verifyAuth(request, db);

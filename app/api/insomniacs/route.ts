@@ -1,11 +1,11 @@
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { getRequestContext } from '@cloudflare/next-on-pages';
 import { cookies } from 'next/headers';
 
 export const runtime = 'edge';
 
 export async function GET() {
   try {
-    const { env } = await getCloudflareContext();
+    const { env } = getRequestContext();
     const db = env.DB;
     
     // Get current user from session
