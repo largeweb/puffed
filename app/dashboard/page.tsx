@@ -1431,6 +1431,13 @@ export default function DashboardPage() {
               👑
             </Link>
             <Link
+              href="/mvp-awards"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-500 transition-all"
+              title="MVP Awards - Weekly Recognition"
+            >
+              🏅
+            </Link>
+            <Link
               href="/weekly-recap"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="Weekly Recap"
