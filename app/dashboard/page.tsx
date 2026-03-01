@@ -1298,6 +1298,20 @@ export default function DashboardPage() {
               🕊️
             </Link>
             <Link
+              href="/sunday-sunrise"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Sunday Sunrise Service - Dawn Devotional 5-9 AM"
+            >
+              🌅
+            </Link>
+            <Link
+              href="/sunday-paper"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-stone-400 transition-all"
+              title="The Sunday Paper - Classic Sunday Read"
+            >
+              📰
+            </Link>
+            <Link
               href="/new-month"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-teal-400 transition-all"
               title="New Month Reset - Fresh Start (Days 1-3)"

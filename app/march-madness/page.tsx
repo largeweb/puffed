@@ -41,8 +41,8 @@ export default function MarchMadnessPage() {
 
   useEffect(() => {
     fetch('/api/march-madness')
-      .then(res => res.json())
-      .then((data: BracketStats) => {
+      .then(res => res.json() as Promise<BracketStats>)
+      .then(data => {
         setStats(data);
         setLoading(false);
       })
@@ -59,7 +59,7 @@ export default function MarchMadnessPage() {
       });
       if (res.ok) {
         // Refresh stats
-        const data: BracketStats = await fetch('/api/march-madness').then(r => r.json());
+        const data = await fetch('/api/march-madness').then(r => r.json() as Promise<BracketStats>);
         setStats(data);
         setConfetti(true);
         setTimeout(() => setConfetti(false), 2000);
