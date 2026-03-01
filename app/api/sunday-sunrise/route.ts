@@ -1,16 +1,25 @@
 import { getRequestContext } from '@cloudflare/next-on-pages';
-import { getAuth } from '@/lib/auth';
+import { parseSessionCookie } from '@/lib/auth';
 
 export const runtime = 'edge';
 
 export async function GET(request: Request) {
-  const auth = await getAuth(request);
-  if (!auth) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   const { env } = getRequestContext();
   const db = env.DB;
+  
+  // Get user from session (optional - allow viewing without login)
+  const cookieHeader = request.headers.get('cookie');
+  const sessionId = parseSessionCookie(cookieHeader);
+  let userId: number | null = null;
+  
+  if (sessionId) {
+    const nowTs = Math.floor(Date.now() / 1000);
+    const session = await db
+      .prepare('SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?')
+      .bind(sessionId, nowTs)
+      .first<{ user_id: number }>();
+    userId = session?.user_id || null;
+  }
 
   const now = new Date();
   const hour = now.getHours();
