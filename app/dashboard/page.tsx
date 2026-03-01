@@ -1277,6 +1277,13 @@ export default function DashboardPage() {
               🔮
             </Link>
             <Link
+              href="/insomniacs"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
+              title="The Insomniac's Club - 2-5 AM"
+            >
+              🌀
+            </Link>
+            <Link
               href="/sunday-sanctuary"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="Sunday Sanctuary - Peaceful Sunday Reflection"
