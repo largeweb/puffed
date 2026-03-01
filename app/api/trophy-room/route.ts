@@ -224,8 +224,8 @@ export async function GET(): Promise<Response> {
     const recentBadges = [
       { id: "aficionado", name: "Aficionado", emoji: "👑", earnedAt: (checkinsResult?.count || 0) >= 25 ? Date.now() : null },
       { id: "regular", name: "Regular", emoji: "💨", earnedAt: (checkinsResult?.count || 0) >= 10 ? Date.now() : null },
-      { id: "first_smoke", name: "First Smoke", emoji: "🌱", earnedAt: (checkinsResult?.count || 0) >= 1 ? firstCheckinResult?.first : null },
-    ].filter(b => b.earnedAt !== null).slice(0, 3);
+      { id: "first_smoke", name: "First Smoke", emoji: "🌱", earnedAt: (checkinsResult?.count || 0) >= 1 ? (firstCheckinResult?.first ?? null) : null },
+    ].filter((b): b is { id: string; name: string; emoji: string; earnedAt: number } => b.earnedAt !== null).slice(0, 3);
 
     // Count badges (simplified - ideally call badges API)
     let badgesEarned = 0;

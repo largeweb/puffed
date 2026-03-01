@@ -82,7 +82,7 @@ export async function GET(request: Request) {
       AND strftime('%w', datetime(created_at, 'unixepoch')) = '0'
       AND CAST(strftime('%H', datetime(created_at, 'unixepoch')) AS INTEGER) >= 5
       AND CAST(strftime('%H', datetime(created_at, 'unixepoch')) AS INTEGER) < 9
-  `).bind(auth.userId).first() as { sunrise_count: number; avg_rating: number | null };
+  `).bind(userId).first() as { sunrise_count: number; avg_rating: number | null };
 
   // Platform-wide Sunday sunrise stats
   const platformStats = await db.prepare(`

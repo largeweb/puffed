@@ -204,7 +204,7 @@ export default function SundayScariesPage() {
         )}
 
         {/* Your Weekend Achievements */}
-        {data?.yourWeekend && user && (
+        {data?.yourWeekend && (
           <div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-green-500/30">
             <h2 className="text-lg font-semibold text-green-300 mb-4 flex items-center gap-2">
               🏆 Your Weekend Wins
