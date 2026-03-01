@@ -1319,6 +1319,13 @@ export default function DashboardPage() {
               🥂
             </Link>
             <Link
+              href="/porch"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="The Porch - Sunday Tradition"
+            >
+              🏡
+            </Link>
+            <Link
               href="/new-month"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-teal-400 transition-all"
               title="New Month Reset - Fresh Start (Days 1-3)"
