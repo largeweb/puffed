@@ -42,7 +42,7 @@ export default function MarchMadnessPage() {
   useEffect(() => {
     fetch('/api/march-madness')
       .then(res => res.json())
-      .then(data => {
+      .then((data: BracketStats) => {
         setStats(data);
         setLoading(false);
       })
@@ -59,7 +59,7 @@ export default function MarchMadnessPage() {
       });
       if (res.ok) {
         // Refresh stats
-        const data = await fetch('/api/march-madness').then(r => r.json());
+        const data: BracketStats = await fetch('/api/march-madness').then(r => r.json());
         setStats(data);
         setConfetti(true);
         setTimeout(() => setConfetti(false), 2000);
