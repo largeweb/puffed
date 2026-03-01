@@ -1,5 +1,5 @@
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { getUserId } from "@/lib/auth";
+import { cookies } from "next/headers";
 
 export const runtime = "edge";
 
@@ -86,9 +86,23 @@ function getPatioTip(): string {
 
 export async function GET() {
   try {
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get("session")?.value;
+    
     const { env } = getRequestContext();
     const db = env.DB;
-    const userId = await getUserId();
+    
+    // Get user from session if logged in
+    let userId: string | null = null;
+    if (sessionId) {
+      const session = await db
+        .prepare("SELECT user_id FROM sessions WHERE id = ?")
+        .bind(sessionId)
+        .first<{ user_id: string }>();
+      if (session) {
+        userId = session.user_id;
+      }
+    }
     
     const now = new Date();
     const hour = now.getHours();
