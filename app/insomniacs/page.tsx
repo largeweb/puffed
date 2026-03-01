@@ -54,7 +54,7 @@ export default function InsomniacsClub() {
     setIsInsomniacHours(hour >= 2 && hour < 5);
     fetch('/api/insomniacs')
       .then(r => r.json())
-      .then(data => {
+      .then((data: InsomniacStats) => {
         setStats(data);
         setLoading(false);
       })
