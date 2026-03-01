@@ -100,6 +100,7 @@ const navGroups = [
       { href: "/sunday-zen", icon: <span>🧘</span>, label: "Sunday Zen", color: "text-emerald-400" },
       { href: "/sunday-paper", icon: <span>📰</span>, label: "Sunday Paper", color: "text-stone-400" },
       { href: "/brunch", icon: <span>🥂</span>, label: "Sunday Brunch", color: "text-rose-400" },
+      { href: "/sunday-funday", icon: <span>🎉</span>, label: "Sunday Funday", color: "text-yellow-400" },
       { href: "/porch", icon: <span>🏡</span>, label: "The Porch", color: "text-amber-400" },
       { href: "/sunday-scaries", icon: <span>😰</span>, label: "Sunday Scaries", color: "text-purple-400" },
       { href: "/new-month", icon: <span>🗓️</span>, label: "New Month Reset", color: "text-teal-400" },

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '../components/AuthContext';
 
 interface ScariesData {
   countdown: {
@@ -40,7 +39,6 @@ interface ScariesData {
 }
 
 export default function SundayScariesPage() {
-  const { user } = useAuth();
   const [data, setData] = useState<ScariesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);

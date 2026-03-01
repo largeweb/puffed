@@ -1326,6 +1326,13 @@ export default function DashboardPage() {
               🥂
             </Link>
             <Link
+              href="/sunday-funday"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
+              title="Sunday Funday - Maximize the Weekend 11 AM - 6 PM"
+            >
+              🎉
+            </Link>
+            <Link
               href="/porch"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="The Porch - Sunday Tradition"
