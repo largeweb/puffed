@@ -51,6 +51,7 @@ const navGroups = [
       { href: "/wishlist", icon: <FiBookmark size={20} />, label: "Want to Try", color: "text-pink-400" },
       { href: "/suggest", icon: <FiZap size={20} />, label: "What to Smoke?", color: "text-purple-400" },
       { href: "/roulette", icon: <span>🎰</span>, label: "Smoke Roulette", color: "text-fuchsia-400" },
+      { href: "/arcade", icon: <span>🕹️</span>, label: "Smoke Arcade", color: "text-cyan-400" },
       { href: "/slots", icon: <span>💰</span>, label: "Cigar Slots", color: "text-yellow-400" },
     ]
   },
@@ -87,6 +88,7 @@ const navGroups = [
       { href: "/bonfire", icon: <span>🔥</span>, label: "The Bonfire", color: "text-orange-400" },
       { href: "/patio", icon: <span>🪴</span>, label: "The Patio", color: "text-emerald-400" },
       { href: "/rooftop", icon: <span>🌃</span>, label: "The Rooftop", color: "text-indigo-400" },
+      { href: "/late-show", icon: <span>🎬</span>, label: "The Late Show", color: "text-amber-400" },
       { href: "/poker-night", icon: <span>🃏</span>, label: "Poker Night", color: "text-emerald-400" },
       { href: "/speakeasy", icon: <span>🗝️</span>, label: "The Speakeasy", color: "text-amber-400" },
       { href: "/graveyard-shift", icon: <span>💀</span>, label: "Graveyard Shift", color: "text-gray-400" },

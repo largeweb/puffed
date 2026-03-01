@@ -1116,6 +1116,13 @@ export default function DashboardPage() {
               🎰
             </Link>
             <Link
+              href="/arcade"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-cyan-400 transition-all"
+              title="Smoke Arcade - High Scores"
+            >
+              🕹️
+            </Link>
+            <Link
               href="/mood-match"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
               title="Mood Match - Cigars for your vibe"
@@ -1240,6 +1247,13 @@ export default function DashboardPage() {
               title="The Rooftop - City Views & Evening Smokes (6 PM - 2 AM)"
             >
               🌃
+            </Link>
+            <Link
+              href="/late-show"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="The Late Show - Tonight's Talk Show (8 PM - 2 AM)"
+            >
+              🎬
             </Link>
             <Link
               href="/poker-night"
