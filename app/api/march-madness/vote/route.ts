@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Must be logged in to vote" }, { status: 401 });
   }
 
-  const body = await request.json();
+  const body = await request.json() as { matchupId?: number; brand?: string };
   const { matchupId, brand } = body;
 
   if (!matchupId || !brand) {
