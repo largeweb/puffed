@@ -1333,11 +1333,25 @@ export default function DashboardPage() {
               🏡
             </Link>
             <Link
+              href="/sunday-scaries"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Sunday Scaries - Support Group 4 PM - 2 AM"
+            >
+              😰
+            </Link>
+            <Link
               href="/spring-garden"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-400 transition-all"
               title="Spring Garden - Celebrate the Season 🌸"
             >
               🌸
+            </Link>
+            <Link
+              href="/weekly-wrap"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Weekly Wrap - Your Week in Review 📊"
+            >
+              📊
             </Link>
             <Link
               href="/new-month"

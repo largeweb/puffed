@@ -1,20 +1,27 @@
-import { getAuth } from '@/lib/auth';
-import { D1Database } from '@cloudflare/workers-types';
+import { getRequestContext } from "@cloudflare/next-on-pages";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export const runtime = 'edge';
 
-interface Env {
-  DB: D1Database;
-}
-
-export async function GET(request: Request) {
-  const auth = await getAuth(request);
-  if (!auth) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const env = (process.env as unknown) as Env;
+export async function GET() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("session_id")?.value;
+  
+  const { env } = getRequestContext();
   const db = env.DB;
+
+  // Get user from session (optional for this page)
+  let userId: string | null = null;
+  if (sessionId) {
+    const session = await db
+      .prepare("SELECT user_id FROM sessions WHERE id = ?")
+      .bind(sessionId)
+      .first<{ user_id: string }>();
+    if (session) {
+      userId = session.user_id;
+    }
+  }
 
   // Spring months: March, April, May (or we track from March 1st onwards)
   const now = new Date();
@@ -25,22 +32,21 @@ export async function GET(request: Request) {
   
   // Calculate spring start (March 1st of current year)
   const springStart = new Date(now.getFullYear(), 2, 1, 0, 0, 0);
-  const springStartTs = Math.floor(springStart.getTime() / 1000);
+  const springStartISO = springStart.toISOString();
   
   // Get today's garden smokers (check-ins today during daylight)
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
-  const todayStartTs = Math.floor(todayStart.getTime() / 1000);
-  const todayEndTs = todayStartTs + 86400;
+  const todayStartISO = todayStart.toISOString();
 
   const gardenSmokers = await db.prepare(`
     SELECT c.id, u.username, c.brand, c.product, c.rating, c.review, c.created_at as createdAt
     FROM checkins c
     JOIN users u ON c.user_id = u.id
-    WHERE c.created_at >= ? AND c.created_at < ?
+    WHERE c.created_at >= ?
     ORDER BY c.created_at DESC
     LIMIT 10
-  `).bind(todayStartTs, todayEndTs).all();
+  `).bind(todayStartISO).all();
 
   // Get spring bloomers (most check-ins since spring started)
   const springBloomers = await db.prepare(`
@@ -51,14 +57,18 @@ export async function GET(request: Request) {
     GROUP BY u.id
     ORDER BY count DESC
     LIMIT 10
-  `).bind(springStartTs).all();
+  `).bind(springStartISO).all();
 
   // Get user's spring stats
-  const userStats = await db.prepare(`
-    SELECT COUNT(*) as springCount, AVG(rating) as avgRating
-    FROM checkins
-    WHERE user_id = ? AND created_at >= ?
-  `).bind(auth.userId, springStartTs).first() as { springCount: number; avgRating: number | null } | null;
+  let userStats = { springCount: 0, avgRating: null as number | null };
+  if (userId) {
+    const stats = await db.prepare(`
+      SELECT COUNT(*) as springCount, AVG(rating) as avgRating
+      FROM checkins
+      WHERE user_id = ? AND created_at >= ?
+    `).bind(userId, springStartISO).first<{ springCount: number; avgRating: number | null }>();
+    if (stats) userStats = stats;
+  }
 
   // Get platform spring stats
   const platformStats = await db.prepare(`
@@ -68,7 +78,7 @@ export async function GET(request: Request) {
       AVG(rating) as avgRating
     FROM checkins
     WHERE created_at >= ?
-  `).bind(springStartTs).first() as { totalSpringSmokes: number; bloomers: number; avgRating: number | null } | null;
+  `).bind(springStartISO).first<{ totalSpringSmokes: number; bloomers: number; avgRating: number | null }>();
 
   // Days since spring started
   const daysSinceSpring = Math.floor((now.getTime() - springStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -105,7 +115,7 @@ export async function GET(request: Request) {
     timeInfo = { isActive: false, hoursUntil };
   }
 
-  return Response.json({
+  return NextResponse.json({
     isActive,
     daysSinceSpring,
     springStart: springStart.toISOString(),
@@ -114,7 +124,7 @@ export async function GET(request: Request) {
     flowers,
     gardenSmokers: gardenSmokers.results || [],
     springBloomers: (springBloomers.results || []).map((b: Record<string, unknown>, i: number) => ({ ...b, rank: i + 1 })),
-    userStats: userStats || { springCount: 0, avgRating: null },
+    userStats,
     platformStats: platformStats || { totalSpringSmokes: 0, bloomers: 0, avgRating: null }
   });
 }
