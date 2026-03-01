@@ -1228,6 +1228,13 @@ export default function DashboardPage() {
               🔥
             </Link>
             <Link
+              href="/poker-night"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
+              title="Poker Night - Fri/Sat 7 PM - 2 AM"
+            >
+              🃏
+            </Link>
+            <Link
               href="/speakeasy"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
               title="The Speakeasy - Members Only"
@@ -1513,6 +1520,13 @@ export default function DashboardPage() {
               title="Smoke Fortune - Daily Wisdom"
             >
               🥠
+            </Link>
+            <Link
+              href="/oracle"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-violet-400 transition-all"
+              title="The Oracle - Mystical Insights"
+            >
+              👁️
             </Link>
             <Link
               href="/weekend-forecast"

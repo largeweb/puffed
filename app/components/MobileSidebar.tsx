@@ -68,6 +68,7 @@ const navGroups = [
       { href: "/personality", icon: <span>🔮</span>, label: "Smoke Personality", color: "text-purple-400" },
       { href: "/horoscope", icon: <span>⭐</span>, label: "Smoke Horoscope", color: "text-yellow-400" },
       { href: "/fortune", icon: <span>✨</span>, label: "Smoke Fortune", color: "text-violet-400" },
+      { href: "/oracle", icon: <span>👁️</span>, label: "The Oracle", color: "text-violet-400" },
       { href: "/flavor-dna", icon: <span>🧬</span>, label: "Flavor DNA", color: "text-purple-400" },
       { href: "/calendar", icon: <FiCalendar size={20} />, label: "Smoke Calendar", color: "text-emerald-400" },
     ]
@@ -84,6 +85,7 @@ const navGroups = [
       { href: "/observatory", icon: <span>🔭</span>, label: "The Observatory", color: "text-purple-400" },
       { href: "/saturday-night", icon: <span>💜</span>, label: "Saturday Night Social", color: "text-fuchsia-400" },
       { href: "/bonfire", icon: <span>🔥</span>, label: "The Bonfire", color: "text-orange-400" },
+      { href: "/poker-night", icon: <span>🃏</span>, label: "Poker Night", color: "text-emerald-400" },
       { href: "/speakeasy", icon: <span>🗝️</span>, label: "The Speakeasy", color: "text-amber-400" },
       { href: "/graveyard-shift", icon: <span>💀</span>, label: "Graveyard Shift", color: "text-gray-400" },
       { href: "/saturday-cartoons", icon: <span>📺</span>, label: "Saturday Cartoons", color: "text-yellow-400" },
