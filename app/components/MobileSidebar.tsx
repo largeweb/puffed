@@ -33,6 +33,7 @@ const navGroups = [
       { href: "/twins", icon: <span>👯</span>, label: "Smoke Time Twins", color: "text-cyan-400" },
       { href: "/following", icon: <FiRss size={20} />, label: "Following Feed", color: "text-cyan-400" },
       { href: "/leaderboard", icon: <FiAward size={20} />, label: "Leaderboard", color: "text-amber-500" },
+      { href: "/crown", icon: <span>👑</span>, label: "The Crown", color: "text-yellow-400" },
       { href: "/council", icon: <span>🏛️</span>, label: "Smoke Council", color: "text-amber-400" },
       { href: "/weekly-recap", icon: <span>📊</span>, label: "Weekly Recap", color: "text-purple-400" },
       { href: "/weekly-wrap", icon: <span>🎬</span>, label: "Weekly Wrap", color: "text-fuchsia-400" },

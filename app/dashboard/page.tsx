@@ -1424,6 +1424,13 @@ export default function DashboardPage() {
               <FiAward size={20} />
             </Link>
             <Link
+              href="/crown"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-yellow-400 transition-all"
+              title="The Crown - Daily Champion"
+            >
+              👑
+            </Link>
+            <Link
               href="/weekly-recap"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
               title="Weekly Recap"
