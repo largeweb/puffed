@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { FiArrowLeft, FiClock, FiLock, FiAward, FiStar, FiUsers } from "react-icons/fi";
-import { GiChampagneGlass } from "react-icons/gi";
 
 interface BrunchUser {
   username: string;
@@ -141,7 +140,7 @@ export default function SundayBrunchPage() {
 
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-rose-900/50 rounded-full border border-rose-700/50 mb-4">
-            <GiChampagneGlass className="text-amber-400 animate-pulse" />
+            <FiStar className="text-amber-400 animate-pulse" />
             <span className="text-rose-300 text-sm">Brunch is Served</span>
             <span className="text-rose-400 text-xs">{data.currentHour > 12 ? data.currentHour - 12 : data.currentHour}:00 {data.currentHour >= 12 ? "PM" : "AM"}</span>
           </div>
@@ -191,7 +190,7 @@ export default function SundayBrunchPage() {
         {/* Platform Stats */}
         <div className="grid grid-cols-3 gap-3 mb-8">
           <div className="bg-rose-900/30 rounded-xl p-4 text-center border border-rose-800/30">
-            <GiChampagneGlass className="text-amber-400 text-xl mx-auto mb-1" />
+            <FiStar className="text-amber-400 text-xl mx-auto mb-1" />
             <p className="text-xl font-bold text-white">{stats.totalBrunchSmokes}</p>
             <p className="text-rose-400 text-xs">Brunch smokes</p>
           </div>
@@ -233,7 +232,7 @@ export default function SundayBrunchPage() {
                 href="/checkin"
                 className="inline-flex items-center gap-2 mt-4 px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors"
               >
-                <GiChampagneGlass />
+                <FiStar />
                 Log a Smoke
               </Link>
             </div>
@@ -278,7 +277,7 @@ export default function SundayBrunchPage() {
             href="/checkin"
             className="inline-flex items-center gap-2 px-6 py-3 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-lg transition-colors"
           >
-            <GiChampagneGlass />
+            <FiStar />
             Log a Smoke Now
           </Link>
         </div>
