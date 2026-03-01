@@ -1277,6 +1277,20 @@ export default function DashboardPage() {
               🔮
             </Link>
             <Link
+              href="/sunday-sanctuary"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-purple-400 transition-all"
+              title="Sunday Sanctuary - Peaceful Sunday Reflection"
+            >
+              🕊️
+            </Link>
+            <Link
+              href="/new-month"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-teal-400 transition-all"
+              title="New Month Reset - Fresh Start (Days 1-3)"
+            >
+              🗓️
+            </Link>
+            <Link
               href="/poker-night"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
               title="Poker Night - Fri/Sat 7 PM - 2 AM"
