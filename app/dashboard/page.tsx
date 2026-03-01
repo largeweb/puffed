@@ -1165,6 +1165,13 @@ export default function DashboardPage() {
               🏆
             </Link>
             <Link
+              href="/trophy-room"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Trophy Room - Your Achievements"
+            >
+              🪙
+            </Link>
+            <Link
               href="/milestones"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-orange-400 transition-all"
               title="Milestones"
