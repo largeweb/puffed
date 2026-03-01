@@ -1235,6 +1235,13 @@ export default function DashboardPage() {
               🪴
             </Link>
             <Link
+              href="/rooftop"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-all"
+              title="The Rooftop - City Views & Evening Smokes (6 PM - 2 AM)"
+            >
+              🌃
+            </Link>
+            <Link
               href="/poker-night"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
               title="Poker Night - Fri/Sat 7 PM - 2 AM"
