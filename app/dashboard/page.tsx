@@ -1312,6 +1312,13 @@ export default function DashboardPage() {
               📰
             </Link>
             <Link
+              href="/brunch"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-rose-400 transition-all"
+              title="Sunday Brunch - Sundays 10 AM - 3 PM"
+            >
+              🥂
+            </Link>
+            <Link
               href="/new-month"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-teal-400 transition-all"
               title="New Month Reset - Fresh Start (Days 1-3)"
