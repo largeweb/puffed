@@ -64,7 +64,7 @@ export default function LastCallPage() {
       try {
         const res = await fetch('/api/last-call');
         if (!res.ok) throw new Error('Failed to fetch');
-        const data = await res.json();
+        const data = await res.json() as { checkins?: CheckIn[]; stats?: LastCallStats };
         setCheckins(data.checkins || []);
         setStats(data.stats || null);
       } catch (err) {
