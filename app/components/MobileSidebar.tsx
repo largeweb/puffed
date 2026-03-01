@@ -121,7 +121,8 @@ export default function MobileSidebar({ isOpen, onClose, username, unreadCount =
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed top-0 left-0 h-full w-72 bg-[#0d0d0d] border-r border-white/10 z-50 overflow-y-auto md:hidden"
+            className="fixed top-0 left-0 bottom-0 w-72 bg-[#0d0d0d] border-r border-white/10 z-50 flex flex-col md:hidden"
+            style={{ height: '100dvh' }}
           >
             {/* Header */}
             <div className="sticky top-0 bg-[#0d0d0d] p-4 border-b border-white/10 flex items-center justify-between">
@@ -142,8 +143,8 @@ export default function MobileSidebar({ isOpen, onClose, username, unreadCount =
               </button>
             </div>
 
-            {/* Nav Groups */}
-            <div className="p-4 space-y-6">
+            {/* Nav Groups - Scrollable */}
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-6" style={{ WebkitOverflowScrolling: 'touch' }}>
               {navGroups.map((group) => (
                 <div key={group.title}>
                   <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
@@ -201,6 +202,9 @@ export default function MobileSidebar({ isOpen, onClose, username, unreadCount =
                   </button>
                 </div>
               </div>
+
+              {/* Bottom safe area spacer for iOS PWA */}
+              <div className="h-20 flex-shrink-0" />
             </div>
           </motion.div>
         </>
