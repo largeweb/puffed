@@ -1256,6 +1256,20 @@ export default function DashboardPage() {
               🎬
             </Link>
             <Link
+              href="/after-party"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-fuchsia-400 transition-all"
+              title="The After Party - Saturday Night 11 PM - 3 AM"
+            >
+              🎊
+            </Link>
+            <Link
+              href="/last-call"
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-amber-400 transition-all"
+              title="Last Call - Closing Time (11 PM - 2 AM)"
+            >
+              🍻
+            </Link>
+            <Link
               href="/poker-night"
               className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-emerald-400 transition-all"
               title="Poker Night - Fri/Sat 7 PM - 2 AM"
