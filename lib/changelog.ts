@@ -19,6 +19,14 @@ export const changelog: Update[] = [
   {
     date: '2026-03-05',
     type: 'feature',
+    title: 'Updates Page 📋',
+    description: 'See what\'s new! Browse all features, fixes, and improvements in one place.',
+    status: 'live',
+    icon: '📋'
+  },
+  {
+    date: '2026-03-05',
+    type: 'feature',
     title: 'Platform Pulse 📊',
     description: 'Real-time health monitor showing platform stats, health score, and trends vs yesterday.',
     status: 'live',
