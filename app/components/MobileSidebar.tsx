@@ -211,6 +211,14 @@ export default function MobileSidebar({ isOpen, onClose, username, unreadCount =
                     )}
                   </Link>
                   <Link
+                    href="/updates"
+                    onClick={onClose}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-all text-indigo-400"
+                  >
+                    <span className="text-lg">📋</span>
+                    <span className="text-sm">Updates</span>
+                  </Link>
+                  <Link
                     href="/settings"
                     onClick={onClose}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-all text-white"
