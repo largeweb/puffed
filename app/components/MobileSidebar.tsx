@@ -35,6 +35,7 @@ const navGroups = [
       { href: "/leaderboard", icon: <FiAward size={20} />, label: "Leaderboard", color: "text-amber-500" },
       { href: "/crown", icon: <span>👑</span>, label: "The Crown", color: "text-yellow-400" },
       { href: "/the-spark", icon: <span>⚡</span>, label: "The Spark", color: "text-yellow-400" },
+      { href: "/the-porch", icon: <span>🪑</span>, label: "The Porch", color: "text-amber-400" },
       { href: "/mvp-awards", icon: <span>🏅</span>, label: "MVP Awards", color: "text-amber-500" },
       { href: "/council", icon: <span>🏛️</span>, label: "Smoke Council", color: "text-amber-400" },
       { href: "/weekly-recap", icon: <span>📊</span>, label: "Weekly Recap", color: "text-purple-400" },
