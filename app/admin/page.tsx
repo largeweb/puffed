@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiUsers, FiActivity, FiHeart, FiTrendingUp, FiAlertCircle, FiRefreshCw, FiZap, FiSend, FiBell, FiUserPlus } from "react-icons/fi";
+import Link from "next/link";
+import { FiUsers, FiActivity, FiHeart, FiTrendingUp, FiAlertCircle, FiRefreshCw, FiZap, FiSend, FiBell, FiUserPlus, FiMessageSquare } from "react-icons/fi";
 
 interface PlatformStats {
   overview: {
@@ -171,6 +172,13 @@ export default function AdminDashboard() {
               CEO-level platform overview
             </p>
           </div>
+          <Link
+            href="/admin/messages"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+          >
+            <FiMessageSquare />
+            Messages
+          </Link>
           <button
             onClick={fetchStats}
             disabled={loading}

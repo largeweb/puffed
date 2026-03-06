@@ -5,8 +5,10 @@ import Link from "next/link";
 import { 
   FiX, FiCompass, FiSearch, FiUsers, FiRss, FiLayers, FiBookmark, 
   FiZap, FiBarChart2, FiCalendar, FiAward, FiActivity, FiCamera,
-  FiShare2, FiBell, FiSettings, FiLogOut, FiHome, FiTarget
+  FiShare2, FiBell, FiSettings, FiLogOut, FiHome, FiTarget,
+  FiMessageSquare, FiHelpCircle
 } from "react-icons/fi";
+import FeedbackButton from "@/components/FeedbackButton";
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -226,6 +228,12 @@ export default function MobileSidebar({ isOpen, onClose, username, unreadCount =
                     <FiSettings size={20} />
                     <span className="text-sm">Settings</span>
                   </Link>
+                  
+                  {/* Feedback & Support */}
+                  <div className="pt-2 mt-2 border-t border-white/10">
+                    <FeedbackButton type="both" variant="full" className="mb-2" />
+                  </div>
+                  
                   <button
                     onClick={() => { onLogout(); onClose(); }}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-500/10 transition-all text-red-400"
