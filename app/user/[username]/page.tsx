@@ -331,50 +331,45 @@ async function getUserProfile(username: string): Promise<UserProfileData | null>
     like_count: number;
   }>();
 
-  // Get earned badges
-  const badgesResult = await DB.prepare(`
-    SELECT badge_id as id
-    FROM user_badges
-    WHERE user_id = ?
-  `).bind(userRow.id).all<{ id: string }>();
+  // Calculate badges dynamically based on user stats (no user_badges table needed)
+  const [
+    fiveStarResult,
+    reviewsResult,
+    photosResult,
+    likesGivenResult,
+    commentsGivenResult,
+  ] = await Promise.all([
+    DB.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ? AND rating = 5").bind(userRow.id).first<{ count: number }>(),
+    DB.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ? AND review IS NOT NULL AND review != ''").bind(userRow.id).first<{ count: number }>(),
+    DB.prepare("SELECT COUNT(*) as count FROM checkins WHERE user_id = ? AND image_url IS NOT NULL").bind(userRow.id).first<{ count: number }>(),
+    DB.prepare("SELECT COUNT(*) as count FROM likes WHERE user_id = ?").bind(userRow.id).first<{ count: number }>(),
+    DB.prepare("SELECT COUNT(*) as count FROM comments WHERE user_id = ?").bind(userRow.id).first<{ count: number }>(),
+  ]);
 
-  const earnedBadgeIds = new Set((badgesResult.results || []).map(b => b.id));
+  const totalCheckins = statsRow?.total_checkins || 0;
+  const uniqueBrands = statsRow?.unique_brands || 0;
+  const followingCountNum = followingCount?.count || 0;
 
-  // Badge definitions
+  // Badge definitions with dynamic checks
   const allBadges = [
-    { id: 'first_smoke', name: 'First Smoke', emoji: '🚬', description: 'Log your first smoke' },
-    { id: 'getting_started', name: 'Getting Started', emoji: '🌟', description: 'Log 5 smokes' },
-    { id: 'regular', name: 'Regular', emoji: '🔥', description: 'Log 10 smokes' },
-    { id: 'aficionado', name: 'Aficionado', emoji: '👑', description: 'Log 25 smokes' },
-    { id: 'legend', name: 'Legend', emoji: '🏆', description: 'Log 50 smokes' },
-    { id: 'five_star', name: 'Five Star', emoji: '⭐', description: 'Give a perfect 5-star rating' },
-    { id: 'critic', name: 'Critic', emoji: '📝', description: 'Write 5 reviews' },
-    { id: 'photographer', name: 'Photographer', emoji: '📸', description: 'Upload 5 photos' },
-    { id: 'first_love', name: 'First Love', emoji: '❤️', description: 'Like your first check-in' },
-    { id: 'socialite', name: 'Socialite', emoji: '🤝', description: 'Follow 5 people' },
-    { id: 'commentator', name: 'Commentator', emoji: '💬', description: 'Leave 5 comments' },
-    { id: 'explorer', name: 'Explorer', emoji: '🗺️', description: 'Try 10 different brands' },
+    { id: 'first_smoke', name: 'First Smoke', emoji: '🚬', description: 'Log your first smoke', earned: totalCheckins >= 1 },
+    { id: 'getting_started', name: 'Getting Started', emoji: '🌟', description: 'Log 5 smokes', earned: totalCheckins >= 5 },
+    { id: 'regular', name: 'Regular', emoji: '🔥', description: 'Log 10 smokes', earned: totalCheckins >= 10 },
+    { id: 'aficionado', name: 'Aficionado', emoji: '👑', description: 'Log 25 smokes', earned: totalCheckins >= 25 },
+    { id: 'legend', name: 'Legend', emoji: '🏆', description: 'Log 50 smokes', earned: totalCheckins >= 50 },
+    { id: 'five_star', name: 'Five Star', emoji: '⭐', description: 'Give a perfect 5-star rating', earned: (fiveStarResult?.count || 0) >= 1 },
+    { id: 'critic', name: 'Critic', emoji: '📝', description: 'Write 5 reviews', earned: (reviewsResult?.count || 0) >= 5 },
+    { id: 'photographer', name: 'Photographer', emoji: '📸', description: 'Upload 5 photos', earned: (photosResult?.count || 0) >= 5 },
+    { id: 'first_love', name: 'First Love', emoji: '❤️', description: 'Like your first check-in', earned: (likesGivenResult?.count || 0) >= 1 },
+    { id: 'socialite', name: 'Socialite', emoji: '🤝', description: 'Follow 5 people', earned: followingCountNum >= 5 },
+    { id: 'commentator', name: 'Commentator', emoji: '💬', description: 'Leave 5 comments', earned: (commentsGivenResult?.count || 0) >= 5 },
+    { id: 'explorer', name: 'Explorer', emoji: '🗺️', description: 'Try 10 different brands', earned: uniqueBrands >= 10 },
   ];
 
-  const badges = allBadges
-    .filter(b => earnedBadgeIds.has(b.id))
-    .map(b => ({ ...b, earned: true }));
+  const badges = allBadges.filter(b => b.earned);
 
-  // Get user's wishlist (items they haven't smoked yet)
-  const wishlistResult = await DB.prepare(`
-    SELECT w.id, w.brand, w.created_at
-    FROM wishlist w
-    WHERE w.user_id = ?
-      AND NOT EXISTS (
-        SELECT 1 FROM checkins c 
-        WHERE c.user_id = w.user_id 
-        AND LOWER(c.brand) = LOWER(w.brand)
-      )
-    ORDER BY w.created_at DESC
-    LIMIT 10
-  `).bind(userRow.id).all<WishlistItem>();
-  
-  const wishlist = wishlistResult.results || [];
+  // Wishlist feature not implemented yet - return empty array
+  const wishlist: WishlistItem[] = [];
 
   // Get common brands if viewing another user's profile
   let commonBrands: string[] = [];

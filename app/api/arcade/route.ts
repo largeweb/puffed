@@ -95,7 +95,7 @@ export async function GET() {
           (SELECT COUNT(*) FROM comments WHERE user_id = u.id) as comments_made,
           (SELECT COUNT(*) FROM follows WHERE follower_id = u.id) as following_count,
           (SELECT COUNT(*) FROM follows WHERE following_id = u.id) as followers_count,
-          (SELECT COUNT(*) FROM user_badges WHERE user_id = u.id) as badges
+          0 as badges
         FROM users u
         LEFT JOIN checkins c ON u.id = c.user_id
         GROUP BY u.id

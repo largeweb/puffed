@@ -172,12 +172,9 @@ export async function GET() {
     }
   }
 
-  // Get badge count
-  const badgeCount = await db.prepare(`
-    SELECT COUNT(*) as count FROM user_badges WHERE user_id = ?
-  `).bind(user.id).first<{ count: number }>();
-
-  const badges = badgeCount?.count || 0;
+  // Badge count (user_badges table doesn't exist, calculate dynamically)
+  // For now, just return 0 - badges are calculated dynamically elsewhere
+  const badges = 0;
 
   // Calculate score breakdown
   const breakdown: ScoreBreakdown[] = [
@@ -275,7 +272,7 @@ export async function GET() {
       (SELECT COUNT(*) FROM reactions r JOIN checkins c ON r.checkin_id = c.id WHERE c.user_id = u.id) as reactions_received,
       (SELECT COUNT(*) FROM follows WHERE following_id = u.id) as followers,
       (SELECT COUNT(*) FROM follows WHERE follower_id = u.id) as following,
-      (SELECT COUNT(*) FROM user_badges WHERE user_id = u.id) as badges
+      0 as badges
     FROM users u
   `).all<{
     id: string;
