@@ -17,6 +17,14 @@ export interface Update {
 export const changelog: Update[] = [
   // ===== March 2026 =====
   {
+    date: '2026-03-06',
+    type: 'fix',
+    title: 'User Profile Fix 🔧',
+    description: 'Fixed server error when viewing user profiles. Badges now calculate dynamically.',
+    status: 'live',
+    icon: '🔧'
+  },
+  {
     date: '2026-03-05',
     type: 'feature',
     title: 'Updates Page 📋',
