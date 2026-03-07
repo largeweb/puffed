@@ -70,7 +70,7 @@ export default function AdminMessagesPage() {
       
       const res = await fetch(`/api/admin-messages?${params}`);
       if (!res.ok) throw new Error('Failed to fetch');
-      const data = await res.json();
+      const data: { messages?: AdminMessage[]; counts?: MessageCounts } = await res.json();
       setMessages(data.messages || []);
       setCounts(data.counts || { open: 0, 'in-progress': 0, completed: 0, total: 0 });
     } catch {
