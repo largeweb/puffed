@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     const { env } = getRequestContext();
     const db = (env as { DB: D1Database }).DB;
     
-    const body = await request.json();
+    const body: { type?: string; category?: string; subject?: string; message?: string } = await request.json();
     const { type, category, subject, message } = body;
     
     if (!type || !message) {

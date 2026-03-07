@@ -51,14 +51,22 @@ export default function PlatformPulsePage() {
   const fetchPulseData = async () => {
     try {
       const res = await fetch('/api/platform-pulse');
-      const data = await res.json();
-      setHealthScore(data.healthScore);
-      setHealthStatus(data.healthStatus);
-      setToday(data.today);
-      setYesterday(data.yesterday);
-      setTotals(data.totals);
-      setStreak(data.streak);
-      setLastActivity(data.lastActivity);
+      const data: {
+        healthScore?: number;
+        healthStatus?: HealthStatus;
+        today?: Metrics;
+        yesterday?: Metrics;
+        totals?: Totals;
+        streak?: number;
+        lastActivity?: LastActivity;
+      } = await res.json();
+      setHealthScore(data.healthScore || 0);
+      setHealthStatus(data.healthStatus || null);
+      setToday(data.today || null);
+      setYesterday(data.yesterday || null);
+      setTotals(data.totals || null);
+      setStreak(data.streak || 0);
+      setLastActivity(data.lastActivity || null);
     } catch (error) {
       console.error('Error fetching pulse data:', error);
     } finally {

@@ -20,7 +20,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const body = await request.json();
+    const body: { status?: string; admin_notes?: string } = await request.json();
     const { status, admin_notes } = body;
     
     const updates: string[] = [];

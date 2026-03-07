@@ -61,9 +61,9 @@ export default function TheSparkPage() {
   const fetchSparkData = async () => {
     try {
       const res = await fetch('/api/the-spark');
-      const data = await res.json();
-      setSpotOpen(data.spotOpen);
-      setFirstToday(data.firstToday);
+      const data: { spotOpen?: boolean; firstToday?: FirstToday | null; sparkLeaders?: SparkLeader[]; recentSparks?: RecentSpark[] } = await res.json();
+      setSpotOpen(data.spotOpen ?? true);
+      setFirstToday(data.firstToday ?? null);
       setSparkLeaders(data.sparkLeaders || []);
       setRecentSparks(data.recentSparks || []);
     } catch (error) {

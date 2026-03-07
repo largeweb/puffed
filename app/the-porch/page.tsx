@@ -40,10 +40,10 @@ export default function ThePorchPage() {
   const fetchPorchData = async () => {
     try {
       const res = await fetch('/api/the-porch');
-      const data = await res.json();
+      const data: { onPorch?: PorchSmoker[]; recentlyLeft?: PorchSmoker[]; stats?: Stats } = await res.json();
       setOnPorch(data.onPorch || []);
       setRecentlyLeft(data.recentlyLeft || []);
-      setStats(data.stats);
+      setStats(data.stats || null);
     } catch (error) {
       console.error('Error fetching porch data:', error);
     } finally {
