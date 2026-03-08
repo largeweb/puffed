@@ -17,6 +17,14 @@ export interface Update {
 export const changelog: Update[] = [
   // ===== March 2026 =====
   {
+    date: '2026-03-08',
+    type: 'feature',
+    title: 'Live Activity Pulse 🔴',
+    description: 'See real-time community activity on Discover! Watch new signups, check-ins, and likes as they happen.',
+    status: 'live',
+    icon: '📡'
+  },
+  {
     date: '2026-03-07',
     type: 'feature',
     title: 'This Week on Puffed 📊',

@@ -344,6 +344,15 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
   );
 }
 
+interface TodayStats {
+  newUsers: number;
+  newCheckins: number;
+  newLikes: number;
+  newFollows: number;
+  newComments: number;
+  newReactions: number;
+}
+
 export default function DiscoverPage() {
   const router = useRouter();
   const [checkins, setCheckins] = useState<CheckinWithLikes[]>([]);
@@ -361,6 +370,7 @@ export default function DiscoverPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | undefined>();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [todayStats, setTodayStats] = useState<TodayStats | null>(null);
 
   // Load user for sidebar
   useEffect(() => {
@@ -393,7 +403,20 @@ export default function DiscoverPage() {
     loadMomentum();
     loadSuggestedUsers();
     loadFeatured();
+    loadTodayStats();
   }, []);
+
+  async function loadTodayStats() {
+    try {
+      const res = await fetch("/api/stats");
+      const data = await res.json() as { today?: TodayStats };
+      if (data.today) {
+        setTodayStats(data.today);
+      }
+    } catch (error) {
+      console.error("Stats error:", error);
+    }
+  }
 
   async function loadFeed(query = "", category = activeCategory) {
     try {
@@ -652,6 +675,53 @@ export default function DiscoverPage() {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Live Activity Pulse - Saturday Night Edition */}
+        {todayStats && !searchQuery && activeCategory === "all" && (todayStats.newUsers > 0 || todayStats.newCheckins > 0 || todayStats.newLikes > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-amber-500/10 border border-purple-500/20"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <motion.span
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="text-lg"
+              >
+                🔴
+              </motion.span>
+              <span className="font-semibold text-white">Live Today</span>
+              <span className="text-xs text-gray-400 ml-auto">Auto-updates</span>
+            </div>
+            <div className="flex flex-wrap gap-3 text-sm">
+              {todayStats.newUsers > 0 && (
+                <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-purple-500/20 text-purple-300">
+                  <FiUsers size={14} />
+                  <span>+{todayStats.newUsers} new {todayStats.newUsers === 1 ? 'smoker' : 'smokers'}</span>
+                </span>
+              )}
+              {todayStats.newCheckins > 0 && (
+                <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300">
+                  🚬
+                  <span>{todayStats.newCheckins} {todayStats.newCheckins === 1 ? 'smoke' : 'smokes'}</span>
+                </span>
+              )}
+              {todayStats.newLikes > 0 && (
+                <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-red-500/20 text-red-300">
+                  <FiHeart size={14} />
+                  <span>{todayStats.newLikes} {todayStats.newLikes === 1 ? 'like' : 'likes'}</span>
+                </span>
+              )}
+              {todayStats.newFollows > 0 && (
+                <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-pink-500/20 text-pink-300">
+                  <FiUserPlus size={14} />
+                  <span>{todayStats.newFollows} follows</span>
+                </span>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {/* Featured Check-in of the Day */}
         {featured && !searchQuery && activeCategory === "all" && (
           <motion.div
