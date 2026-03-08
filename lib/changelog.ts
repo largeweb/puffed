@@ -17,6 +17,14 @@ export interface Update {
 export const changelog: Update[] = [
   // ===== March 2026 =====
   {
+    date: '2026-03-07',
+    type: 'feature',
+    title: 'This Week on Puffed 📊',
+    description: 'New weekly recap page! See stats, rising stars, top brands, and community MVPs.',
+    status: 'live',
+    icon: '📅'
+  },
+  {
     date: '2026-03-06',
     type: 'fix',
     title: 'User Profile Fix 🔧',
