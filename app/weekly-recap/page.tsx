@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FiArrowLeft, FiShare2, FiStar, FiHeart, FiMessageCircle, FiUsers, FiClock, FiTrendingUp, FiTag } from 'react-icons/fi';
+import { FiArrowLeft, FiShare2, FiStar, FiHeart, FiMessageCircle, FiUsers, FiClock, FiTrendingUp, FiTag, FiMenu } from 'react-icons/fi';
+import MobileSidebar from '@/app/components/MobileSidebar';
+import { useSidebar } from '@/hooks/useSidebar';
 
 interface WeeklyRecap {
   weekStats: {
@@ -38,6 +40,7 @@ interface WeeklyRecap {
 
 export default function WeeklyRecapPage() {
   const router = useRouter();
+  const { sidebarOpen, setSidebarOpen, currentUser, unreadCount, handleLogout } = useSidebar();
   const [recap, setRecap] = useState<WeeklyRecap | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,13 +126,21 @@ export default function WeeklyRecapPage() {
   const dateRange = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-4 pb-20">
       <div className="max-w-lg mx-auto pt-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <Link href="/dashboard" className="text-white/70 hover:text-white flex items-center gap-2">
-            <FiArrowLeft /> Back
-          </Link>
+          <button onClick={() => setSidebarOpen(true)} className="text-white/70 hover:text-white flex items-center gap-2">
+            <FiMenu size={20} /> Menu
+          </button>
           <button
             onClick={handleShare}
             className="text-white/70 hover:text-white flex items-center gap-2 bg-white/10 px-3 py-2 rounded-lg transition"
@@ -340,5 +351,6 @@ export default function WeeklyRecapPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

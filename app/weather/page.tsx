@@ -4,10 +4,13 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import MobileSidebar from "@/app/components/MobileSidebar";
+import { useSidebar } from "@/hooks/useSidebar";
 import {
   FiArrowLeft,
   FiCloud,
   FiSun,
+  FiMenu,
   FiDroplet,
   FiWind,
   FiThermometer,
@@ -82,6 +85,7 @@ function getWeatherIcon(condition: string, isDay: boolean): string {
 
 export default function SmokeWeatherPage() {
   const router = useRouter();
+  const { sidebarOpen, setSidebarOpen, currentUser, unreadCount, handleLogout } = useSidebar();
   const [data, setData] = useState<SmokeWeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -131,16 +135,24 @@ export default function SmokeWeatherPage() {
   const ratingColors = data?.smoking ? RATING_COLORS[data.smoking.rating] : RATING_COLORS.good;
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-950 to-gray-900">
       {/* Header */}
       <header className="glass border-b border-white/5 sticky top-0 z-50">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <button
-            onClick={() => router.back()}
+            onClick={() => setSidebarOpen(true)}
             className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
           >
-            <FiArrowLeft />
-            <span>Back</span>
+            <FiMenu size={20} />
+            <span>Menu</span>
           </button>
           <h1 className="text-lg font-semibold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
             🌤️ Smoke Weather
@@ -399,5 +411,6 @@ export default function SmokeWeatherPage() {
         )}
       </main>
     </div>
+    </>
   );
 }

@@ -4,7 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiArrowLeft, FiStar, FiShare2, FiRefreshCw, FiX, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { FiArrowLeft, FiStar, FiShare2, FiRefreshCw, FiX, FiChevronDown, FiChevronUp, FiMenu } from "react-icons/fi";
+import MobileSidebar from "@/app/components/MobileSidebar";
+import { useSidebar } from "@/hooks/useSidebar";
 
 interface TierListItem {
   brand: string;
@@ -74,6 +76,7 @@ function BrandChip({
 
 export default function TierListPage() {
   const router = useRouter();
+  const { sidebarOpen, setSidebarOpen, currentUser, unreadCount, handleLogout } = useSidebar();
   const [data, setData] = useState<TierListData | null>(null);
   const [loading, setLoading] = useState(true);
   const [tiers, setTiers] = useState<Record<string, string[]>>({
@@ -241,6 +244,14 @@ export default function TierListPage() {
   }
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <main className="min-h-screen p-4 pb-24 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -250,9 +261,9 @@ export default function TierListPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="p-2 rounded-lg glass hover:bg-white/10">
-              <FiArrowLeft />
-            </Link>
+            <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg glass hover:bg-white/10">
+              <FiMenu size={20} />
+            </button>
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 🎮 Brand Tier List
@@ -439,5 +450,6 @@ export default function TierListPage() {
         </AnimatePresence>
       </motion.div>
     </main>
+    </>
   );
 }
