@@ -60,11 +60,12 @@ export async function GET(request: Request) {
     const todayEnd = todayStart + 86400;
 
     // Get candidates for yesterday's crown (who smoked yesterday)
+    // Note: avatar_url doesn't exist yet in users table, so we return NULL
     const candidatesQuery = `
       SELECT 
         u.id as user_id,
         u.username,
-        u.avatar_url,
+        NULL as avatar_url,
         COUNT(DISTINCT c.id) as checkins,
         COALESCE(SUM(c.rating), 0) as total_rating,
         COALESCE(AVG(c.rating), 0) as avg_rating,
@@ -188,7 +189,7 @@ export async function GET(request: Request) {
         SELECT 
           u.id as user_id,
           u.username,
-          u.avatar_url,
+          NULL as avatar_url,
           COUNT(DISTINCT c.id) as checkins,
           COALESCE(AVG(c.rating), 0) as avg_rating,
           (SELECT COUNT(*) FROM likes l JOIN checkins lc ON l.checkin_id = lc.id 
