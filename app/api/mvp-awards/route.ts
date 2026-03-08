@@ -2,79 +2,21 @@ import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
-interface WeeklyMVP {
-  username: string;
-  score: number;
-  checkins: number;
-  likesGiven: number;
-  likesReceived: number;
-  commentsGiven: number;
-  commentsReceived: number;
-  followsGiven: number;
-}
-
-interface BestCheckin {
-  checkinId: number;
-  username: string;
-  brand: string;
-  product: string | null;
-  rating: number;
-  review: string | null;
-  photoUrl: string | null;
-  likes: number;
-  comments: number;
-  engagementScore: number;
-}
-
-interface RisingStar {
-  username: string;
-  thisWeekCheckins: number;
-  lastWeekCheckins: number;
-  growthPercent: number;
-}
-
-interface SocialButterfly {
-  username: string;
-  likesGiven: number;
-  commentsGiven: number;
-  followsGiven: number;
-  totalGiven: number;
-}
-
-interface StreakChampion {
-  username: string;
-  currentStreak: number;
-}
-
 interface MVPAwardsData {
   weekOf: string;
   weekStart: string;
   weekEnd: string;
   
-  mvp: WeeklyMVP | null;
-  bestCheckin: BestCheckin | null;
-  risingStar: RisingStar | null;
-  socialButterfly: SocialButterfly | null;
-  streakChampion: StreakChampion | null;
-  
-  honorableMentions: {
-    username: string;
-    achievement: string;
-    icon: string;
-  }[];
+  mvp: { username: string; score: number; checkins: number; likesGiven: number; commentsGiven: number } | null;
+  bestCheckin: { username: string; brand: string; rating: number; likes: number; comments: number } | null;
+  topEngager: { username: string; likesGiven: number; commentsGiven: number } | null;
   
   weeklyStats: {
     totalCheckins: number;
     totalLikes: number;
     totalComments: number;
     newUsers: number;
-    avgRating: number;
   };
-  
-  previousWinners: {
-    weekOf: string;
-    mvp: string;
-  }[];
 }
 
 export async function GET() {
@@ -96,255 +38,143 @@ export async function GET() {
     const weekStartTs = Math.floor(weekStart.getTime() / 1000);
     const weekEndTs = Math.floor(weekEnd.getTime() / 1000);
     
-    // Last week boundaries
-    const lastWeekStart = new Date(weekStart);
-    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-    const lastWeekStartTs = Math.floor(lastWeekStart.getTime() / 1000);
-    
-    // 1. MVP - Most engaged user this week
-    const mvpQuery = await db.prepare(`
-      WITH user_activity AS (
-        SELECT 
-          u.id as user_id,
-          u.username,
-          COALESCE((SELECT COUNT(*) FROM checkins WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) as checkins,
-          COALESCE((SELECT COUNT(*) FROM likes WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) as likes_given,
-          COALESCE((SELECT COUNT(*) FROM likes l JOIN checkins c ON l.checkin_id = c.id WHERE c.user_id = u.id AND l.created_at >= ? AND l.created_at <= ?), 0) as likes_received,
-          COALESCE((SELECT COUNT(*) FROM comments WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) as comments_given,
-          COALESCE((SELECT COUNT(*) FROM comments cm JOIN checkins c ON cm.checkin_id = c.id WHERE c.user_id = u.id AND cm.created_at >= ? AND cm.created_at <= ?), 0) as comments_received,
-          COALESCE((SELECT COUNT(*) FROM follows WHERE follower_id = u.id AND created_at >= ? AND created_at <= ?), 0) as follows_given
-        FROM users u
-        WHERE u.username != 'openclaw_tester'
-      )
-      SELECT 
-        username,
-        checkins,
-        likes_given,
-        likes_received,
-        comments_given,
-        comments_received,
-        follows_given,
-        (checkins * 10 + likes_given * 2 + likes_received * 3 + comments_given * 5 + comments_received * 5 + follows_given * 3) as score
-      FROM user_activity
-      WHERE checkins > 0 OR likes_given > 0 OR comments_given > 0
-      ORDER BY score DESC
-      LIMIT 1
-    `).bind(
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs
-    ).first<WeeklyMVP>();
-    
-    // 2. Best Check-in - Highest engagement + rating
-    const bestCheckinQuery = await db.prepare(`
-      SELECT 
-        c.id as checkinId,
-        u.username,
-        c.brand,
-        c.product,
-        c.rating,
-        c.review,
-        c.image_url as photoUrl,
-        COALESCE((SELECT COUNT(*) FROM likes WHERE checkin_id = c.id), 0) as likes,
-        COALESCE((SELECT COUNT(*) FROM comments WHERE checkin_id = c.id), 0) as comments,
-        (c.rating * 2 + COALESCE((SELECT COUNT(*) FROM likes WHERE checkin_id = c.id), 0) * 3 + COALESCE((SELECT COUNT(*) FROM comments WHERE checkin_id = c.id), 0) * 5) as engagementScore
-      FROM checkins c
-      JOIN users u ON c.user_id = u.id
-      WHERE c.created_at >= ? AND c.created_at <= ?
-        AND u.username != 'openclaw_tester'
-      ORDER BY engagementScore DESC, c.rating DESC
-      LIMIT 1
-    `).bind(weekStartTs, weekEndTs).first<BestCheckin>();
-    
-    // 3. Rising Star - Most improved from last week
-    const risingStarQuery = await db.prepare(`
-      WITH weekly_counts AS (
-        SELECT 
-          u.username,
-          COALESCE((SELECT COUNT(*) FROM checkins WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) as this_week,
-          COALESCE((SELECT COUNT(*) FROM checkins WHERE user_id = u.id AND created_at >= ? AND created_at < ?), 0) as last_week
-        FROM users u
-        WHERE u.username != 'openclaw_tester'
-      )
-      SELECT 
-        username,
-        this_week as thisWeekCheckins,
-        last_week as lastWeekCheckins,
-        CASE 
-          WHEN last_week = 0 AND this_week > 0 THEN 100
-          WHEN last_week > 0 THEN ROUND(((this_week - last_week) * 100.0 / last_week), 1)
-          ELSE 0
-        END as growthPercent
-      FROM weekly_counts
-      WHERE this_week > last_week AND this_week >= 2
-      ORDER BY growthPercent DESC, this_week DESC
-      LIMIT 1
-    `).bind(weekStartTs, weekEndTs, lastWeekStartTs, weekStartTs).first<RisingStar>();
-    
-    // 4. Social Butterfly - Most social activity given
-    const socialButterflyQuery = await db.prepare(`
-      SELECT 
-        u.username,
-        COALESCE((SELECT COUNT(*) FROM likes WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) as likesGiven,
-        COALESCE((SELECT COUNT(*) FROM comments WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) as commentsGiven,
-        COALESCE((SELECT COUNT(*) FROM follows WHERE follower_id = u.id AND created_at >= ? AND created_at <= ?), 0) as followsGiven,
-        (
-          COALESCE((SELECT COUNT(*) FROM likes WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) +
-          COALESCE((SELECT COUNT(*) FROM comments WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) * 2 +
-          COALESCE((SELECT COUNT(*) FROM follows WHERE follower_id = u.id AND created_at >= ? AND created_at <= ?), 0)
-        ) as totalGiven
-      FROM users u
-      WHERE u.username != 'openclaw_tester'
-      HAVING totalGiven > 0
-      ORDER BY totalGiven DESC
-      LIMIT 1
-    `).bind(
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs
-    ).first<SocialButterfly>();
-    
-    // 5. Streak Champion - Calculate from consecutive check-in days
-    // (streaks table doesn't exist, so we calculate dynamically)
-    let streakChampionQuery: StreakChampion | null = null;
+    // Simple MVP - user with most check-ins this week
+    let mvp = null;
     try {
-      // Get users with most consecutive days of check-ins ending today or yesterday
-      const streakResult = await db.prepare(`
-        WITH user_days AS (
-          SELECT 
-            u.id as user_id,
-            u.username,
-            DATE(c.created_at, 'unixepoch') as checkin_date
-          FROM users u
-          JOIN checkins c ON c.user_id = u.id
-          WHERE u.username != 'openclaw_tester'
-          GROUP BY u.id, DATE(c.created_at, 'unixepoch')
-        ),
-        streak_calc AS (
-          SELECT 
-            username,
-            checkin_date,
-            julianday(checkin_date) - ROW_NUMBER() OVER (PARTITION BY username ORDER BY checkin_date) as grp
-          FROM user_days
-        ),
-        streaks AS (
-          SELECT 
-            username,
-            COUNT(*) as streak_length,
-            MAX(checkin_date) as last_date
-          FROM streak_calc
-          GROUP BY username, grp
-        )
-        SELECT 
-          username,
-          streak_length as currentStreak
-        FROM streaks
-        WHERE last_date >= DATE('now', '-1 day')
-        ORDER BY streak_length DESC
+      const mvpResult = await db.prepare(`
+        SELECT u.username, COUNT(*) as checkins
+        FROM checkins c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.created_at >= ? AND c.created_at <= ?
+          AND u.username != 'openclaw_tester'
+        GROUP BY u.id
+        ORDER BY checkins DESC
         LIMIT 1
-      `).first<StreakChampion>();
-      streakChampionQuery = streakResult || null;
-    } catch {
-      // Streak calculation failed, skip this award
-      streakChampionQuery = null;
+      `).bind(weekStartTs, weekEndTs).first<{ username: string; checkins: number }>();
+      
+      if (mvpResult) {
+        // Get additional stats for MVP
+        const likesGiven = await db.prepare(`
+          SELECT COUNT(*) as count FROM likes l
+          JOIN users u ON l.user_id = u.id
+          WHERE u.username = ? AND l.created_at >= ? AND l.created_at <= ?
+        `).bind(mvpResult.username, weekStartTs, weekEndTs).first<{ count: number }>();
+        
+        const commentsGiven = await db.prepare(`
+          SELECT COUNT(*) as count FROM comments c
+          JOIN users u ON c.user_id = u.id
+          WHERE u.username = ? AND c.created_at >= ? AND c.created_at <= ?
+        `).bind(mvpResult.username, weekStartTs, weekEndTs).first<{ count: number }>();
+        
+        mvp = {
+          username: mvpResult.username,
+          checkins: mvpResult.checkins,
+          likesGiven: likesGiven?.count || 0,
+          commentsGiven: commentsGiven?.count || 0,
+          score: mvpResult.checkins * 10 + (likesGiven?.count || 0) * 2 + (commentsGiven?.count || 0) * 5
+        };
+      }
+    } catch (e) {
+      console.error("MVP query failed:", e);
     }
     
-    // Weekly stats
-    const weeklyStatsQuery = await db.prepare(`
-      SELECT 
-        (SELECT COUNT(*) FROM checkins WHERE created_at >= ? AND created_at <= ?) as totalCheckins,
-        (SELECT COUNT(*) FROM likes WHERE created_at >= ? AND created_at <= ?) as totalLikes,
-        (SELECT COUNT(*) FROM comments WHERE created_at >= ? AND created_at <= ?) as totalComments,
-        (SELECT COUNT(*) FROM users WHERE created_at >= ? AND created_at <= ?) as newUsers,
-        (SELECT AVG(rating) FROM checkins WHERE created_at >= ? AND created_at <= ?) as avgRating
-    `).bind(
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs,
-      weekStartTs, weekEndTs
-    ).first<{
-      totalCheckins: number;
-      totalLikes: number;
-      totalComments: number;
-      newUsers: number;
-      avgRating: number | null;
-    }>();
-    
-    // Honorable mentions - other achievements
-    const honorableMentions: { username: string; achievement: string; icon: string }[] = [];
-    
-    // Night Owl - most late night smokes
-    const nightOwl = await db.prepare(`
-      SELECT u.username, COUNT(*) as count
-      FROM checkins c
-      JOIN users u ON c.user_id = u.id
-      WHERE c.created_at >= ? AND c.created_at <= ?
-        AND u.username != 'openclaw_tester'
-        AND (strftime('%H', c.created_at, 'unixepoch', 'localtime') >= '22' 
-             OR strftime('%H', c.created_at, 'unixepoch', 'localtime') < '05')
-      GROUP BY u.id
-      HAVING count >= 2
-      ORDER BY count DESC
-      LIMIT 1
-    `).bind(weekStartTs, weekEndTs).first<{ username: string; count: number }>();
-    
-    if (nightOwl) {
-      honorableMentions.push({
-        username: nightOwl.username,
-        achievement: `Night Owl (${nightOwl.count} late night smokes)`,
-        icon: "🦉"
-      });
+    // Best check-in - highest rated with most engagement
+    let bestCheckin = null;
+    try {
+      const checkinResult = await db.prepare(`
+        SELECT 
+          c.id,
+          u.username,
+          c.brand,
+          c.rating
+        FROM checkins c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.created_at >= ? AND c.created_at <= ?
+          AND c.rating IS NOT NULL
+          AND u.username != 'openclaw_tester'
+        ORDER BY c.rating DESC, c.created_at DESC
+        LIMIT 1
+      `).bind(weekStartTs, weekEndTs).first<{ id: string; username: string; brand: string; rating: number }>();
+      
+      if (checkinResult) {
+        const likes = await db.prepare(`
+          SELECT COUNT(*) as count FROM likes WHERE checkin_id = ?
+        `).bind(checkinResult.id).first<{ count: number }>();
+        
+        const comments = await db.prepare(`
+          SELECT COUNT(*) as count FROM comments WHERE checkin_id = ?
+        `).bind(checkinResult.id).first<{ count: number }>();
+        
+        bestCheckin = {
+          username: checkinResult.username,
+          brand: checkinResult.brand,
+          rating: checkinResult.rating,
+          likes: likes?.count || 0,
+          comments: comments?.count || 0
+        };
+      }
+    } catch (e) {
+      console.error("Best checkin query failed:", e);
     }
     
-    // Early Bird - most morning smokes
-    const earlyBird = await db.prepare(`
-      SELECT u.username, COUNT(*) as count
-      FROM checkins c
-      JOIN users u ON c.user_id = u.id
-      WHERE c.created_at >= ? AND c.created_at <= ?
-        AND u.username != 'openclaw_tester'
-        AND strftime('%H', c.created_at, 'unixepoch', 'localtime') >= '05'
-        AND strftime('%H', c.created_at, 'unixepoch', 'localtime') < '09'
-      GROUP BY u.id
-      HAVING count >= 2
-      ORDER BY count DESC
-      LIMIT 1
-    `).bind(weekStartTs, weekEndTs).first<{ username: string; count: number }>();
-    
-    if (earlyBird) {
-      honorableMentions.push({
-        username: earlyBird.username,
-        achievement: `Early Bird (${earlyBird.count} morning smokes)`,
-        icon: "🐦"
-      });
+    // Top engager - most likes + comments given
+    let topEngager = null;
+    try {
+      const engagerResult = await db.prepare(`
+        SELECT u.username, COUNT(*) as likesGiven
+        FROM likes l
+        JOIN users u ON l.user_id = u.id
+        WHERE l.created_at >= ? AND l.created_at <= ?
+          AND u.username != 'openclaw_tester'
+        GROUP BY u.id
+        ORDER BY likesGiven DESC
+        LIMIT 1
+      `).bind(weekStartTs, weekEndTs).first<{ username: string; likesGiven: number }>();
+      
+      if (engagerResult) {
+        const comments = await db.prepare(`
+          SELECT COUNT(*) as count FROM comments c
+          JOIN users u ON c.user_id = u.id
+          WHERE u.username = ? AND c.created_at >= ? AND c.created_at <= ?
+        `).bind(engagerResult.username, weekStartTs, weekEndTs).first<{ count: number }>();
+        
+        topEngager = {
+          username: engagerResult.username,
+          likesGiven: engagerResult.likesGiven,
+          commentsGiven: comments?.count || 0
+        };
+      }
+    } catch (e) {
+      console.error("Top engager query failed:", e);
     }
     
-    // Connoisseur - highest average rating
-    const connoisseur = await db.prepare(`
-      SELECT u.username, AVG(c.rating) as avgRating, COUNT(*) as count
-      FROM checkins c
-      JOIN users u ON c.user_id = u.id
-      WHERE c.created_at >= ? AND c.created_at <= ?
-        AND u.username != 'openclaw_tester'
-      GROUP BY u.id
-      HAVING count >= 3
-      ORDER BY avgRating DESC
-      LIMIT 1
-    `).bind(weekStartTs, weekEndTs).first<{ username: string; avgRating: number; count: number }>();
-    
-    if (connoisseur && connoisseur.avgRating >= 4.5) {
-      honorableMentions.push({
-        username: connoisseur.username,
-        achievement: `Connoisseur (${connoisseur.avgRating.toFixed(1)}★ avg)`,
-        icon: "🎩"
-      });
+    // Weekly stats - simple counts
+    let weeklyStats = { totalCheckins: 0, totalLikes: 0, totalComments: 0, newUsers: 0 };
+    try {
+      const checkins = await db.prepare(`
+        SELECT COUNT(*) as count FROM checkins WHERE created_at >= ? AND created_at <= ?
+      `).bind(weekStartTs, weekEndTs).first<{ count: number }>();
+      
+      const likes = await db.prepare(`
+        SELECT COUNT(*) as count FROM likes WHERE created_at >= ? AND created_at <= ?
+      `).bind(weekStartTs, weekEndTs).first<{ count: number }>();
+      
+      const comments = await db.prepare(`
+        SELECT COUNT(*) as count FROM comments WHERE created_at >= ? AND created_at <= ?
+      `).bind(weekStartTs, weekEndTs).first<{ count: number }>();
+      
+      const users = await db.prepare(`
+        SELECT COUNT(*) as count FROM users WHERE created_at >= ? AND created_at <= ?
+      `).bind(weekStartTs, weekEndTs).first<{ count: number }>();
+      
+      weeklyStats = {
+        totalCheckins: checkins?.count || 0,
+        totalLikes: likes?.count || 0,
+        totalComments: comments?.count || 0,
+        newUsers: users?.count || 0
+      };
+    } catch (e) {
+      console.error("Weekly stats query failed:", e);
     }
     
     // Format dates
@@ -354,29 +184,15 @@ export async function GET() {
       weekOf: `${formatDate(weekStart)} - ${formatDate(weekEnd)}`,
       weekStart: weekStart.toISOString(),
       weekEnd: weekEnd.toISOString(),
-      
-      mvp: mvpQuery || null,
-      bestCheckin: bestCheckinQuery || null,
-      risingStar: risingStarQuery || null,
-      socialButterfly: socialButterflyQuery || null,
-      streakChampion: streakChampionQuery || null,
-      
-      honorableMentions,
-      
-      weeklyStats: {
-        totalCheckins: weeklyStatsQuery?.totalCheckins || 0,
-        totalLikes: weeklyStatsQuery?.totalLikes || 0,
-        totalComments: weeklyStatsQuery?.totalComments || 0,
-        newUsers: weeklyStatsQuery?.newUsers || 0,
-        avgRating: weeklyStatsQuery?.avgRating || 0
-      },
-      
-      previousWinners: [] // Could implement historical tracking later
+      mvp,
+      bestCheckin,
+      topEngager,
+      weeklyStats
     };
     
     return Response.json(response);
   } catch (error) {
     console.error("MVP Awards API error:", error);
-    return Response.json({ error: "Failed to fetch MVP awards" }, { status: 500 });
+    return Response.json({ error: "Failed to fetch MVP awards", details: String(error) }, { status: 500 });
   }
 }

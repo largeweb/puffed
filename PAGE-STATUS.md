@@ -43,7 +43,7 @@ Last updated: Mar 7, 2026 (v1.0.7)
 | Page | Route | Issue | Priority |
 |------|-------|-------|----------|
 | The Crown | /crown | ✅ Fixed v1.0.7 | DONE |
-| MVP Awards | /mvp-awards | Client error | HIGH |
+| MVP Awards | /mvp-awards | Fixed v1.0.8 | DONE |
 | Smoke Council | /council | Failed to load | HIGH |
 | Weekly Wrap | /weekly-wrap | Auth check broken | MEDIUM |
 | Smoke Score | /smoke-score | Auth check broken | MEDIUM |
