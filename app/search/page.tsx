@@ -2,9 +2,11 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
-import { FiSearch, FiUser, FiStar, FiHome, FiUserPlus, FiUserCheck, FiHash, FiTrendingUp } from "react-icons/fi";
+import { FiSearch, FiUser, FiStar, FiHome, FiUserPlus, FiUserCheck, FiHash, FiTrendingUp, FiMenu } from "react-icons/fi";
 import { GiCigarette } from "react-icons/gi";
 import Link from "next/link";
+import MobileSidebar from "@/app/components/MobileSidebar";
+import { useSidebar } from "@/hooks/useSidebar";
 
 interface SearchResult {
   type: 'user' | 'cigar';
@@ -38,6 +40,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function SearchPage() {
+  const { sidebarOpen, setSidebarOpen, currentUser, unreadCount, handleLogout } = useSidebar();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "users" | "cigars">("all");
   const [users, setUsers] = useState<SearchResult[]>([]);
@@ -103,13 +106,21 @@ export default function SearchPage() {
   const showCigars = filter === "all" || filter === "cigars";
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <div className="min-h-screen bg-gradient-to-br from-amber-950 via-stone-900 to-black text-amber-50">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-stone-900/90 backdrop-blur-sm border-b border-amber-900/30">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/dashboard" className="text-amber-400 hover:text-amber-300">
-            <FiHome size={24} />
-          </Link>
+          <button onClick={() => setSidebarOpen(true)} className="text-amber-400 hover:text-amber-300 p-1">
+            <FiMenu size={24} />
+          </button>
           <h1 className="text-xl font-bold text-amber-100">Search</h1>
           <div className="w-6" />
         </div>
@@ -286,5 +297,6 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

@@ -2,12 +2,14 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck, FiCamera } from "react-icons/fi";
+import { useRouter } from "next/navigation";
+import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck, FiCamera, FiMenu } from "react-icons/fi";
 import Link from "next/link";
 import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
+import MobileSidebar from "@/app/components/MobileSidebar";
 import { FLAVOR_TAGS } from "@/lib/flavors";
 import { CATEGORIES, getCategory } from "@/lib/categories";
 
@@ -343,6 +345,7 @@ function CheckinCard({ checkin, onLike }: { checkin: CheckinWithLikes; onLike: (
 }
 
 export default function DiscoverPage() {
+  const router = useRouter();
   const [checkins, setCheckins] = useState<CheckinWithLikes[]>([]);
   const [trending, setTrending] = useState<TrendingBrand[]>([]);
   const [momentum, setMomentum] = useState<TrendingWeekBrand[]>([]);
@@ -355,6 +358,34 @@ export default function DiscoverPage() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [followingAll, setFollowingAll] = useState(false);
   const [followAllMessage, setFollowAllMessage] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | undefined>();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Load user for sidebar
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const res = await fetch("/api/me");
+        if (res.ok) {
+          const data: { user?: { username: string } } = await res.json();
+          setCurrentUser(data.user?.username);
+          // Load notification count
+          const notifRes = await fetch("/api/notifications/count");
+          if (notifRes.ok) {
+            const notifData: { count?: number } = await notifRes.json();
+            setUnreadCount(notifData.count || 0);
+          }
+        }
+      } catch { /* ignore */ }
+    };
+    loadUser();
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+  };
 
   useEffect(() => {
     loadFeed();
@@ -512,15 +543,27 @@ export default function DiscoverPage() {
   }
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <main className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-white/5">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                <span className="text-lg">🚬</span>
-              </div>
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 -ml-2 rounded-lg hover:bg-white/10 transition-colors"
+                aria-label="Open menu"
+              >
+                <FiMenu size={24} />
+              </button>
               <div>
                 <h1 className="font-semibold">Discover</h1>
                 <p className="text-xs text-gray-400">See what everyone's smoking</p>
@@ -935,5 +978,6 @@ export default function DiscoverPage() {
         )}
       </div>
     </main>
+    </>
   );
 }

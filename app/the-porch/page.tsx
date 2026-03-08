@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { FiMenu } from 'react-icons/fi';
+import MobileSidebar from '@/app/components/MobileSidebar';
+import { useSidebar } from '@/hooks/useSidebar';
 
 interface PorchSmoker {
   id: number;
@@ -26,6 +29,7 @@ interface Stats {
 }
 
 export default function ThePorchPage() {
+  const { sidebarOpen, setSidebarOpen, currentUser, unreadCount, handleLogout } = useSidebar();
   const [onPorch, setOnPorch] = useState<PorchSmoker[]>([]);
   const [recentlyLeft, setRecentlyLeft] = useState<PorchSmoker[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -94,9 +98,23 @@ export default function ThePorchPage() {
   }
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <div className="min-h-screen bg-gradient-to-b from-amber-900/20 via-zinc-900 to-zinc-900 p-4 pb-24">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white">
+            <FiMenu size={24} />
+          </button>
+          <div className="w-10" />
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-amber-400 mb-2">🪑 The Porch</h1>
           <p className="text-zinc-400">See who&apos;s smoking right now</p>
@@ -224,5 +242,6 @@ export default function ThePorchPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

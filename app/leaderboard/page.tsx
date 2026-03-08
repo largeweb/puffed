@@ -2,8 +2,10 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiAward, FiHome, FiTrendingUp, FiCalendar, FiHeart, FiStar, FiZap, FiMoon } from "react-icons/fi";
+import { FiAward, FiHome, FiTrendingUp, FiCalendar, FiHeart, FiStar, FiZap, FiMoon, FiMenu } from "react-icons/fi";
 import Link from "next/link";
+import MobileSidebar from "@/app/components/MobileSidebar";
+import { useSidebar } from "@/hooks/useSidebar";
 import type { LeaderboardEntry, LeaderboardResponse, StreakLeaderEntry } from "@/lib/types";
 
 type TimeFrame = "allTime" | "thisMonth" | "thisWeek" | "streaks" | "nightOwls";
@@ -200,6 +202,7 @@ function LeaderboardCard({ entry, index }: { entry: LeaderboardEntry; index: num
 }
 
 export default function LeaderboardPage() {
+  const { sidebarOpen, setSidebarOpen, currentUser, unreadCount, handleLogout } = useSidebar();
   const [data, setData] = useState<LeaderboardResponse | null>(null);
   const [nightOwlData, setNightOwlData] = useState<NightOwlResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -249,15 +252,23 @@ export default function LeaderboardPage() {
   }
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <main className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-white/5">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                <FiAward size={20} />
-              </div>
+              <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all">
+                <FiMenu size={20} />
+              </button>
               <div>
                 <h1 className="font-semibold">Leaderboard</h1>
                 <p className="text-xs text-gray-400">Top smokers on Puffed</p>
@@ -446,5 +457,6 @@ export default function LeaderboardPage() {
         </AnimatePresence>
       </div>
     </main>
+    </>
   );
 }

@@ -3,7 +3,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FiHome, FiCamera, FiHeart, FiMessageCircle, FiStar, FiClock, FiTrendingUp, FiZap } from "react-icons/fi";
+import { FiHome, FiCamera, FiHeart, FiMessageCircle, FiStar, FiClock, FiTrendingUp, FiZap, FiMenu } from "react-icons/fi";
+import MobileSidebar from "@/app/components/MobileSidebar";
+import { useSidebar } from "@/hooks/useSidebar";
 
 interface GalleryItem {
   id: string;
@@ -36,6 +38,7 @@ function getTimeAgo(timestamp: number): string {
 }
 
 export default function GalleryPage() {
+  const { sidebarOpen, setSidebarOpen, currentUser, unreadCount, handleLogout } = useSidebar();
   const [photos, setPhotos] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<"recent" | "liked" | "top">("recent");
@@ -62,14 +65,22 @@ export default function GalleryPage() {
   }, [sort]);
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <div className="min-h-screen bg-gradient-to-br from-amber-950 via-stone-900 to-black text-amber-50">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-stone-900/90 backdrop-blur-sm border-b border-amber-900/30">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="text-amber-400 hover:text-amber-300">
-              <FiHome size={22} />
-            </Link>
+            <button onClick={() => setSidebarOpen(true)} className="text-amber-400 hover:text-amber-300 p-1">
+              <FiMenu size={22} />
+            </button>
             <div className="flex items-center gap-2">
               <FiCamera className="text-amber-500" size={20} />
               <h1 className="text-lg font-semibold">Photo Gallery</h1>
@@ -300,5 +311,6 @@ export default function GalleryPage() {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }

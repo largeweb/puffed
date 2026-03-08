@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { FiMenu } from 'react-icons/fi';
+import MobileSidebar from '@/app/components/MobileSidebar';
+import { useSidebar } from '@/hooks/useSidebar';
 
 interface HealthStatus {
   label: string;
@@ -33,6 +36,7 @@ interface LastActivity {
 }
 
 export default function PlatformPulsePage() {
+  const { sidebarOpen, setSidebarOpen, currentUser, unreadCount, handleLogout } = useSidebar();
   const [healthScore, setHealthScore] = useState(0);
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
   const [today, setToday] = useState<Metrics | null>(null);
@@ -111,9 +115,23 @@ export default function PlatformPulsePage() {
   }
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <div className="min-h-screen bg-gradient-to-b from-blue-900/20 via-zinc-900 to-zinc-900 p-4 pb-24">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white">
+            <FiMenu size={24} />
+          </button>
+          <div className="w-10" />
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-blue-400 mb-2">📊 Platform Pulse</h1>
           <p className="text-zinc-400">Real-time health monitor</p>
@@ -284,5 +302,6 @@ export default function PlatformPulsePage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -3,8 +3,10 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiUsers, FiArrowLeft, FiUserPlus, FiUserCheck, FiStar, FiPercent, FiActivity, FiSearch, FiHeart } from "react-icons/fi";
+import { FiUsers, FiArrowLeft, FiUserPlus, FiUserCheck, FiStar, FiPercent, FiActivity, FiSearch, FiHeart, FiMenu } from "react-icons/fi";
 import Link from "next/link";
+import MobileSidebar from "@/app/components/MobileSidebar";
+import { useSidebar } from "@/hooks/useSidebar";
 
 interface UserSuggestion {
   id: string;
@@ -28,6 +30,7 @@ interface DiscoverResponse {
 
 export default function DiscoverPeople() {
   const router = useRouter();
+  const { sidebarOpen, setSidebarOpen, currentUser, unreadCount, handleLogout } = useSidebar();
   const [loading, setLoading] = useState(true);
   const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
   const [followingCount, setFollowingCount] = useState(0);
@@ -100,14 +103,22 @@ export default function DiscoverPeople() {
   }
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-[#0a0a0a]/95 backdrop-blur-lg border-b border-white/5">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="text-gray-400 hover:text-white">
-              <FiArrowLeft className="w-5 h-5" />
-            </Link>
+            <button onClick={() => setSidebarOpen(true)} className="text-gray-400 hover:text-white p-1">
+              <FiMenu className="w-5 h-5" />
+            </button>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               <FiUsers className="text-pink-500" />
               Discover People
@@ -283,5 +294,6 @@ export default function DiscoverPeople() {
         </div>
       </main>
     </div>
+    </>
   );
 }
