@@ -2,6 +2,13 @@ import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
+interface WeekendWarrior {
+  username: string;
+  checkins: number;
+  likes: number;
+  totalActivity: number;
+}
+
 interface SundayDigest {
   isEnjoySunday: boolean;
   thisWeek: {
@@ -26,6 +33,12 @@ interface SundayDigest {
   topBrandThisWeek: string | null;
   mostActiveUser: string | null;
   communityMessage: string;
+  weekendWarriors: WeekendWarrior[];
+  weekendStats: {
+    totalCheckins: number;
+    totalLikes: number;
+    activeUsers: number;
+  };
 }
 
 export async function GET(): Promise<Response> {
@@ -96,6 +109,69 @@ export async function GET(): Promise<Response> {
       LIMIT 1
     `).bind(oneWeekAgo).first<{ username: string; activity: number }>();
 
+    // Weekend warriors - most active this Sat/Sun
+    // Calculate Saturday and Sunday timestamps
+    const nowDate = new Date();
+    const dayOfWeek = nowDate.getUTCDay(); // 0 = Sunday, 6 = Saturday
+    const todayMidnight = Math.floor(now / 86400) * 86400;
+    
+    // If it's Sunday (0), Saturday was yesterday. If it's Saturday (6), it's today.
+    const saturdayStart = dayOfWeek === 0 
+      ? todayMidnight - 86400 // Yesterday
+      : dayOfWeek === 6 
+        ? todayMidnight // Today
+        : todayMidnight - (dayOfWeek + 1) * 86400; // Previous Saturday
+    const sundayEnd = saturdayStart + 2 * 86400; // End of Sunday
+
+    // Get weekend warriors with checkins and likes
+    const weekendWarriorsResult = await db.prepare(`
+      SELECT 
+        u.username,
+        COALESCE(c.checkin_count, 0) as checkins,
+        COALESCE(l.like_count, 0) as likes,
+        (COALESCE(c.checkin_count, 0) * 3 + COALESCE(l.like_count, 0)) as total_activity
+      FROM users u
+      LEFT JOIN (
+        SELECT user_id, COUNT(*) as checkin_count
+        FROM checkins
+        WHERE created_at >= ? AND created_at < ?
+        GROUP BY user_id
+      ) c ON u.id = c.user_id
+      LEFT JOIN (
+        SELECT user_id, COUNT(*) as like_count
+        FROM likes
+        WHERE created_at >= ? AND created_at < ?
+        GROUP BY user_id
+      ) l ON u.id = l.user_id
+      WHERE c.checkin_count > 0 OR l.like_count > 0
+      ORDER BY total_activity DESC
+      LIMIT 5
+    `).bind(saturdayStart, sundayEnd, saturdayStart, sundayEnd).all<{
+      username: string;
+      checkins: number;
+      likes: number;
+      total_activity: number;
+    }>();
+
+    // Weekend totals
+    const weekendTotals = await db.prepare(`
+      SELECT
+        (SELECT COUNT(*) FROM checkins WHERE created_at >= ? AND created_at < ?) as checkins,
+        (SELECT COUNT(*) FROM likes WHERE created_at >= ? AND created_at < ?) as likes,
+        (SELECT COUNT(DISTINCT user_id) FROM checkins WHERE created_at >= ? AND created_at < ?) as active_users
+    `).bind(saturdayStart, sundayEnd, saturdayStart, sundayEnd, saturdayStart, sundayEnd).first<{
+      checkins: number;
+      likes: number;
+      active_users: number;
+    }>();
+
+    const weekendWarriors: WeekendWarrior[] = (weekendWarriorsResult.results || []).map(w => ({
+      username: w.username,
+      checkins: w.checkins,
+      likes: w.likes,
+      totalActivity: w.total_activity,
+    }));
+
     // Calculate growth percentages
     const tw = thisWeek || { new_users: 0, checkins: 0, likes: 0, follows: 0, comments: 0 };
     const lw = lastWeek || { new_users: 0, checkins: 0, likes: 0, follows: 0, comments: 0 };
@@ -146,6 +222,12 @@ export async function GET(): Promise<Response> {
       topBrandThisWeek: topBrand?.brand || null,
       mostActiveUser: mostActive?.username || null,
       communityMessage,
+      weekendWarriors,
+      weekendStats: {
+        totalCheckins: weekendTotals?.checkins || 0,
+        totalLikes: weekendTotals?.likes || 0,
+        activeUsers: weekendTotals?.active_users || 0,
+      },
     };
 
     return Response.json(digest);

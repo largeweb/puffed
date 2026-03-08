@@ -18,6 +18,14 @@ export const changelog: Update[] = [
   // ===== March 2026 =====
   {
     date: '2026-03-08',
+    type: 'feature',
+    title: 'Weekend Warriors ⚔️',
+    description: 'Celebrating our most active weekend smokers! See who\'s been lighting up on Saturday and Sunday with the new Weekend Warriors leaderboard.',
+    status: 'live',
+    icon: '⚔️'
+  },
+  {
+    date: '2026-03-08',
     type: 'fix',
     title: 'Smoke Council Now Public 🏛️',
     description: 'The Smoke Council is now viewable by everyone! No login required to see the weekly cabinet of distinguished smokers.',
