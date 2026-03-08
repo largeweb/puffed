@@ -18,6 +18,14 @@ export const changelog: Update[] = [
   // ===== March 2026 =====
   {
     date: '2026-03-08',
+    type: 'fix',
+    title: 'Smoke Council Now Public 🏛️',
+    description: 'The Smoke Council is now viewable by everyone! No login required to see the weekly cabinet of distinguished smokers.',
+    status: 'live',
+    icon: '🏛️'
+  },
+  {
+    date: '2026-03-08',
     type: 'feature',
     title: 'Sunday Coffee ☕',
     description: 'Special Sunday banner showing weekly highlights! See new members, top brands, MVPs, and community growth at a glance.',

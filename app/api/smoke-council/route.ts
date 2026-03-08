@@ -34,21 +34,20 @@ export async function GET() {
     const cookieStore = await cookies();
     const sessionId = cookieStore.get("session")?.value;
 
-    if (!sessionId) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    // Allow unauthenticated access - council is public, yourPosition requires auth
+    let userId: string | null = null;
+    
+    if (sessionId) {
+      const now = Math.floor(Date.now() / 1000);
+      const session = await db
+        .prepare("SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?")
+        .bind(sessionId, now)
+        .first<SessionRow>();
+      
+      if (session) {
+        userId = session.user_id;
+      }
     }
-
-    const now = Math.floor(Date.now() / 1000);
-    const session = await db
-      .prepare("SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?")
-      .bind(sessionId, now)
-      .first<SessionRow>();
-
-    if (!session) {
-      return Response.json({ error: "Session expired" }, { status: 401 });
-    }
-
-    const userId = session.user_id;
 
     // Get start of this week (Monday)
     const currentDate = new Date();
@@ -334,42 +333,45 @@ export async function GET() {
       });
     }
 
-    // Find current user's position
+    // Find current user's position (only if logged in)
     let yourPosition = null;
-    const userInCouncil = council.find(m => m.id === userId);
-    if (userInCouncil) {
-      yourPosition = {
-        title: userInCouncil.title,
-        description: userInCouncil.description,
-        emoji: userInCouncil.emoji,
-        stat: userInCouncil.stat,
-        statValue: userInCouncil.statValue,
-        color: userInCouncil.color,
-      };
-    } else {
-      // Give them a fun fallback position based on their activity
-      const userActivity = await db.prepare(`
-        SELECT COUNT(*) as cnt FROM checkins WHERE user_id = ? AND created_at >= ?
-      `).bind(userId, weekStart).first<{ cnt: number }>();
-
-      if (userActivity && userActivity.cnt > 0) {
+    
+    if (userId) {
+      const userInCouncil = council.find(m => m.id === userId);
+      if (userInCouncil) {
         yourPosition = {
-          title: "Rising Delegate",
-          description: "Future Council Member",
-          emoji: "📜",
-          stat: "Check-ins this week",
-          statValue: userActivity.cnt,
-          color: "from-gray-500 to-gray-600",
+          title: userInCouncil.title,
+          description: userInCouncil.description,
+          emoji: userInCouncil.emoji,
+          stat: userInCouncil.stat,
+          statValue: userInCouncil.statValue,
+          color: userInCouncil.color,
         };
       } else {
-        yourPosition = {
-          title: "Citizen",
-          description: "Log smokes to earn your seat",
-          emoji: "🗳️",
-          stat: "Check-ins this week",
-          statValue: 0,
-          color: "from-gray-600 to-gray-700",
-        };
+        // Give them a fun fallback position based on their activity
+        const userActivity = await db.prepare(`
+          SELECT COUNT(*) as cnt FROM checkins WHERE user_id = ? AND created_at >= ?
+        `).bind(userId, weekStart).first<{ cnt: number }>();
+
+        if (userActivity && userActivity.cnt > 0) {
+          yourPosition = {
+            title: "Rising Delegate",
+            description: "Future Council Member",
+            emoji: "📜",
+            stat: "Check-ins this week",
+            statValue: userActivity.cnt,
+            color: "from-gray-500 to-gray-600",
+          };
+        } else {
+          yourPosition = {
+            title: "Citizen",
+            description: "Log smokes to earn your seat",
+            emoji: "🗳️",
+            stat: "Check-ins this week",
+            statValue: 0,
+            color: "from-gray-600 to-gray-700",
+          };
+        }
       }
     }
 
