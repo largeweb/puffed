@@ -1,6 +1,6 @@
 # Puffed Page Status Tracking
 
-Last updated: Mar 7, 2026 (v1.0.5)
+Last updated: Mar 7, 2026 (v1.0.7)
 
 ## Legend
 - ✅ Working
@@ -42,7 +42,7 @@ Last updated: Mar 7, 2026 (v1.0.5)
 
 | Page | Route | Issue | Priority |
 |------|-------|-------|----------|
-| The Crown | /crown | Client error | HIGH |
+| The Crown | /crown | ✅ Fixed v1.0.7 | DONE |
 | MVP Awards | /mvp-awards | Client error | HIGH |
 | Smoke Council | /council | Failed to load | HIGH |
 | Weekly Wrap | /weekly-wrap | Auth check broken | MEDIUM |
