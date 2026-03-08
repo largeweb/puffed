@@ -633,8 +633,24 @@ export default function DiscoverPage() {
                 <FiMenu size={24} />
               </button>
               <div>
-                <h1 className="font-semibold">Discover</h1>
-                <p className="text-xs text-gray-400">See what everyone's smoking</p>
+                <h1 className="font-semibold flex items-center gap-2">
+                  Discover
+                  {todayStats && todayStats.newCheckins > 0 && (
+                    <span className="flex items-center gap-1.5 text-xs font-normal px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                      {todayStats.newCheckins} today
+                    </span>
+                  )}
+                </h1>
+                <p className="text-xs text-gray-400">
+                  {todayStats && todayStats.totalUsers > 0 
+                    ? `${todayStats.totalUsers} smokers • ${todayStats.newLikes + todayStats.newReactions} engagements today`
+                    : "See what everyone's smoking"
+                  }
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
