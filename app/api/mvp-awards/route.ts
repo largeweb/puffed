@@ -210,18 +210,50 @@ export async function GET() {
       weekStartTs, weekEndTs
     ).first<SocialButterfly>();
     
-    // 5. Streak Champion - Longest active streak
-    const streakChampionQuery = await db.prepare(`
-      SELECT 
-        u.username,
-        COALESCE(s.current_streak, 0) as currentStreak
-      FROM users u
-      LEFT JOIN streaks s ON u.id = s.user_id
-      WHERE u.username != 'openclaw_tester'
-        AND COALESCE(s.current_streak, 0) > 0
-      ORDER BY currentStreak DESC
-      LIMIT 1
-    `).first<StreakChampion>();
+    // 5. Streak Champion - Calculate from consecutive check-in days
+    // (streaks table doesn't exist, so we calculate dynamically)
+    let streakChampionQuery: StreakChampion | null = null;
+    try {
+      // Get users with most consecutive days of check-ins ending today or yesterday
+      const streakResult = await db.prepare(`
+        WITH user_days AS (
+          SELECT 
+            u.id as user_id,
+            u.username,
+            DATE(c.created_at, 'unixepoch') as checkin_date
+          FROM users u
+          JOIN checkins c ON c.user_id = u.id
+          WHERE u.username != 'openclaw_tester'
+          GROUP BY u.id, DATE(c.created_at, 'unixepoch')
+        ),
+        streak_calc AS (
+          SELECT 
+            username,
+            checkin_date,
+            julianday(checkin_date) - ROW_NUMBER() OVER (PARTITION BY username ORDER BY checkin_date) as grp
+          FROM user_days
+        ),
+        streaks AS (
+          SELECT 
+            username,
+            COUNT(*) as streak_length,
+            MAX(checkin_date) as last_date
+          FROM streak_calc
+          GROUP BY username, grp
+        )
+        SELECT 
+          username,
+          streak_length as currentStreak
+        FROM streaks
+        WHERE last_date >= DATE('now', '-1 day')
+        ORDER BY streak_length DESC
+        LIMIT 1
+      `).first<StreakChampion>();
+      streakChampionQuery = streakResult || null;
+    } catch {
+      // Streak calculation failed, skip this award
+      streakChampionQuery = null;
+    }
     
     // Weekly stats
     const weeklyStatsQuery = await db.prepare(`
