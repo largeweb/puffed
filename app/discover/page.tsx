@@ -385,6 +385,10 @@ export default function DiscoverPage() {
   } | null>(null);
   const [isSunday, setIsSunday] = useState(false);
   const [mostLoved, setMostLoved] = useState<MostLovedCheckin[]>([]);
+  const [tasteTwin, setTasteTwin] = useState<{
+    twin: { username: string; shared_brands: string[]; overlap_count: number; is_following: boolean } | null;
+    all_matches?: Array<{ username: string; shared_brands: string[]; overlap_count: number; is_following: boolean }>;
+  } | null>(null);
 
   // Load user for sidebar
   useEffect(() => {
@@ -418,6 +422,7 @@ export default function DiscoverPage() {
     loadSuggestedUsers();
     loadFeatured();
     loadMostLoved();
+    loadTasteTwin();
     loadTodayStats();
     
     // Check if it's Sunday and load special content
@@ -539,6 +544,19 @@ export default function DiscoverPage() {
       setMostLoved(data.checkins || []);
     } catch (error) {
       console.error("Most loved error:", error);
+    }
+  }
+
+  async function loadTasteTwin() {
+    try {
+      const res = await fetch("/api/taste-twin");
+      const data = await res.json() as {
+        twin: { username: string; shared_brands: string[]; overlap_count: number; is_following: boolean } | null;
+        all_matches?: Array<{ username: string; shared_brands: string[]; overlap_count: number; is_following: boolean }>;
+      };
+      setTasteTwin(data);
+    } catch (error) {
+      console.error("Taste twin error:", error);
     }
   }
 
@@ -1217,6 +1235,51 @@ export default function DiscoverPage() {
                   )}
                 </Link>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Taste Twin Section - Find your smoking buddy */}
+        {tasteTwin?.twin && !searchQuery && activeCategory === "all" && !tasteTwin.twin.is_following && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-pink-500/15 via-purple-500/10 to-blue-500/10 border border-pink-500/25">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xl">👯</span>
+                <div>
+                  <h3 className="font-semibold text-pink-200">Your Taste Twin</h3>
+                  <p className="text-xs text-pink-400/80">Someone who smokes what you smoke!</p>
+                </div>
+              </div>
+              <Link
+                href={`/user/${tasteTwin.twin.username}`}
+                className="flex items-center justify-between p-3 rounded-xl bg-black/30 hover:bg-black/40 transition-all"
+              >
+                <div>
+                  <p className="font-medium text-white">@{tasteTwin.twin.username}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    You both enjoy: {tasteTwin.twin.shared_brands.join(', ')}
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleFollow(tasteTwin.twin!.username);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm bg-pink-500 text-white hover:bg-pink-400 transition-all"
+                >
+                  <FiUserPlus size={14} />
+                  <span>Follow</span>
+                </button>
+              </Link>
+              {tasteTwin.all_matches && tasteTwin.all_matches.length > 1 && (
+                <p className="text-xs text-pink-400/60 mt-2 text-center">
+                  +{tasteTwin.all_matches.length - 1} more with similar taste
+                </p>
+              )}
             </div>
           </motion.div>
         )}

@@ -19,6 +19,14 @@ export const changelog: Update[] = [
   {
     date: '2026-03-08',
     type: 'feature',
+    title: 'Find Your Taste Twin 👯',
+    description: 'Meet smokers who love the same brands as you! The Discover page now suggests your "Taste Twin" — someone with similar smoking preferences.',
+    status: 'live',
+    icon: '👯'
+  },
+  {
+    date: '2026-03-08',
+    type: 'feature',
     title: 'Most Loved This Week 💕',
     description: 'Discover the check-ins getting the most love! See which smokes earned the most likes, reactions, and comments on the Discover page.',
     status: 'live',
