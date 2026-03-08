@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { FiMenu } from 'react-icons/fi';
+import MobileSidebar from '@/app/components/MobileSidebar';
+import { useSidebar } from '@/hooks/useSidebar';
 
 interface SparkLeader {
   username: string;
@@ -25,6 +28,7 @@ interface FirstToday {
 }
 
 export default function TheSparkPage() {
+  const { sidebarOpen, setSidebarOpen, currentUser, unreadCount, handleLogout } = useSidebar();
   const [spotOpen, setSpotOpen] = useState(true);
   const [firstToday, setFirstToday] = useState<FirstToday | null>(null);
   const [sparkLeaders, setSparkLeaders] = useState<SparkLeader[]>([]);
@@ -105,9 +109,23 @@ export default function TheSparkPage() {
   }
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <div className="min-h-screen bg-gradient-to-b from-yellow-900/20 via-zinc-900 to-zinc-900 p-4 pb-24">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white">
+            <FiMenu size={24} />
+          </button>
+          <div className="w-10" />
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-yellow-400 mb-2">⚡ The Spark</h1>
           <p className="text-zinc-400">First smoke of the day gets the glory</p>
@@ -223,5 +241,6 @@ export default function TheSparkPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

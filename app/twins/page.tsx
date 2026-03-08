@@ -2,8 +2,10 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiUsers, FiClock, FiArrowLeft, FiUserPlus, FiCheck, FiSun, FiMoon, FiStar } from "react-icons/fi";
+import { FiUsers, FiClock, FiArrowLeft, FiUserPlus, FiCheck, FiSun, FiMoon, FiStar, FiMenu } from "react-icons/fi";
 import Link from "next/link";
+import MobileSidebar from "@/app/components/MobileSidebar";
+import { useSidebar } from "@/hooks/useSidebar";
 
 interface SmokeTwin {
   id: string;
@@ -205,6 +207,7 @@ function TwinCard({ twin, onFollow }: { twin: SmokeTwin; onFollow: (id: string) 
 }
 
 export default function SmokeTwinsPage() {
+  const { sidebarOpen, setSidebarOpen, currentUser, unreadCount, handleLogout } = useSidebar();
   const [data, setData] = useState<TwinsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -259,16 +262,24 @@ export default function SmokeTwinsPage() {
   }
 
   return (
+    <>
+      <MobileSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        username={currentUser}
+        unreadCount={unreadCount}
+        onLogout={handleLogout}
+      />
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black">
       {/* Header */}
       <div className="bg-gradient-to-r from-cyan-600/20 via-blue-600/20 to-purple-600/20 border-b border-gray-800">
         <div className="max-w-lg mx-auto px-4 py-6">
-          <Link
-            href="/dashboard"
+          <button
+            onClick={() => setSidebarOpen(true)}
             className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-4"
           >
-            <FiArrowLeft className="mr-2" /> Back
-          </Link>
+            <FiMenu className="mr-2" size={20} /> Menu
+          </button>
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -369,5 +380,6 @@ export default function SmokeTwinsPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
