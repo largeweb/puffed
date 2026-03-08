@@ -351,6 +351,7 @@ interface TodayStats {
   newFollows: number;
   newComments: number;
   newReactions: number;
+  totalUsers: number;
 }
 
 export default function DiscoverPage() {
@@ -409,9 +410,15 @@ export default function DiscoverPage() {
   async function loadTodayStats() {
     try {
       const res = await fetch("/api/stats");
-      const data = await res.json() as { today?: TodayStats };
+      const data = await res.json() as { 
+        today?: Omit<TodayStats, 'totalUsers'>; 
+        overall?: { total_users: number } 
+      };
       if (data.today) {
-        setTodayStats(data.today);
+        setTodayStats({
+          ...data.today,
+          totalUsers: data.overall?.total_users || 0
+        });
       }
     } catch (error) {
       console.error("Stats error:", error);
@@ -691,6 +698,11 @@ export default function DiscoverPage() {
                 🔴
               </motion.span>
               <span className="font-semibold text-white">Live Today</span>
+              {todayStats.totalUsers > 0 && (
+                <span className="text-xs text-amber-400 font-medium">
+                  🚀 {todayStats.totalUsers} smokers strong
+                </span>
+              )}
               <span className="text-xs text-gray-400 ml-auto">Auto-updates</span>
             </div>
             <div className="flex flex-wrap gap-3 text-sm">

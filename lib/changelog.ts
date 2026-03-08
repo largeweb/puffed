@@ -18,6 +18,14 @@ export const changelog: Update[] = [
   // ===== March 2026 =====
   {
     date: '2026-03-08',
+    type: 'improvement',
+    title: 'Community Counter 🚀',
+    description: 'See total community size in the Live Activity banner! Watch our community grow in real-time.',
+    status: 'live',
+    icon: '🚀'
+  },
+  {
+    date: '2026-03-08',
     type: 'feature',
     title: 'Live Activity Pulse 🔴',
     description: 'See real-time community activity on Discover! Watch new signups, check-ins, and likes as they happen.',
