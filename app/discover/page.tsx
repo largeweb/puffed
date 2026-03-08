@@ -381,6 +381,7 @@ export default function DiscoverPage() {
     weekendWarriors?: Array<{ username: string; checkins: number; likes: number; totalActivity: number }>;
     weekendStats?: { totalCheckins: number; totalLikes: number; activeUsers: number };
     newMembers?: Array<{ username: string; joinedAt: number; checkins: number; followers: number }>;
+    streakChampions?: Array<{ username: string; currentStreak: number; bestStreak: number }>;
   } | null>(null);
   const [isSunday, setIsSunday] = useState(false);
 
@@ -831,6 +832,40 @@ export default function DiscoverPage() {
                 </div>
                 <p className="mt-2 text-xs text-amber-400/60 text-center">
                   Give them a follow and help them feel at home! 💛
+                </p>
+              </div>
+            )}
+            
+            {/* Streak Champions Section */}
+            {sundayDigest.streakChampions && sundayDigest.streakChampions.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-amber-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🔥</span>
+                  <span className="text-sm font-medium text-amber-200">Streak Champions</span>
+                  <span className="text-xs text-amber-400/60 ml-auto">
+                    Logging daily!
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {sundayDigest.streakChampions.map((champ, idx) => (
+                    <Link
+                      key={champ.username}
+                      href={`/user/${champ.username}`}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 hover:bg-orange-500/20 transition-all border border-orange-500/20"
+                    >
+                      <span className="text-sm">
+                        {idx === 0 ? '🔥' : idx === 1 ? '✨' : '💨'}
+                      </span>
+                      <span className="text-sm text-orange-100 font-medium">@{champ.username}</span>
+                      <span className="text-xs text-orange-400/70">
+                        {champ.currentStreak} day{champ.currentStreak !== 1 ? 's' : ''}
+                        {champ.bestStreak > champ.currentStreak && ` (best: ${champ.bestStreak})`}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-amber-400/60 text-center">
+                  Keep the streak alive — log a smoke every day! 🔥
                 </p>
               </div>
             )}

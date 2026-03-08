@@ -9,6 +9,12 @@ interface WeekendWarrior {
   totalActivity: number;
 }
 
+interface StreakChampion {
+  username: string;
+  currentStreak: number;
+  bestStreak: number;
+}
+
 interface NewMember {
   username: string;
   joinedAt: number;
@@ -47,6 +53,7 @@ interface SundayDigest {
     activeUsers: number;
   };
   newMembers: NewMember[];
+  streakChampions: StreakChampion[];
 }
 
 export async function GET(): Promise<Response> {
@@ -215,6 +222,88 @@ export async function GET(): Promise<Response> {
       followers: m.followers,
     }));
 
+    // Streak Champions - users with longest active streaks
+    // Get all users with recent check-ins and calculate their streaks
+    const streakUsersResult = await db.prepare(`
+      SELECT 
+        u.id as user_id,
+        u.username,
+        GROUP_CONCAT(DISTINCT date(c.created_at, 'unixepoch')) as checkin_dates
+      FROM users u
+      JOIN checkins c ON u.id = c.user_id
+      WHERE u.username != 'openclaw_tester'
+      GROUP BY u.id
+      HAVING COUNT(c.id) > 0
+    `).all<{
+      user_id: string;
+      username: string;
+      checkin_dates: string;
+    }>();
+
+    // Calculate streaks for each user
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    
+    function calculateUserStreak(datesStr: string): { current: number; best: number; active: boolean } {
+      if (!datesStr) return { current: 0, best: 0, active: false };
+      const dates = datesStr.split(',').sort((a, b) => b.localeCompare(a)); // desc
+      
+      // Check if active (last checkin today or yesterday)
+      const lastDate = dates[0];
+      const active = lastDate === today || lastDate === yesterday;
+      
+      if (!active) return { current: 0, best: 1, active: false };
+      
+      // Calculate current streak
+      let currentStreak = 0;
+      let expectedDate = lastDate;
+      
+      for (const date of dates) {
+        if (date === expectedDate) {
+          currentStreak++;
+          const dateObj = new Date(expectedDate + 'T12:00:00Z');
+          dateObj.setUTCDate(dateObj.getUTCDate() - 1);
+          expectedDate = dateObj.toISOString().split('T')[0];
+        } else if (date < expectedDate) {
+          break;
+        }
+      }
+      
+      // Calculate best streak
+      let bestStreak = 1;
+      let tempStreak = 1;
+      for (let i = 1; i < dates.length; i++) {
+        const prevDateObj = new Date(dates[i - 1] + 'T12:00:00Z');
+        prevDateObj.setUTCDate(prevDateObj.getUTCDate() - 1);
+        const expectedPrev = prevDateObj.toISOString().split('T')[0];
+        
+        if (expectedPrev === dates[i]) {
+          tempStreak++;
+          bestStreak = Math.max(bestStreak, tempStreak);
+        } else {
+          tempStreak = 1;
+        }
+      }
+      bestStreak = Math.max(bestStreak, currentStreak);
+      
+      return { current: currentStreak, best: bestStreak, active };
+    }
+
+    const streakChampions: StreakChampion[] = (streakUsersResult.results || [])
+      .map(u => {
+        const streak = calculateUserStreak(u.checkin_dates);
+        return {
+          username: u.username,
+          currentStreak: streak.current,
+          bestStreak: streak.best,
+          active: streak.active,
+        };
+      })
+      .filter(s => s.active && s.currentStreak >= 2) // Only active streaks of 2+ days
+      .sort((a, b) => b.currentStreak - a.currentStreak)
+      .slice(0, 3)
+      .map(({ username, currentStreak, bestStreak }) => ({ username, currentStreak, bestStreak }));
+
     // Calculate growth percentages
     const tw = thisWeek || { new_users: 0, checkins: 0, likes: 0, follows: 0, comments: 0 };
     const lw = lastWeek || { new_users: 0, checkins: 0, likes: 0, follows: 0, comments: 0 };
@@ -272,6 +361,7 @@ export async function GET(): Promise<Response> {
         activeUsers: weekendTotals?.active_users || 0,
       },
       newMembers,
+      streakChampions,
     };
 
     return Response.json(digest);

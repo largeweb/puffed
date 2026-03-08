@@ -19,6 +19,14 @@ export const changelog: Update[] = [
   {
     date: '2026-03-08',
     type: 'feature',
+    title: 'Streak Champions 🔥',
+    description: 'Celebrating smokers who log in every day! The Sunday Coffee banner now shows users with the longest active check-in streaks.',
+    status: 'live',
+    icon: '🔥'
+  },
+  {
+    date: '2026-03-08',
+    type: 'feature',
     title: 'Welcome New Members 🎊',
     description: 'The Sunday Coffee banner now spotlights new users who joined this week! Help them feel at home by giving them a follow.',
     status: 'live',
