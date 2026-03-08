@@ -372,6 +372,14 @@ export default function DiscoverPage() {
   const [currentUser, setCurrentUser] = useState<string | undefined>();
   const [unreadCount, setUnreadCount] = useState(0);
   const [todayStats, setTodayStats] = useState<TodayStats | null>(null);
+  const [sundayDigest, setSundayDigest] = useState<{
+    thisWeek: { newUsers: number; checkins: number; likes: number; follows: number };
+    growth: { usersGrowth: number; checkinsGrowth: number; engagementGrowth: number };
+    topBrandThisWeek: string | null;
+    mostActiveUser: string | null;
+    communityMessage: string;
+  } | null>(null);
+  const [isSunday, setIsSunday] = useState(false);
 
   // Load user for sidebar
   useEffect(() => {
@@ -405,7 +413,33 @@ export default function DiscoverPage() {
     loadSuggestedUsers();
     loadFeatured();
     loadTodayStats();
+    
+    // Check if it's Sunday and load special content
+    const today = new Date();
+    const isSundayNow = today.getDay() === 0;
+    setIsSunday(isSundayNow);
+    if (isSundayNow) {
+      loadSundayDigest();
+    }
   }, []);
+
+  async function loadSundayDigest() {
+    try {
+      const res = await fetch("/api/sunday-digest");
+      if (res.ok) {
+        const data = await res.json() as {
+          thisWeek: { newUsers: number; checkins: number; likes: number; follows: number };
+          growth: { usersGrowth: number; checkinsGrowth: number; engagementGrowth: number };
+          topBrandThisWeek: string | null;
+          mostActiveUser: string | null;
+          communityMessage: string;
+        };
+        setSundayDigest(data);
+      }
+    } catch (error) {
+      console.error("Sunday digest error:", error);
+    }
+  }
 
   async function loadTodayStats() {
     try {
@@ -682,6 +716,57 @@ export default function DiscoverPage() {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Sunday Coffee Banner - Only on Sundays */}
+        {isSunday && sundayDigest && !searchQuery && activeCategory === "all" && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-600/20 via-orange-500/15 to-yellow-500/10 border border-amber-500/30"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">☕</span>
+              <div>
+                <h3 className="font-semibold text-amber-200">Sunday Coffee</h3>
+                <p className="text-xs text-amber-400/80">{sundayDigest.communityMessage}</p>
+              </div>
+              <Link 
+                href="/weekly-wrap"
+                className="ml-auto text-xs px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-all"
+              >
+                Your Week →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+              <div className="p-2 rounded-lg bg-black/20">
+                <div className="text-lg font-bold text-white">{sundayDigest.thisWeek.newUsers}</div>
+                <div className="text-xs text-gray-400">New Smokers</div>
+                {sundayDigest.growth.usersGrowth > 0 && (
+                  <div className="text-xs text-green-400">↑{sundayDigest.growth.usersGrowth}%</div>
+                )}
+              </div>
+              <div className="p-2 rounded-lg bg-black/20">
+                <div className="text-lg font-bold text-white">{sundayDigest.thisWeek.checkins}</div>
+                <div className="text-xs text-gray-400">Smokes</div>
+                {sundayDigest.growth.checkinsGrowth > 0 && (
+                  <div className="text-xs text-green-400">↑{sundayDigest.growth.checkinsGrowth}%</div>
+                )}
+              </div>
+              <div className="p-2 rounded-lg bg-black/20">
+                <div className="text-lg font-bold text-amber-400 truncate">
+                  {sundayDigest.topBrandThisWeek || "—"}
+                </div>
+                <div className="text-xs text-gray-400">Top Brand</div>
+              </div>
+              <div className="p-2 rounded-lg bg-black/20">
+                <div className="text-lg font-bold text-purple-400 truncate">
+                  @{sundayDigest.mostActiveUser || "—"}
+                </div>
+                <div className="text-xs text-gray-400">MVP</div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Live Activity Pulse - Saturday Night Edition */}
         {todayStats && !searchQuery && activeCategory === "all" && (todayStats.newUsers > 0 || todayStats.newCheckins > 0 || todayStats.newLikes > 0) && (
           <motion.div

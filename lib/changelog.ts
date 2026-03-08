@@ -18,6 +18,14 @@ export const changelog: Update[] = [
   // ===== March 2026 =====
   {
     date: '2026-03-08',
+    type: 'feature',
+    title: 'Sunday Coffee ☕',
+    description: 'Special Sunday banner showing weekly highlights! See new members, top brands, MVPs, and community growth at a glance.',
+    status: 'live',
+    icon: '☕'
+  },
+  {
+    date: '2026-03-08',
     type: 'improvement',
     title: 'Community Counter 🚀',
     description: 'See total community size in the Live Activity banner! Watch our community grow in real-time.',
