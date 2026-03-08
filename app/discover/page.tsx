@@ -380,6 +380,7 @@ export default function DiscoverPage() {
     communityMessage: string;
     weekendWarriors?: Array<{ username: string; checkins: number; likes: number; totalActivity: number }>;
     weekendStats?: { totalCheckins: number; totalLikes: number; activeUsers: number };
+    newMembers?: Array<{ username: string; joinedAt: number; checkins: number; followers: number }>;
   } | null>(null);
   const [isSunday, setIsSunday] = useState(false);
 
@@ -797,6 +798,40 @@ export default function DiscoverPage() {
                     </Link>
                   ))}
                 </div>
+              </div>
+            )}
+            
+            {/* Welcome New Members Section */}
+            {sundayDigest.newMembers && sundayDigest.newMembers.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-amber-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🎊</span>
+                  <span className="text-sm font-medium text-amber-200">Welcome New Members</span>
+                  <span className="text-xs text-amber-400/60 ml-auto">
+                    {sundayDigest.newMembers.length} joined this week
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {sundayDigest.newMembers.slice(0, 5).map((member) => (
+                    <Link
+                      key={member.username}
+                      href={`/user/${member.username}`}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 transition-all border border-green-500/20"
+                    >
+                      <span className="text-sm">👋</span>
+                      <span className="text-sm text-green-100 font-medium">@{member.username}</span>
+                      {member.checkins > 0 && (
+                        <span className="text-xs text-green-400/70">{member.checkins} 🚬</span>
+                      )}
+                      {member.followers > 0 && (
+                        <span className="text-xs text-green-400/70">{member.followers} 👥</span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-amber-400/60 text-center">
+                  Give them a follow and help them feel at home! 💛
+                </p>
               </div>
             )}
           </motion.div>

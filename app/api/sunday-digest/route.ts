@@ -9,6 +9,13 @@ interface WeekendWarrior {
   totalActivity: number;
 }
 
+interface NewMember {
+  username: string;
+  joinedAt: number;
+  checkins: number;
+  followers: number;
+}
+
 interface SundayDigest {
   isEnjoySunday: boolean;
   thisWeek: {
@@ -39,6 +46,7 @@ interface SundayDigest {
     totalLikes: number;
     activeUsers: number;
   };
+  newMembers: NewMember[];
 }
 
 export async function GET(): Promise<Response> {
@@ -172,6 +180,41 @@ export async function GET(): Promise<Response> {
       totalActivity: w.total_activity,
     }));
 
+    // New members this week - spotlight the newest joiners
+    const newMembersResult = await db.prepare(`
+      SELECT 
+        u.username,
+        u.created_at as joined_at,
+        COALESCE(c.checkin_count, 0) as checkins,
+        COALESCE(f.follower_count, 0) as followers
+      FROM users u
+      LEFT JOIN (
+        SELECT user_id, COUNT(*) as checkin_count
+        FROM checkins
+        GROUP BY user_id
+      ) c ON u.id = c.user_id
+      LEFT JOIN (
+        SELECT following_id, COUNT(*) as follower_count
+        FROM follows
+        GROUP BY following_id
+      ) f ON u.id = f.following_id
+      WHERE u.created_at > ?
+      ORDER BY u.created_at DESC
+      LIMIT 5
+    `).bind(oneWeekAgo).all<{
+      username: string;
+      joined_at: number;
+      checkins: number;
+      followers: number;
+    }>();
+
+    const newMembers: NewMember[] = (newMembersResult.results || []).map(m => ({
+      username: m.username,
+      joinedAt: m.joined_at,
+      checkins: m.checkins,
+      followers: m.followers,
+    }));
+
     // Calculate growth percentages
     const tw = thisWeek || { new_users: 0, checkins: 0, likes: 0, follows: 0, comments: 0 };
     const lw = lastWeek || { new_users: 0, checkins: 0, likes: 0, follows: 0, comments: 0 };
@@ -228,6 +271,7 @@ export async function GET(): Promise<Response> {
         totalLikes: weekendTotals?.likes || 0,
         activeUsers: weekendTotals?.active_users || 0,
       },
+      newMembers,
     };
 
     return Response.json(digest);

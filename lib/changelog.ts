@@ -19,6 +19,14 @@ export const changelog: Update[] = [
   {
     date: '2026-03-08',
     type: 'feature',
+    title: 'Welcome New Members 🎊',
+    description: 'The Sunday Coffee banner now spotlights new users who joined this week! Help them feel at home by giving them a follow.',
+    status: 'live',
+    icon: '🎊'
+  },
+  {
+    date: '2026-03-08',
+    type: 'feature',
     title: 'Weekend Warriors ⚔️',
     description: 'Celebrating our most active weekend smokers! See who\'s been lighting up on Saturday and Sunday with the new Weekend Warriors leaderboard.',
     status: 'live',
