@@ -992,3 +992,24 @@ export interface DailyChallengeData {
     photosToday: number;
   };
 }
+
+// Most Loved This Week
+export interface MostLovedCheckin {
+  id: string;
+  user_id: string;
+  username: string;
+  brand: string;
+  rating: number;
+  review: string | null;
+  photo_url: string | null;
+  like_count: number;
+  reaction_count: number;
+  comment_count: number;
+  total_engagement: number;
+  created_at: number;
+}
+
+export interface MostLovedResponse {
+  checkins: MostLovedCheckin[];
+  count: number;
+}

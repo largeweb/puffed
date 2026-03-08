@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck, FiCamera, FiMenu } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse } from "@/lib/types";
+import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse, MostLovedCheckin, MostLovedResponse } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -384,6 +384,7 @@ export default function DiscoverPage() {
     streakChampions?: Array<{ username: string; currentStreak: number; bestStreak: number }>;
   } | null>(null);
   const [isSunday, setIsSunday] = useState(false);
+  const [mostLoved, setMostLoved] = useState<MostLovedCheckin[]>([]);
 
   // Load user for sidebar
   useEffect(() => {
@@ -416,6 +417,7 @@ export default function DiscoverPage() {
     loadMomentum();
     loadSuggestedUsers();
     loadFeatured();
+    loadMostLoved();
     loadTodayStats();
     
     // Check if it's Sunday and load special content
@@ -527,6 +529,16 @@ export default function DiscoverPage() {
       setFeatured(data.featured);
     } catch (error) {
       console.error("Featured error:", error);
+    }
+  }
+
+  async function loadMostLoved() {
+    try {
+      const res = await fetch("/api/most-loved");
+      const data: MostLovedResponse = await res.json();
+      setMostLoved(data.checkins || []);
+    } catch (error) {
+      console.error("Most loved error:", error);
     }
   }
 
@@ -1058,6 +1070,68 @@ export default function DiscoverPage() {
               >
                 <span className="text-sm">More →</span>
               </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Most Loved This Week */}
+        {mostLoved.length > 0 && !searchQuery && activeCategory === "all" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-pink-500">💕</span>
+              <h2 className="font-semibold">Most Loved This Week</h2>
+            </div>
+            <div className="space-y-2">
+              {mostLoved.slice(0, 3).map((checkin, index) => (
+                <Link
+                  key={checkin.id}
+                  href={`/checkin/${checkin.id}`}
+                  className="block glass rounded-xl p-3 hover:border-pink-500/50 border border-white/10 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium truncate">{checkin.brand}</span>
+                        {checkin.rating && (
+                          <span className="flex items-center gap-0.5 text-amber-500 text-sm">
+                            <FiStar size={12} fill="currentColor" />
+                            {checkin.rating}
+                          </span>
+                        )}
+                      </div>
+                      <Link
+                        href={`/user/${checkin.username}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-gray-400 text-sm hover:text-amber-500"
+                      >
+                        @{checkin.username}
+                      </Link>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                      {checkin.like_count > 0 && (
+                        <span className="flex items-center gap-1">
+                          <FiHeart size={12} className="text-pink-500" /> {checkin.like_count}
+                        </span>
+                      )}
+                      {checkin.reaction_count > 0 && (
+                        <span className="flex items-center gap-1">
+                          💨 {checkin.reaction_count}
+                        </span>
+                      )}
+                      {checkin.comment_count > 0 && (
+                        <span className="flex items-center gap-1">
+                          <FiMessageCircle size={12} /> {checkin.comment_count}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           </motion.div>
         )}
