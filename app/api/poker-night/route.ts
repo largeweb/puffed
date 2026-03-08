@@ -9,7 +9,7 @@ interface CheckIn {
   product: string | null;
   rating: number;
   created_at: number;
-  photo_url: string | null;
+  image_url: string | null;
   username: string;
   review: string | null;
 }
@@ -128,7 +128,7 @@ export async function GET(): Promise<Response> {
     const playersResult = await db
       .prepare(
         `
-        SELECT c.id, c.brand, c.product, c.rating, c.created_at, c.photo_url, c.review, u.username
+        SELECT c.id, c.brand, c.product, c.rating, c.created_at, c.image_url, c.review, u.username
         FROM checkins c
         JOIN users u ON c.user_id = u.id
         WHERE c.created_at >= ? AND c.created_at < ?
@@ -301,7 +301,7 @@ export async function GET(): Promise<Response> {
       brand: p.brand,
       product: p.product,
       rating: p.rating,
-      photoUrl: p.photo_url,
+      photoUrl: p.image_url,
       review: p.review,
       time: formatTime(p.created_at),
       card: generateCard(p.rating, p.brand),

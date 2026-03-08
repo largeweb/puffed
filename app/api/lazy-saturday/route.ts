@@ -9,7 +9,7 @@ interface CheckinRow {
   brand: string;
   product: string | null;
   rating: number;
-  photo_url: string | null;
+  image_url: string | null;
   created_at: string;
 }
 
@@ -57,7 +57,7 @@ export async function GET() {
   
   // Get current lazy Saturday smokers (today 12-6 PM)
   const currentSmokersResult = await db.prepare(`
-    SELECT c.id, u.username, c.brand, c.product, c.rating, c.photo_url, c.created_at
+    SELECT c.id, u.username, c.brand, c.product, c.rating, c.image_url, c.created_at
     FROM checkins c
     JOIN users u ON c.user_id = u.id
     WHERE DATE(c.created_at, '-5 hours') = ?
@@ -208,7 +208,7 @@ export async function GET() {
       brand: c.brand,
       product: c.product,
       rating: c.rating,
-      photoUrl: c.photo_url,
+      photoUrl: c.image_url,
       time: c.created_at
     })) || [],
     lazyLegends: legendsResult.results?.map(l => ({

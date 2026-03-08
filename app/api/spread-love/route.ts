@@ -26,7 +26,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<SpreadLove
     const { env } = getRequestContext();
     const db = env.DB;
     const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("session_token")?.value;
+    const sessionToken = cookieStore.get("session")?.value;
 
     if (!sessionToken) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<SpreadLove
 
     // Get current user
     const userRow = await db
-      .prepare("SELECT id, username FROM users WHERE session_token = ?")
+      .prepare("SELECT id, username FROM users WHERE session = ?")
       .bind(sessionToken)
       .first<{ id: string; username: string }>();
 
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SpreadLov
     const { env } = getRequestContext();
     const db = env.DB;
     const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("session_token")?.value;
+    const sessionToken = cookieStore.get("session")?.value;
 
     if (!sessionToken) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SpreadLov
 
     // Get current user
     const userRow = await db
-      .prepare("SELECT id, username FROM users WHERE session_token = ?")
+      .prepare("SELECT id, username FROM users WHERE session = ?")
       .bind(sessionToken)
       .first<{ id: string; username: string }>();
 

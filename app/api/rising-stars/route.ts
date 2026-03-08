@@ -15,7 +15,7 @@ interface RisingStar {
   latest_checkin?: {
     brand: string;
     rating: number;
-    photo_url?: string;
+    image_url?: string;
   };
 }
 
@@ -76,12 +76,12 @@ export async function GET() {
   const stars: (RisingStar & { isFollowing: boolean; isMe: boolean })[] = [];
   for (const star of risingStars.results) {
     const latestCheckin = await db.prepare(`
-      SELECT brand, rating, photo_url
+      SELECT brand, rating, image_url
       FROM checkins
       WHERE user_id = ?
       ORDER BY created_at DESC
       LIMIT 1
-    `).bind(star.user_id).first<{ brand: string; rating: number; photo_url?: string }>();
+    `).bind(star.user_id).first<{ brand: string; rating: number; image_url?: string }>();
 
     // Check if current user is following this star
     const isFollowing = await db.prepare(`

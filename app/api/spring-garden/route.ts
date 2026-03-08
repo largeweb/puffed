@@ -6,7 +6,7 @@ export const runtime = 'edge';
 
 export async function GET() {
   const cookieStore = await cookies();
-  const sessionId = cookieStore.get("session_id")?.value;
+  const sessionId = cookieStore.get("session")?.value;
   
   const { env } = getRequestContext();
   const db = env.DB;

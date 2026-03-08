@@ -25,7 +25,7 @@ export async function GET() {
   try {
     const { env } = getRequestContext();
     const cookieStore = await cookies();
-    const token = cookieStore.get("session_token")?.value;
+    const token = cookieStore.get("session")?.value;
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -141,7 +141,7 @@ export async function POST(request: Request) {
   try {
     const { env } = getRequestContext();
     const cookieStore = await cookies();
-    const token = cookieStore.get("session_token")?.value;
+    const token = cookieStore.get("session")?.value;
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

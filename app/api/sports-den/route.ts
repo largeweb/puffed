@@ -10,7 +10,7 @@ interface DBRow {
   brand?: string;
   product?: string;
   rating?: number;
-  photo_url?: string;
+  image_url?: string;
   created_at?: string;
   total?: number;
   count?: number;
@@ -101,7 +101,7 @@ export async function GET(): Promise<Response> {
   
   const currentSpectators = await db
     .prepare(`
-      SELECT c.id, u.username, c.brand, c.product, c.rating, c.photo_url, c.created_at
+      SELECT c.id, u.username, c.brand, c.product, c.rating, c.image_url, c.created_at
       FROM checkins c
       JOIN users u ON c.user_id = u.id
       WHERE c.created_at >= ?
@@ -228,7 +228,7 @@ export async function GET(): Promise<Response> {
       brand: r.brand,
       product: r.product,
       rating: r.rating || 0,
-      photoUrl: r.photo_url,
+      photoUrl: r.image_url,
       time: new Date(r.created_at || "").toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "2-digit",

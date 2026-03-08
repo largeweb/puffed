@@ -101,7 +101,7 @@ export async function GET() {
     
     // Get current hammock occupants (people who smoked 12-5 PM today on weekend)
     const currentOccupants = isWeekend ? await db.prepare(`
-      SELECT c.id, u.username, c.brand, c.product, c.rating, c.photo_url as photoUrl,
+      SELECT c.id, u.username, c.brand, c.product, c.rating, c.image_url as photoUrl,
              datetime(c.created_at, 'unixepoch') as time
       FROM checkins c
       JOIN users u ON c.user_id = u.id

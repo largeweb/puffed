@@ -108,7 +108,7 @@ export async function GET() {
           u.id as user_id,
           u.username,
           COALESCE((SELECT COUNT(*) FROM checkins WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) as checkins,
-          COALESCE((SELECT COUNT(*) FROM likes WHERE liker_id = u.id AND created_at >= ? AND created_at <= ?), 0) as likes_given,
+          COALESCE((SELECT COUNT(*) FROM likes WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) as likes_given,
           COALESCE((SELECT COUNT(*) FROM likes l JOIN checkins c ON l.checkin_id = c.id WHERE c.user_id = u.id AND l.created_at >= ? AND l.created_at <= ?), 0) as likes_received,
           COALESCE((SELECT COUNT(*) FROM comments WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) as comments_given,
           COALESCE((SELECT COUNT(*) FROM comments cm JOIN checkins c ON cm.checkin_id = c.id WHERE c.user_id = u.id AND cm.created_at >= ? AND cm.created_at <= ?), 0) as comments_received,
@@ -147,7 +147,7 @@ export async function GET() {
         c.product,
         c.rating,
         c.review,
-        c.photo_url as photoUrl,
+        c.image_url as photoUrl,
         COALESCE((SELECT COUNT(*) FROM likes WHERE checkin_id = c.id), 0) as likes,
         COALESCE((SELECT COUNT(*) FROM comments WHERE checkin_id = c.id), 0) as comments,
         (c.rating * 2 + COALESCE((SELECT COUNT(*) FROM likes WHERE checkin_id = c.id), 0) * 3 + COALESCE((SELECT COUNT(*) FROM comments WHERE checkin_id = c.id), 0) * 5) as engagementScore
@@ -188,11 +188,11 @@ export async function GET() {
     const socialButterflyQuery = await db.prepare(`
       SELECT 
         u.username,
-        COALESCE((SELECT COUNT(*) FROM likes WHERE liker_id = u.id AND created_at >= ? AND created_at <= ?), 0) as likesGiven,
+        COALESCE((SELECT COUNT(*) FROM likes WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) as likesGiven,
         COALESCE((SELECT COUNT(*) FROM comments WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) as commentsGiven,
         COALESCE((SELECT COUNT(*) FROM follows WHERE follower_id = u.id AND created_at >= ? AND created_at <= ?), 0) as followsGiven,
         (
-          COALESCE((SELECT COUNT(*) FROM likes WHERE liker_id = u.id AND created_at >= ? AND created_at <= ?), 0) +
+          COALESCE((SELECT COUNT(*) FROM likes WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) +
           COALESCE((SELECT COUNT(*) FROM comments WHERE user_id = u.id AND created_at >= ? AND created_at <= ?), 0) * 2 +
           COALESCE((SELECT COUNT(*) FROM follows WHERE follower_id = u.id AND created_at >= ? AND created_at <= ?), 0)
         ) as totalGiven

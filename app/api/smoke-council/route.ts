@@ -258,7 +258,7 @@ export async function GET() {
       FROM checkins c
       JOIN users u ON c.user_id = u.id
       WHERE c.created_at >= ? 
-        AND c.photo_url IS NOT NULL
+        AND c.image_url IS NOT NULL
         AND u.id NOT IN (${[...usedUserIds].map(() => '?').join(',') || "''"})
       GROUP BY u.id
       ORDER BY photo_count DESC

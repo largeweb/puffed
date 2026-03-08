@@ -100,7 +100,7 @@ export async function GET() {
     // Get tonight's rooftop smokers (6 PM - 2 AM)
     const rooftopSmokers = await db
       .prepare(`
-        SELECT c.id, u.username, c.brand, c.product, c.rating, c.photo_url as photoUrl,
+        SELECT c.id, u.username, c.brand, c.product, c.rating, c.image_url as photoUrl,
                c.review, c.created_at as createdAt
         FROM checkins c
         JOIN users u ON c.user_id = u.id

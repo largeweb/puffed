@@ -58,7 +58,7 @@ export async function GET() {
     const { env } = getRequestContext();
     const DB = env.DB as D1Database;
     const cookieStore = await cookies();
-    const sessionId = cookieStore.get("session_id")?.value;
+    const sessionId = cookieStore.get("session")?.value;
 
     if (!sessionId) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
@@ -66,7 +66,7 @@ export async function GET() {
 
     // Get user
     const user = await DB.prepare(
-      `SELECT id, username, created_at FROM users WHERE session_id = ?`
+      `SELECT id, username, created_at FROM users WHERE session = ?`
     ).bind(sessionId).first<{ id: string; username: string; created_at: number }>();
 
     if (!user) {

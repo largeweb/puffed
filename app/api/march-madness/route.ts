@@ -24,7 +24,7 @@ const TOURNAMENT_BRANDS = [
 ];
 
 async function getCurrentUserId(request: NextRequest, db: D1Database): Promise<string | null> {
-  const sessionId = request.cookies.get("session_id")?.value;
+  const sessionId = request.cookies.get("session")?.value;
   if (!sessionId) return null;
 
   const session = await db

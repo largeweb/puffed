@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
   // User's check-ins this week
   const thisWeekCheckins = await db.prepare(`
-    SELECT id, brand, product, rating, review, photo_url, created_at, category
+    SELECT id, brand, product, rating, review, image_url, created_at, category
     FROM checkins 
     WHERE user_id = ? AND created_at >= ?
     ORDER BY created_at DESC
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     product: string | null;
     rating: number;
     review: string | null;
-    photo_url: string | null;
+    image_url: string | null;
     created_at: number;
     category: string | null;
   }>();
@@ -230,7 +230,7 @@ export async function GET(request: NextRequest) {
       brand: c.brand,
       product: c.product,
       rating: c.rating,
-      photoUrl: c.photo_url,
+      photoUrl: c.image_url,
       createdAt: c.created_at,
     })),
   });

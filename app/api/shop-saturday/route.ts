@@ -9,7 +9,7 @@ interface CheckinRow {
   brand: string;
   product: string | null;
   rating: number;
-  photo_url: string | null;
+  image_url: string | null;
   created_at: string;
   review: string | null;
 }
@@ -94,7 +94,7 @@ export async function GET() {
 
   // Today's shoppers (Saturday check-ins during shop hours 9 AM - 6 PM)
   const todayShoppersQuery = `
-    SELECT c.id, u.username, c.brand, c.product, c.rating, c.photo_url, c.created_at, c.review
+    SELECT c.id, u.username, c.brand, c.product, c.rating, c.image_url, c.created_at, c.review
     FROM checkins c
     JOIN users u ON c.user_id = u.id
     WHERE DATE(c.created_at, '-5 hours') = ?
@@ -250,7 +250,7 @@ export async function GET() {
       brand: s.brand,
       product: s.product,
       rating: s.rating,
-      photoUrl: s.photo_url,
+      photoUrl: s.image_url,
       time: s.created_at,
       review: s.review
     })),

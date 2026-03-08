@@ -76,7 +76,7 @@ export async function GET(request: Request) {
   
   // Get current Sunday smokers (today's check-ins if Sunday)
   const currentSitters = isSunday ? await db.prepare(`
-    SELECT c.id, u.username, c.brand, c.product, c.rating, c.photo_url as photoUrl, c.created_at
+    SELECT c.id, u.username, c.brand, c.product, c.rating, c.image_url as photoUrl, c.created_at
     FROM checkins c
     JOIN users u ON c.user_id = u.id
     WHERE c.created_at >= ?

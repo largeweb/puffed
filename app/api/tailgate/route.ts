@@ -164,7 +164,7 @@ export async function GET() {
     let currentUser: { id: number; username: string } | null = null;
     if (sessionToken) {
       const userResult = await db
-        .prepare("SELECT id, username FROM users WHERE session_token = ?")
+        .prepare("SELECT id, username FROM users WHERE session = ?")
         .bind(sessionToken)
         .first<{ id: number; username: string }>();
       if (userResult) {
@@ -180,7 +180,7 @@ export async function GET() {
     // Get today's tailgate smokers (weekend afternoons/evenings)
     const tailgatersQuery = `
       SELECT 
-        c.id, u.username, c.brand, c.product, c.rating, c.photo_url as photoUrl,
+        c.id, u.username, c.brand, c.product, c.rating, c.image_url as photoUrl,
         c.review, c.created_at
       FROM checkins c
       JOIN users u ON c.user_id = u.id

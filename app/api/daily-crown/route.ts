@@ -35,11 +35,11 @@ export async function GET(request: Request) {
     const sessionMatch = cookieHeader.match(/session=([^;]+)/);
     const sessionToken = sessionMatch ? sessionMatch[1] : null;
 
-    let userId: number | null = null;
+    let userId: string | null = null;
     if (sessionToken) {
       const sessionResult = await db.prepare(
-        "SELECT user_id FROM sessions WHERE token = ? AND expires_at > ?"
-      ).bind(sessionToken, Math.floor(Date.now() / 1000)).first<{ user_id: number }>();
+        "SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?"
+      ).bind(sessionToken, Math.floor(Date.now() / 1000)).first<{ user_id: string }>();
       if (sessionResult) {
         userId = sessionResult.user_id;
       }
@@ -237,9 +237,9 @@ export async function GET(request: Request) {
     }
 
     // Check if current user has ever held the crown
-    const userCrownCount = userId ? pastChampions.filter(p => p.userId === userId).length + 
-                           (champion?.userId === userId ? 1 : 0) : 0;
-    const isCurrentChampion = champion?.userId === userId;
+    const userCrownCount = userId ? pastChampions.filter(p => String(p.userId) === userId).length + 
+                           (String(champion?.userId) === userId ? 1 : 0) : 0;
+    const isCurrentChampion = String(champion?.userId) === userId;
 
     // Crown stats
     const crownStats = {

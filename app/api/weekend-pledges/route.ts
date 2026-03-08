@@ -96,7 +96,7 @@ async function checkPledgeCompletion(
     case "photo": {
       const result = await db.prepare(`
         SELECT id FROM checkins 
-        WHERE user_id = ? AND created_at >= ? AND created_at <= ? AND photo_url IS NOT NULL
+        WHERE user_id = ? AND created_at >= ? AND created_at <= ? AND image_url IS NOT NULL
         LIMIT 1
       `).bind(userId, weekendStart, weekendEnd).first();
       return !!result;

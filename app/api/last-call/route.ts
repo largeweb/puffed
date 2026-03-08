@@ -30,7 +30,7 @@ export async function GET() {
     // Get tonight's last call check-ins
     const tonightQuery = `
       SELECT 
-        c.id, c.brand, c.product, c.rating, c.review, c.photo_url, c.created_at,
+        c.id, c.brand, c.product, c.rating, c.review, c.image_url, c.created_at,
         u.username,
         (SELECT COUNT(*) FROM likes WHERE checkin_id = c.id) as like_count,
         (SELECT COUNT(*) FROM comments WHERE checkin_id = c.id) as comment_count

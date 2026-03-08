@@ -11,12 +11,12 @@ export async function GET() {
 
     // Get current user
     const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("session_token")?.value;
+    const sessionToken = cookieStore.get("session")?.value;
     let currentUserId: number | null = null;
 
     if (sessionToken) {
       const userResult = await db
-        .prepare("SELECT id FROM users WHERE session_token = ?")
+        .prepare("SELECT id FROM users WHERE session = ?")
         .bind(sessionToken)
         .first<{ id: number }>();
       if (userResult) currentUserId = userResult.id;

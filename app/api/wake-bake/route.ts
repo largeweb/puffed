@@ -37,7 +37,7 @@ export async function GET() {
     }
 
     const user = await env.DB.prepare(
-      "SELECT id, username FROM users WHERE session_token = ?"
+      "SELECT id, username FROM users WHERE session = ?"
     )
       .bind(session)
       .first<{ id: number; username: string }>();

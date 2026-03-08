@@ -137,7 +137,7 @@ export async function GET() {
           c.brand,
           c.product,
           c.rating,
-          c.photo_url as photoUrl,
+          c.image_url as photoUrl,
           c.review,
           c.created_at as createdAt
         FROM checkins c

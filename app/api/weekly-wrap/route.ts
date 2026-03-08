@@ -6,7 +6,7 @@ export const runtime = "edge";
 
 export async function GET() {
   const cookieStore = await cookies();
-  const sessionId = cookieStore.get("session_id")?.value;
+  const sessionId = cookieStore.get("session")?.value;
   
   if (!sessionId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -64,7 +64,7 @@ export async function GET() {
     const photosCount = await db.prepare(`
       SELECT COUNT(*) as count 
       FROM checkins 
-      WHERE user_id = ? AND created_at >= ? AND photo_url IS NOT NULL
+      WHERE user_id = ? AND created_at >= ? AND image_url IS NOT NULL
     `).bind(userId, thisWeekISO).first<{ count: number }>();
 
     // Last week's check-ins
@@ -163,7 +163,7 @@ export async function GET() {
     // Top highlights (best engagement)
     const highlights = await db.prepare(`
       SELECT 
-        c.id, c.brand, c.product, c.rating, c.photo_url,
+        c.id, c.brand, c.product, c.rating, c.image_url,
         (SELECT COUNT(*) FROM likes WHERE checkin_id = c.id) as likes
       FROM checkins c
       WHERE c.user_id = ? AND c.created_at >= ?
@@ -174,7 +174,7 @@ export async function GET() {
       brand: string;
       product: string | null;
       rating: number;
-      photo_url: string | null;
+      image_url: string | null;
       likes: number;
     }>();
 
