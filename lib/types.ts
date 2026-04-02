@@ -1013,3 +1013,21 @@ export interface MostLovedResponse {
   checkins: MostLovedCheckin[];
   count: number;
 }
+
+export interface NeedsLoveCheckin {
+  id: string;
+  user_id: string;
+  username: string;
+  brand: string;
+  product: string | null;
+  rating: number;
+  review: string | null;
+  photo_url: string | null;
+  category: string;
+  created_at: number;
+}
+
+export interface NeedsLoveResponse {
+  checkins: NeedsLoveCheckin[];
+  count: number;
+}

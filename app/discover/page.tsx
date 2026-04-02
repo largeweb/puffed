@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck, FiCamera, FiMenu } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse, MostLovedCheckin, MostLovedResponse } from "@/lib/types";
+import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse, MostLovedCheckin, MostLovedResponse, NeedsLoveCheckin, NeedsLoveResponse } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -385,6 +385,7 @@ export default function DiscoverPage() {
   } | null>(null);
   const [isSunday, setIsSunday] = useState(false);
   const [mostLoved, setMostLoved] = useState<MostLovedCheckin[]>([]);
+  const [needsLove, setNeedsLove] = useState<NeedsLoveCheckin[]>([]);
   const [tasteTwin, setTasteTwin] = useState<{
     twin: { username: string; shared_brands: string[]; overlap_count: number; is_following: boolean } | null;
     all_matches?: Array<{ username: string; shared_brands: string[]; overlap_count: number; is_following: boolean }>;
@@ -422,6 +423,7 @@ export default function DiscoverPage() {
     loadSuggestedUsers();
     loadFeatured();
     loadMostLoved();
+    loadNeedsLove();
     loadTasteTwin();
     loadTodayStats();
     
@@ -544,6 +546,16 @@ export default function DiscoverPage() {
       setMostLoved(data.checkins || []);
     } catch (error) {
       console.error("Most loved error:", error);
+    }
+  }
+
+  async function loadNeedsLove() {
+    try {
+      const res = await fetch("/api/needs-love");
+      const data: NeedsLoveResponse = await res.json();
+      setNeedsLove(data.checkins || []);
+    } catch (error) {
+      console.error("Needs love error:", error);
     }
   }
 
@@ -1056,6 +1068,62 @@ export default function DiscoverPage() {
                 title={`${featured.brand} - Featured on Puffed`}
                 prominent
               />
+            </div>
+          </motion.div>
+        )}
+
+        {/* Needs Love Section - Recent check-ins with no engagement */}
+        {!searchQuery && needsLove.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass rounded-2xl p-4 mb-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-pink-400">💕</span>
+              <h2 className="font-semibold">Show Some Love</h2>
+              <span className="text-xs text-gray-500 ml-auto">No engagement yet</span>
+            </div>
+            <p className="text-sm text-gray-400 mb-4">These recent smokes need some appreciation!</p>
+            <div className="space-y-3">
+              {needsLove.slice(0, 3).map((checkin) => {
+                const category = getCategory(checkin.category as import("@/lib/types").CheckinCategory);
+                return (
+                  <Link
+                    key={checkin.id}
+                    href={`/checkin/${checkin.id}`}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-pink-500/10 border border-white/10 hover:border-pink-500/30 transition-all group"
+                  >
+                    {checkin.photo_url ? (
+                      <img
+                        src={checkin.photo_url}
+                        alt={checkin.brand}
+                        className="w-12 h-12 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className={`w-12 h-12 rounded-lg ${category.bgColor} flex items-center justify-center text-xl`}>
+                        {category.emoji}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-500 text-sm">@{checkin.username}</span>
+                        {checkin.rating && (
+                          <span className="text-yellow-500 text-xs flex items-center gap-0.5">
+                            <FiStar className="w-3 h-3" /> {checkin.rating}
+                          </span>
+                        )}
+                      </div>
+                      <div className="font-medium truncate">
+                        {checkin.brand}{checkin.product ? ` ${checkin.product}` : ''}
+                      </div>
+                    </div>
+                    <div className="text-pink-400 group-hover:scale-110 transition-transform">
+                      <FiHeart className="w-5 h-5" />
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </motion.div>
         )}
