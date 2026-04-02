@@ -15,6 +15,15 @@ export interface Update {
 }
 
 export const changelog: Update[] = [
+  // ===== April 2026 =====
+  {
+    date: '2026-04-02',
+    type: 'feature',
+    title: 'April Fresh Start 🌱',
+    description: 'New month, fresh vibes! The Discover page now shows a special April banner in the first week with your monthly stats and encouragement to log your April smokes.',
+    status: 'live',
+    icon: '🌱'
+  },
   // ===== March 2026 =====
   {
     date: '2026-03-08',

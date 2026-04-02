@@ -384,6 +384,8 @@ export default function DiscoverPage() {
     streakChampions?: Array<{ username: string; currentStreak: number; bestStreak: number }>;
   } | null>(null);
   const [isSunday, setIsSunday] = useState(false);
+  const [isAprilFirstWeek, setIsAprilFirstWeek] = useState(false);
+  const [aprilStats, setAprilStats] = useState<{ smokesThisMonth: number; daysActive: number } | null>(null);
   const [mostLoved, setMostLoved] = useState<MostLovedCheckin[]>([]);
   const [needsLove, setNeedsLove] = useState<NeedsLoveCheckin[]>([]);
   const [tasteTwin, setTasteTwin] = useState<{
@@ -434,7 +436,30 @@ export default function DiscoverPage() {
     if (isSundayNow) {
       loadSundayDigest();
     }
+    
+    // Check if it's the first week of April
+    const isApril = today.getMonth() === 3; // 0-indexed, April = 3
+    const dayOfMonth = today.getDate();
+    if (isApril && dayOfMonth <= 7) {
+      setIsAprilFirstWeek(true);
+      loadAprilStats();
+    }
   }, []);
+  
+  async function loadAprilStats() {
+    try {
+      const res = await fetch("/api/my-month-stats");
+      if (res.ok) {
+        const data = await res.json() as { smokesThisMonth?: number; daysActive?: number };
+        setAprilStats({
+          smokesThisMonth: data.smokesThisMonth || 0,
+          daysActive: data.daysActive || 0
+        });
+      }
+    } catch (error) {
+      console.error("April stats error:", error);
+    }
+  }
 
   async function loadSundayDigest() {
     try {
@@ -927,6 +952,42 @@ export default function DiscoverPage() {
                 </p>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* April Fresh Start Banner - First week of April only */}
+        {isAprilFirstWeek && !searchQuery && activeCategory === "all" && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-green-500/15 via-emerald-500/10 to-teal-500/15 border border-green-500/30"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🌱</span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-green-200">April Fresh Start</h3>
+                <p className="text-xs text-green-400/80">
+                  {aprilStats && aprilStats.smokesThisMonth > 0 
+                    ? `You've logged ${aprilStats.smokesThisMonth} smoke${aprilStats.smokesThisMonth === 1 ? '' : 's'} this month across ${aprilStats.daysActive} day${aprilStats.daysActive === 1 ? '' : 's'}!`
+                    : "New month, fresh vibes. Log your first April smoke! 🚬"
+                  }
+                </p>
+              </div>
+              {aprilStats && aprilStats.smokesThisMonth === 0 && (
+                <Link
+                  href="/checkin"
+                  className="px-4 py-2 rounded-lg bg-green-500/20 text-green-300 text-sm font-medium hover:bg-green-500/30 transition-all border border-green-500/30"
+                >
+                  Log First Smoke →
+                </Link>
+              )}
+              {aprilStats && aprilStats.smokesThisMonth > 0 && aprilStats.smokesThisMonth < 5 && (
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-300">{5 - aprilStats.smokesThisMonth}</div>
+                  <div className="text-xs text-green-400/60">to April 5 badge</div>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
 
