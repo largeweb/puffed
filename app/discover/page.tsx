@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck, FiCamera, FiMenu } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse, MostLovedCheckin, MostLovedResponse, NeedsLoveCheckin, NeedsLoveResponse } from "@/lib/types";
+import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse, MostLovedCheckin, MostLovedResponse, NeedsLoveCheckin, NeedsLoveResponse, WeekendChallengeResponse } from "@/lib/types";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -396,6 +396,7 @@ export default function DiscoverPage() {
   const [nightOwlMessage, setNightOwlMessage] = useState("");
   const [isFriday, setIsFriday] = useState(false);
   const [fridayMessage, setFridayMessage] = useState("");
+  const [weekendChallenge, setWeekendChallenge] = useState<WeekendChallengeResponse | null>(null);
 
   // Load user for sidebar
   useEffect(() => {
@@ -431,6 +432,7 @@ export default function DiscoverPage() {
     loadMostLoved();
     loadNeedsLove();
     loadTasteTwin();
+    loadWeekendChallenge();
     loadTodayStats();
     
     // Check if it's Sunday and load special content
@@ -634,6 +636,16 @@ export default function DiscoverPage() {
       setTasteTwin(data);
     } catch (error) {
       console.error("Taste twin error:", error);
+    }
+  }
+
+  async function loadWeekendChallenge() {
+    try {
+      const res = await fetch("/api/weekend-challenge");
+      const data: WeekendChallengeResponse = await res.json();
+      setWeekendChallenge(data);
+    } catch (error) {
+      console.error("Weekend challenge error:", error);
     }
   }
 
@@ -1087,6 +1099,52 @@ export default function DiscoverPage() {
                 <span>Celebrate</span>
                 <span className="text-lg">🎉</span>
               </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Weekend Challenge Banner */}
+        {weekendChallenge?.active && weekendChallenge.challenge && !searchQuery && activeCategory === "all" && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-indigo-500/15 via-purple-500/10 to-pink-500/15 border border-indigo-500/30"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <motion.span 
+                className="text-3xl"
+                animate={{ scale: [1, 1.15, 1] }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+              >
+                {weekendChallenge.challenge.emoji}
+              </motion.span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-indigo-200">{weekendChallenge.challenge.title}</h3>
+                  {weekendChallenge.challenge.completed && (
+                    <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs">✓ Complete!</span>
+                  )}
+                </div>
+                <p className="text-xs text-indigo-400/80">{weekendChallenge.challenge.description}</p>
+              </div>
+              <span className="text-xs text-indigo-400/60">{weekendChallenge.timeRemaining}</span>
+            </div>
+            {/* Progress Bar */}
+            <div className="relative h-3 rounded-full bg-indigo-900/40 overflow-hidden">
+              <motion.div
+                className={`absolute inset-y-0 left-0 rounded-full ${weekendChallenge.challenge.completed ? 'bg-gradient-to-r from-green-500 to-emerald-400' : 'bg-gradient-to-r from-indigo-500 to-purple-500'}`}
+                initial={{ width: 0 }}
+                animate={{ width: `${weekendChallenge.challenge.progress}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
+            </div>
+            <div className="flex justify-between items-center mt-2 text-xs">
+              <span className="text-indigo-300">
+                {weekendChallenge.challenge.current} / {weekendChallenge.challenge.goal}
+              </span>
+              <span className="text-indigo-400/60">
+                🏆 {weekendChallenge.challenge.reward}
+              </span>
             </div>
           </motion.div>
         )}

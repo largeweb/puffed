@@ -21,7 +21,7 @@ export const changelog: Update[] = [
     type: 'feature',
     title: 'TGIF Friday Vibes 🎊',
     description: 'Happy Friday! The Discover page now shows a special TGIF banner every Friday with fun messages to kick off your weekend smoking session.',
-    status: 'live',
+    status: 'coming-soon',
     icon: '🎊'
   },
   {
@@ -29,7 +29,7 @@ export const changelog: Update[] = [
     type: 'feature',
     title: 'Night Owl Mode 🦉',
     description: 'Late night smoker? The Discover page now shows a special Night Owl banner from 8pm-4am with encouraging messages for the after-dark crew.',
-    status: 'live',
+    status: 'coming-soon',
     icon: '🦉'
   },
   {
@@ -37,7 +37,7 @@ export const changelog: Update[] = [
     type: 'feature',
     title: 'April Fresh Start 🌱',
     description: 'New month, fresh vibes! The Discover page now shows a special April banner in the first week with your monthly stats and encouragement to log your April smokes.',
-    status: 'live',
+    status: 'coming-soon',
     icon: '🌱'
   },
   // ===== March 2026 =====

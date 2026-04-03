@@ -1031,3 +1031,29 @@ export interface NeedsLoveResponse {
   checkins: NeedsLoveCheckin[];
   count: number;
 }
+
+// Weekend Challenge
+export interface WeekendChallenge {
+  type: 'checkins' | 'engagement' | 'reactions' | 'community';
+  title: string;
+  description: string;
+  emoji: string;
+  current: number;
+  goal: number;
+  progress: number;
+  completed: boolean;
+  reward: string;
+}
+
+export interface WeekendChallengeResponse {
+  active: boolean;
+  challenge: WeekendChallenge | null;
+  weekendStats: {
+    checkins: number;
+    likes: number;
+    reactions: number;
+    comments: number;
+    newUsers: number;
+  };
+  timeRemaining: string;
+}
