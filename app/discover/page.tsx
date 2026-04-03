@@ -392,6 +392,8 @@ export default function DiscoverPage() {
     twin: { username: string; shared_brands: string[]; overlap_count: number; is_following: boolean } | null;
     all_matches?: Array<{ username: string; shared_brands: string[]; overlap_count: number; is_following: boolean }>;
   } | null>(null);
+  const [isNightOwlHours, setIsNightOwlHours] = useState(false);
+  const [nightOwlMessage, setNightOwlMessage] = useState("");
 
   // Load user for sidebar
   useEffect(() => {
@@ -443,6 +445,21 @@ export default function DiscoverPage() {
     if (isApril && dayOfMonth <= 7) {
       setIsAprilFirstWeek(true);
       loadAprilStats();
+    }
+    
+    // Check if it's Night Owl hours (8pm - 4am)
+    const hour = today.getHours();
+    const isNightTime = hour >= 20 || hour < 4;
+    setIsNightOwlHours(isNightTime);
+    if (isNightTime) {
+      const messages = [
+        "The best smokes happen after dark 🌙",
+        "Night owls unite — log your late-night smoke 🦉",
+        "Quiet hours, quality smokes ✨",
+        "The moon's out, time to light up 🌑",
+        "Late night crew checking in? 🔥"
+      ];
+      setNightOwlMessage(messages[Math.floor(Math.random() * messages.length)]);
     }
   }, []);
   
@@ -987,6 +1004,36 @@ export default function DiscoverPage() {
                   <div className="text-xs text-green-400/60">to April 5 badge</div>
                 </div>
               )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Night Owl Mode - 8pm to 4am */}
+        {isNightOwlHours && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && !isSunday && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-indigo-500/15 via-purple-500/10 to-violet-500/15 border border-indigo-500/30"
+          >
+            <div className="flex items-center gap-3">
+              <motion.span 
+                className="text-3xl"
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+              >
+                🦉
+              </motion.span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-indigo-200">Night Owl Mode</h3>
+                <p className="text-xs text-indigo-400/80">{nightOwlMessage}</p>
+              </div>
+              <Link
+                href="/checkin"
+                className="px-4 py-2 rounded-lg bg-indigo-500/20 text-indigo-300 text-sm font-medium hover:bg-indigo-500/30 transition-all border border-indigo-500/30 flex items-center gap-2"
+              >
+                <span>Log Smoke</span>
+                <span className="text-lg">🌙</span>
+              </Link>
             </div>
           </motion.div>
         )}

@@ -19,6 +19,14 @@ export const changelog: Update[] = [
   {
     date: '2026-04-02',
     type: 'feature',
+    title: 'Night Owl Mode 🦉',
+    description: 'Late night smoker? The Discover page now shows a special Night Owl banner from 8pm-4am with encouraging messages for the after-dark crew.',
+    status: 'live',
+    icon: '🦉'
+  },
+  {
+    date: '2026-04-02',
+    type: 'feature',
     title: 'April Fresh Start 🌱',
     description: 'New month, fresh vibes! The Discover page now shows a special April banner in the first week with your monthly stats and encouragement to log your April smokes.',
     status: 'live',
