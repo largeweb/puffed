@@ -17,6 +17,14 @@ export interface Update {
 export const changelog: Update[] = [
   // ===== April 2026 =====
   {
+    date: '2026-04-03',
+    type: 'feature',
+    title: 'TGIF Friday Vibes 🎊',
+    description: 'Happy Friday! The Discover page now shows a special TGIF banner every Friday with fun messages to kick off your weekend smoking session.',
+    status: 'live',
+    icon: '🎊'
+  },
+  {
     date: '2026-04-02',
     type: 'feature',
     title: 'Night Owl Mode 🦉',

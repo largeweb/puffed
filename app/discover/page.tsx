@@ -394,6 +394,8 @@ export default function DiscoverPage() {
   } | null>(null);
   const [isNightOwlHours, setIsNightOwlHours] = useState(false);
   const [nightOwlMessage, setNightOwlMessage] = useState("");
+  const [isFriday, setIsFriday] = useState(false);
+  const [fridayMessage, setFridayMessage] = useState("");
 
   // Load user for sidebar
   useEffect(() => {
@@ -460,6 +462,27 @@ export default function DiscoverPage() {
         "Late night crew checking in? 🔥"
       ];
       setNightOwlMessage(messages[Math.floor(Math.random() * messages.length)]);
+    }
+    
+    // Check if it's Friday (TGIF vibes!)
+    const isFridayNow = today.getDay() === 5;
+    setIsFriday(isFridayNow);
+    if (isFridayNow) {
+      const isEvening = hour >= 17;
+      const morningMessages = [
+        "Happy Friday! The weekend starts now 🎉",
+        "Friday morning — treat yourself to something good ☕",
+        "You made it! Any weekend smoke plans? 🙌",
+        "TGIF! What's on the menu this weekend? ✨"
+      ];
+      const eveningMessages = [
+        "TGIF! Time to celebrate with your favorite smoke 🎉",
+        "Friday night, perfect for something special 🔥",
+        "Cheers to the weekend! What's lighting up tonight? 🍻",
+        "Friday vibes: Good company, great smoke 🌙"
+      ];
+      const messages = isEvening ? eveningMessages : morningMessages;
+      setFridayMessage(messages[Math.floor(Math.random() * messages.length)]);
     }
   }, []);
   
@@ -1009,7 +1032,7 @@ export default function DiscoverPage() {
         )}
 
         {/* Night Owl Mode - 8pm to 4am */}
-        {isNightOwlHours && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && !isSunday && (
+        {isNightOwlHours && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && !isSunday && !isFriday && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1033,6 +1056,36 @@ export default function DiscoverPage() {
               >
                 <span>Log Smoke</span>
                 <span className="text-lg">🌙</span>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* TGIF Friday Banner */}
+        {isFriday && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && !isSunday && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-purple-500/15 via-pink-500/10 to-amber-500/15 border border-purple-500/30"
+          >
+            <div className="flex items-center gap-3">
+              <motion.span 
+                className="text-3xl"
+                animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              >
+                🎊
+              </motion.span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-purple-200">TGIF!</h3>
+                <p className="text-xs text-purple-400/80">{fridayMessage}</p>
+              </div>
+              <Link
+                href="/checkin"
+                className="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-300 text-sm font-medium hover:bg-purple-500/30 transition-all border border-purple-500/30 flex items-center gap-2"
+              >
+                <span>Celebrate</span>
+                <span className="text-lg">🎉</span>
               </Link>
             </div>
           </motion.div>
