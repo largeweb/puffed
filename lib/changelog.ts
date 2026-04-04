@@ -17,6 +17,22 @@ export interface Update {
 export const changelog: Update[] = [
   // ===== April 2026 =====
   {
+    date: '2026-04-04',
+    type: 'feature',
+    title: 'Public Stats API 📊',
+    description: 'New /api/public-stats endpoint shows platform health without requiring login: total users, check-ins, likes, follows, trending brands, and top users this week.',
+    status: 'coming-soon',
+    icon: '📊'
+  },
+  {
+    date: '2026-04-03',
+    type: 'feature',
+    title: 'Weekend Challenge 🏆',
+    description: 'Gamified weekend goals! A community challenge banner appears Friday evening through Sunday showing progress toward shared weekend milestones.',
+    status: 'coming-soon',
+    icon: '🏆'
+  },
+  {
     date: '2026-04-03',
     type: 'feature',
     title: 'TGIF Friday Vibes 🎊',
