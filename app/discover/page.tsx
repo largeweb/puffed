@@ -396,6 +396,8 @@ export default function DiscoverPage() {
   const [nightOwlMessage, setNightOwlMessage] = useState("");
   const [isFriday, setIsFriday] = useState(false);
   const [fridayMessage, setFridayMessage] = useState("");
+  const [isSaturday, setIsSaturday] = useState(false);
+  const [saturdayMessage, setSaturdayMessage] = useState("");
   const [weekendChallenge, setWeekendChallenge] = useState<WeekendChallengeResponse | null>(null);
 
   // Load user for sidebar
@@ -485,6 +487,34 @@ export default function DiscoverPage() {
       ];
       const messages = isEvening ? eveningMessages : morningMessages;
       setFridayMessage(messages[Math.floor(Math.random() * messages.length)]);
+    }
+    
+    // Check if it's Saturday (Weekend Warrior mode!)
+    const isSaturdayNow = today.getDay() === 6;
+    setIsSaturday(isSaturdayNow);
+    if (isSaturdayNow) {
+      const isEvening = hour >= 17;
+      const isMorning = hour < 12;
+      const morningMessages = [
+        "Saturday morning — perfect time for a slow smoke ☕",
+        "Weekend warrior mode: activated 🏆",
+        "Lazy Saturday vibes — what's first on the list? 🌅",
+        "Saturday brunch & a good smoke? Yes please ✨"
+      ];
+      const afternoonMessages = [
+        "Saturday afternoon smoke session 🔥",
+        "Peak weekend energy — enjoy it! 🌞",
+        "The weekend is yours. Light something good 💨",
+        "Saturday chill: relax, unwind, smoke 🍃"
+      ];
+      const eveningMessages = [
+        "Saturday night lights — time to shine 🌟",
+        "Weekend warrior: still going strong 🔥",
+        "Saturday evening = premium smoke time 🌙",
+        "The night is young — what's in the humidor? ✨"
+      ];
+      const messages = isMorning ? morningMessages : (isEvening ? eveningMessages : afternoonMessages);
+      setSaturdayMessage(messages[Math.floor(Math.random() * messages.length)]);
     }
   }, []);
   
@@ -1098,6 +1128,36 @@ export default function DiscoverPage() {
               >
                 <span>Celebrate</span>
                 <span className="text-lg">🎉</span>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Saturday Smoke Banner */}
+        {isSaturday && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-yellow-500/15 border border-amber-500/30"
+          >
+            <div className="flex items-center gap-3">
+              <motion.span 
+                className="text-3xl"
+                animate={{ scale: [1, 1.1, 1], y: [0, -3, 0] }}
+                transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+              >
+                🏆
+              </motion.span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-amber-200">Saturday Smoke!</h3>
+                <p className="text-xs text-amber-400/80">{saturdayMessage}</p>
+              </div>
+              <Link
+                href="/checkin"
+                className="px-4 py-2 rounded-lg bg-amber-500/20 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-all border border-amber-500/30 flex items-center gap-2"
+              >
+                <span>Log It</span>
+                <span className="text-lg">🔥</span>
               </Link>
             </div>
           </motion.div>
