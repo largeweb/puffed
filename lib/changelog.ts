@@ -15,13 +15,30 @@ export interface Update {
 }
 
 export const changelog: Update[] = [
+  // ===== June 2026 =====
+  {
+    date: '2026-06-14',
+    type: 'feature',
+    title: 'Sunday Suggestion 💭',
+    description: 'Get personalized cigar recommendations every Sunday! Based on community favorites and what\'s trending, with a fresh suggestion each week.',
+    status: 'live',
+    icon: '💭'
+  },
+  {
+    date: '2026-06-14',
+    type: 'announcement',
+    title: 'Deploys Restored! 🎉',
+    description: 'After 70 days, our deployment pipeline is fully operational again. Expect faster updates and new features rolling out!',
+    status: 'live',
+    icon: '🚀'
+  },
   // ===== April 2026 =====
   {
     date: '2026-04-04',
     type: 'feature',
     title: 'Public Stats API 📊',
     description: 'New /api/public-stats endpoint shows platform health without requiring login: total users, check-ins, likes, follows, trending brands, and top users this week.',
-    status: 'coming-soon',
+    status: 'live',
     icon: '📊'
   },
   {
@@ -29,7 +46,7 @@ export const changelog: Update[] = [
     type: 'feature',
     title: 'Weekend Challenge 🏆',
     description: 'Gamified weekend goals! A community challenge banner appears Friday evening through Sunday showing progress toward shared weekend milestones.',
-    status: 'coming-soon',
+    status: 'live',
     icon: '🏆'
   },
   {
@@ -37,7 +54,7 @@ export const changelog: Update[] = [
     type: 'feature',
     title: 'TGIF Friday Vibes 🎊',
     description: 'Happy Friday! The Discover page now shows a special TGIF banner every Friday with fun messages to kick off your weekend smoking session.',
-    status: 'coming-soon',
+    status: 'live',
     icon: '🎊'
   },
   {
@@ -45,7 +62,7 @@ export const changelog: Update[] = [
     type: 'feature',
     title: 'Night Owl Mode 🦉',
     description: 'Late night smoker? The Discover page now shows a special Night Owl banner from 8pm-4am with encouraging messages for the after-dark crew.',
-    status: 'coming-soon',
+    status: 'live',
     icon: '🦉'
   },
   {
@@ -53,7 +70,7 @@ export const changelog: Update[] = [
     type: 'feature',
     title: 'April Fresh Start 🌱',
     description: 'New month, fresh vibes! The Discover page now shows a special April banner in the first week with your monthly stats and encouragement to log your April smokes.',
-    status: 'coming-soon',
+    status: 'live',
     icon: '🌱'
   },
   // ===== March 2026 =====
