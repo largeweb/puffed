@@ -399,6 +399,8 @@ export default function DiscoverPage() {
   const [fridayMessage, setFridayMessage] = useState("");
   const [isSaturday, setIsSaturday] = useState(false);
   const [saturdayMessage, setSaturdayMessage] = useState("");
+  const [isMonday, setIsMonday] = useState(false);
+  const [mondayMessage, setMondayMessage] = useState("");
   const [weekendChallenge, setWeekendChallenge] = useState<WeekendChallengeResponse | null>(null);
 
   // Load user for sidebar
@@ -516,6 +518,34 @@ export default function DiscoverPage() {
       ];
       const messages = isMorning ? morningMessages : (isEvening ? eveningMessages : afternoonMessages);
       setSaturdayMessage(messages[Math.floor(Math.random() * messages.length)]);
+    }
+
+    // Check if it's Monday (Start the week right!)
+    const isMondayNow = today.getDay() === 1;
+    setIsMonday(isMondayNow);
+    if (isMondayNow) {
+      const isMorning = hour < 12;
+      const isEvening = hour >= 17;
+      const morningMessages = [
+        "Monday morning — start the week with a good smoke ☕",
+        "New week, new smokes. What's first? 🚀",
+        "Monday motivation: log your first smoke of the week ✨",
+        "Rise and grind — then unwind with a quality smoke 🌅"
+      ];
+      const afternoonMessages = [
+        "Midday Monday break? You've earned it 💨",
+        "Monday momentum building — keep it going 🔥",
+        "Power through the week with a quick smoke session 💪",
+        "Monday afternoon vibes — log a smoke 🌤️"
+      ];
+      const eveningMessages = [
+        "Monday survived — time for a victory smoke 🏆",
+        "You made it through Monday. Celebrate! 🎉",
+        "Monday evening wind-down time 🌙",
+        "Start the week strong — end the day stronger 💫"
+      ];
+      const messages = isMorning ? morningMessages : (isEvening ? eveningMessages : afternoonMessages);
+      setMondayMessage(messages[Math.floor(Math.random() * messages.length)]);
     }
   }, []);
   
@@ -1203,6 +1233,36 @@ export default function DiscoverPage() {
               >
                 <span>Log It</span>
                 <span className="text-lg">🔥</span>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Monday Momentum Banner */}
+        {isMonday && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-blue-500/15 via-cyan-500/10 to-teal-500/15 border border-blue-500/30"
+          >
+            <div className="flex items-center gap-3">
+              <motion.span 
+                className="text-3xl"
+                animate={{ scale: [1, 1.1, 1], x: [0, 2, 0] }}
+                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              >
+                🚀
+              </motion.span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-blue-200">Monday Momentum!</h3>
+                <p className="text-xs text-blue-400/80">{mondayMessage}</p>
+              </div>
+              <Link
+                href="/checkin"
+                className="px-4 py-2 rounded-lg bg-blue-500/20 text-blue-300 text-sm font-medium hover:bg-blue-500/30 transition-all border border-blue-500/30 flex items-center gap-2"
+              >
+                <span>Start Week</span>
+                <span className="text-lg">💪</span>
               </Link>
             </div>
           </motion.div>

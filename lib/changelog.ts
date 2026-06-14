@@ -19,6 +19,14 @@ export const changelog: Update[] = [
   {
     date: '2026-06-14',
     type: 'feature',
+    title: 'Monday Momentum 🚀',
+    description: 'Start your week right! A motivational banner appears every Monday with time-of-day messages to encourage logging your first smoke of the week.',
+    status: 'live',
+    icon: '🚀'
+  },
+  {
+    date: '2026-06-14',
+    type: 'feature',
     title: 'Sunday Suggestion 💭',
     description: 'Get personalized cigar recommendations every Sunday! Based on community favorites and what\'s trending, with a fresh suggestion each week.',
     status: 'live',
