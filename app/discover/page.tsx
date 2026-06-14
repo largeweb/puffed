@@ -382,6 +382,7 @@ export default function DiscoverPage() {
     weekendStats?: { totalCheckins: number; totalLikes: number; activeUsers: number };
     newMembers?: Array<{ username: string; joinedAt: number; checkins: number; followers: number }>;
     streakChampions?: Array<{ username: string; currentStreak: number; bestStreak: number }>;
+    sundaySuggestion?: { brand: string; cigar: string; avgRating: number; totalSmokes: number; topFlavors: string[] } | null;
   } | null>(null);
   const [isSunday, setIsSunday] = useState(false);
   const [isAprilFirstWeek, setIsAprilFirstWeek] = useState(false);
@@ -1032,6 +1033,50 @@ export default function DiscoverPage() {
                 <p className="mt-2 text-xs text-amber-400/60 text-center">
                   Keep the streak alive — log a smoke every day! 🔥
                 </p>
+              </div>
+            )}
+
+            {/* Sunday Suggestion - Try This Today */}
+            {sundayDigest.sundaySuggestion && (
+              <div className="mt-4 pt-3 border-t border-amber-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">💡</span>
+                  <span className="text-sm font-medium text-amber-200">Try This Sunday</span>
+                  <span className="text-xs text-amber-400/60 ml-auto">
+                    Community favorite
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="font-medium text-amber-100">{sundayDigest.sundaySuggestion.brand}</div>
+                      <div className="text-sm text-amber-200/80">{sundayDigest.sundaySuggestion.cigar}</div>
+                      {sundayDigest.sundaySuggestion.topFlavors.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {sundayDigest.sundaySuggestion.topFlavors.map((flavor) => (
+                            <span key={flavor} className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+                              {flavor}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-lg font-bold text-amber-300">
+                        {sundayDigest.sundaySuggestion.avgRating}★
+                      </div>
+                      <div className="text-xs text-amber-400/60">
+                        {sundayDigest.sundaySuggestion.totalSmokes} smoke{sundayDigest.sundaySuggestion.totalSmokes !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <Link
+                    href="/checkin"
+                    className="mt-3 block text-center px-4 py-2 rounded-lg bg-amber-500/20 text-amber-200 text-sm font-medium hover:bg-amber-500/30 transition-all border border-amber-500/30"
+                  >
+                    Log Your Sunday Smoke →
+                  </Link>
+                </div>
               </div>
             )}
           </motion.div>

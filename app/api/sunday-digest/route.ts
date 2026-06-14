@@ -22,6 +22,14 @@ interface NewMember {
   followers: number;
 }
 
+interface SundaySuggestion {
+  brand: string;
+  cigar: string;
+  avgRating: number;
+  totalSmokes: number;
+  topFlavors: string[];
+}
+
 interface SundayDigest {
   isEnjoySunday: boolean;
   thisWeek: {
@@ -54,6 +62,7 @@ interface SundayDigest {
   };
   newMembers: NewMember[];
   streakChampions: StreakChampion[];
+  sundaySuggestion: SundaySuggestion | null;
 }
 
 export async function GET(): Promise<Response> {
@@ -322,6 +331,61 @@ export async function GET(): Promise<Response> {
       engagementGrowth: calcGrowth(thisWeekEngagement, lastWeekEngagement),
     };
 
+    // Sunday Suggestion - recommend a highly-rated cigar
+    const suggestionResult = await db.prepare(`
+      SELECT 
+        c.brand,
+        c.cigar,
+        AVG(c.rating) as avg_rating,
+        COUNT(*) as total_smokes,
+        GROUP_CONCAT(DISTINCT c.flavor_tags) as all_flavors
+      FROM checkins c
+      WHERE c.rating >= 4
+        AND c.brand IS NOT NULL 
+        AND c.brand != ''
+        AND c.cigar IS NOT NULL
+        AND c.cigar != ''
+      GROUP BY LOWER(c.brand), LOWER(c.cigar)
+      HAVING COUNT(*) >= 2
+      ORDER BY avg_rating DESC, total_smokes DESC
+      LIMIT 10
+    `).all<{
+      brand: string;
+      cigar: string;
+      avg_rating: number;
+      total_smokes: number;
+      all_flavors: string | null;
+    }>();
+
+    // Pick a semi-random suggestion based on today's date
+    const suggestions = suggestionResult.results || [];
+    let sundaySuggestion: SundaySuggestion | null = null;
+    if (suggestions.length > 0) {
+      const dayOfYear = Math.floor((Date.now() - new Date(nowDate.getFullYear(), 0, 0).getTime()) / 86400000);
+      const pick = suggestions[dayOfYear % suggestions.length];
+      
+      // Extract unique flavors from all check-ins of this cigar
+      const flavors: string[] = [];
+      if (pick.all_flavors) {
+        const allTags = pick.all_flavors.split(',').map(f => f.trim()).filter(Boolean);
+        const seen = new Set<string>();
+        for (const tag of allTags) {
+          if (!seen.has(tag.toLowerCase())) {
+            seen.add(tag.toLowerCase());
+            flavors.push(tag);
+          }
+        }
+      }
+      
+      sundaySuggestion = {
+        brand: pick.brand,
+        cigar: pick.cigar,
+        avgRating: Math.round(pick.avg_rating * 10) / 10,
+        totalSmokes: pick.total_smokes,
+        topFlavors: flavors.slice(0, 3),
+      };
+    }
+
     // Generate a fun community message based on growth
     let communityMessage = "Happy Sunday! ☕ Take it easy and enjoy your smoke.";
     if (growth.usersGrowth > 50) {
@@ -362,6 +426,7 @@ export async function GET(): Promise<Response> {
       },
       newMembers,
       streakChampions,
+      sundaySuggestion,
     };
 
     return Response.json(digest);
