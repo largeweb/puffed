@@ -11,6 +11,7 @@ import TimeOfDayBanner from "@/components/TimeOfDayBanner";
 import CommunityPulse from "@/components/CommunityPulse";
 import RandomDiscovery from "@/components/RandomDiscovery";
 import SmokeStreak from "@/components/SmokeStreak";
+import SmokeBuddies from "@/components/SmokeBuddies";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1114,6 +1115,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <SmokeStreak />
+          </div>
+        )}
+
+        {/* Smoke Buddies - People with similar taste */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <SmokeBuddies />
           </div>
         )}
 
