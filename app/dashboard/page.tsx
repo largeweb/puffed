@@ -2513,6 +2513,47 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
+        {/* Last Call Sunday - shows Sunday evening (6 PM+) */}
+        {(() => {
+          const now = new Date();
+          const isSundayEvening = now.getDay() === 0 && now.getHours() >= 18;
+          if (!isSundayEvening) return null;
+          
+          const hour = now.getHours();
+          const getMessage = () => {
+            if (hour >= 22) return { emoji: "🌙", title: "Sunday Night Cap", text: "One last smoke before the week begins..." };
+            if (hour >= 20) return { emoji: "🍷", title: "Last Call Sunday", text: "Final weekend smoke? Make it count!" };
+            return { emoji: "🌅", title: "Sunday Wind-down", text: "Evening smoke before the week ahead" };
+          };
+          const msg = getMessage();
+          
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.04 }}
+              className="glass rounded-2xl p-4 mb-6 border border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 to-purple-500/5"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{msg.emoji}</span>
+                  <div>
+                    <h3 className="text-sm font-medium text-indigo-300">{msg.title}</h3>
+                    <p className="text-xs text-gray-400">{msg.text}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 text-xs font-medium hover:bg-indigo-500/30 transition-all flex items-center gap-1.5"
+                >
+                  <FiPlus size={12} />
+                  Log it
+                </button>
+              </div>
+            </motion.div>
+          );
+        })()}
+
         {/* Weekly Recap Section (shows on weekends) */}
         {weeklyRecap && weeklyRecap.isSunday && weeklyRecap.weekStats.checkins > 0 && (
           <motion.div
