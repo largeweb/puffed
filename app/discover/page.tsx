@@ -406,6 +406,8 @@ export default function DiscoverPage() {
   const [wednesdayMessage, setWednesdayMessage] = useState("");
   const [isTuesday, setIsTuesday] = useState(false);
   const [tuesdayMessage, setTuesdayMessage] = useState("");
+  const [isThursday, setIsThursday] = useState(false);
+  const [thursdayMessage, setThursdayMessage] = useState("");
   const [weekendChallenge, setWeekendChallenge] = useState<WeekendChallengeResponse | null>(null);
 
   // Load user for sidebar
@@ -631,6 +633,34 @@ export default function DiscoverPage() {
       ];
       const tuesdayMessages = isTuesMorning ? morningMessages : (isTuesEvening ? eveningMessages : afternoonMessages);
       setTuesdayMessage(tuesdayMessages[Math.floor(Math.random() * tuesdayMessages.length)]);
+    }
+    
+    // Check if it's Thursday (Throwback Thursday - reminisce!)
+    const isThursdayNow = today.getDay() === 4;
+    setIsThursday(isThursdayNow);
+    if (isThursdayNow) {
+      const isThursMorning = hour < 12;
+      const isThursEvening = hour >= 17;
+      const morningMessages = [
+        "Throwback Thursday! 📸 What's your all-time favorite smoke?",
+        "Thursday morning — revisit a classic ☕",
+        "Remember that perfect smoke? Light it up again 🔥",
+        "Nostalgic vibes — what got you into smoking? 🌅"
+      ];
+      const afternoonMessages = [
+        "Throwback Thursday! 🎬 Share your smoke story",
+        "Afternoon throwback — pair with memories 💭",
+        "That smoke you'll never forget? Today's the day 🏆",
+        "Classic choices for a classic Thursday 🎯"
+      ];
+      const eveningMessages = [
+        "Thursday evening throwback — old favorites 🌙",
+        "Revisit the classics tonight 🌆",
+        "Throwback time — what's your origin story? 📖",
+        "Almost Friday — celebrate with a nostalgic pick 🎉"
+      ];
+      const thursdayMessages = isThursMorning ? morningMessages : (isThursEvening ? eveningMessages : afternoonMessages);
+      setThursdayMessage(thursdayMessages[Math.floor(Math.random() * thursdayMessages.length)]);
     }
   }, []);
   
@@ -1438,6 +1468,36 @@ export default function DiscoverPage() {
               >
                 <span>Log It</span>
                 <span className="text-lg">⛰️</span>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Throwback Thursday Banner */}
+        {isThursday && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-purple-500/15 via-violet-500/10 to-fuchsia-500/15 border border-purple-500/30"
+          >
+            <div className="flex items-center gap-3">
+              <motion.span 
+                className="text-3xl"
+                animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.05, 1] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              >
+                📸
+              </motion.span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-purple-200">Throwback Thursday!</h3>
+                <p className="text-xs text-purple-400/80">{thursdayMessage}</p>
+              </div>
+              <Link
+                href="/history"
+                className="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-300 text-sm font-medium hover:bg-purple-500/30 transition-all border border-purple-500/30 flex items-center gap-2"
+              >
+                <span>My History</span>
+                <span className="text-lg">📖</span>
               </Link>
             </div>
           </motion.div>
