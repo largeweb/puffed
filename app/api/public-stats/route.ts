@@ -68,6 +68,11 @@ export async function GET() {
       LIMIT 5
     `).all();
 
+    // Get most recent check-in timestamp (community pulse)
+    const lastCheckin = await env.DB.prepare(`
+      SELECT created_at FROM checkins ORDER BY created_at DESC LIMIT 1
+    `).first<{ created_at: number }>();
+
     return NextResponse.json({
       stats: {
         users: userCount?.count || 0,
@@ -81,6 +86,7 @@ export async function GET() {
       activity: {
         checkinsToday: todayCheckins?.count || 0,
         checkinsThisWeek: weekCheckins?.count || 0,
+        lastCheckinAt: lastCheckin?.created_at || null,
       },
       trending: {
         topBrands: (topBrands.results || []).map((row: Record<string, unknown>) => ({

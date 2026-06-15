@@ -410,6 +410,7 @@ export default function DiscoverPage() {
   const [thursdayMessage, setThursdayMessage] = useState("");
   const [weekendChallenge, setWeekendChallenge] = useState<WeekendChallengeResponse | null>(null);
   const [checkinsThisWeek, setCheckinsThisWeek] = useState<number | null>(null);
+  const [lastCheckinAt, setLastCheckinAt] = useState<number | null>(null);
 
   // Load user for sidebar
   useEffect(() => {
@@ -830,8 +831,9 @@ export default function DiscoverPage() {
   async function loadWeeklyActivity() {
     try {
       const res = await fetch("/api/public-stats");
-      const data: { activity?: { checkinsThisWeek?: number } } = await res.json();
+      const data: { activity?: { checkinsThisWeek?: number; lastCheckinAt?: number | null } } = await res.json();
       setCheckinsThisWeek(data.activity?.checkinsThisWeek ?? 0);
+      setLastCheckinAt(data.activity?.lastCheckinAt ?? null);
     } catch (error) {
       console.error("Weekly activity error:", error);
     }
@@ -1043,6 +1045,22 @@ export default function DiscoverPage() {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Community Pulse - Shows last activity */}
+        {lastCheckinAt && !searchQuery && (
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mb-4">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span>
+              Last smoke logged {(() => {
+                const seconds = Math.floor(Date.now() / 1000 - lastCheckinAt);
+                if (seconds < 60) return "just now";
+                if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+                if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+                return `${Math.floor(seconds / 86400)}d ago`;
+              })()}
+            </span>
+          </div>
+        )}
+
         {/* Sunday Coffee Banner - Only on Sundays */}
         {isSunday && sundayDigest && !searchQuery && activeCategory === "all" && (
           <motion.div
