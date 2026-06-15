@@ -409,6 +409,7 @@ export default function DiscoverPage() {
   const [isThursday, setIsThursday] = useState(false);
   const [thursdayMessage, setThursdayMessage] = useState("");
   const [weekendChallenge, setWeekendChallenge] = useState<WeekendChallengeResponse | null>(null);
+  const [checkinsThisWeek, setCheckinsThisWeek] = useState<number | null>(null);
 
   // Load user for sidebar
   useEffect(() => {
@@ -445,6 +446,7 @@ export default function DiscoverPage() {
     loadNeedsLove();
     loadTasteTwin();
     loadWeekendChallenge();
+    loadWeeklyActivity();
     loadTodayStats();
     
     // Check if it's Sunday and load special content
@@ -822,6 +824,16 @@ export default function DiscoverPage() {
       setWeekendChallenge(data);
     } catch (error) {
       console.error("Weekend challenge error:", error);
+    }
+  }
+
+  async function loadWeeklyActivity() {
+    try {
+      const res = await fetch("/api/public-stats");
+      const data: { activity?: { checkinsThisWeek?: number } } = await res.json();
+      setCheckinsThisWeek(data.activity?.checkinsThisWeek ?? 0);
+    } catch (error) {
+      console.error("Weekly activity error:", error);
     }
   }
 
@@ -1383,8 +1395,47 @@ export default function DiscoverPage() {
           </motion.div>
         )}
 
-        {/* Monday Momentum Banner */}
-        {isMonday && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && (
+        {/* Be the First This Week Banner - Shows when no check-ins yet this week */}
+        {isMonday && checkinsThisWeek === 0 && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-6 p-5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-green-500/15 to-teal-500/20 border-2 border-emerald-500/40 shadow-lg shadow-emerald-500/10"
+          >
+            <div className="flex items-center gap-4">
+              <motion.div 
+                className="text-4xl"
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  rotate: [0, 10, -10, 0]
+                }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+              >
+                🏆
+              </motion.div>
+              <div className="flex-1">
+                <h3 className="font-bold text-emerald-200 text-lg">Be the First This Week!</h3>
+                <p className="text-sm text-emerald-400/80">No one has logged a smoke yet — claim the crown! 👑</p>
+              </div>
+              <Link
+                href="/checkin"
+                className="px-5 py-3 rounded-xl bg-emerald-500/30 text-emerald-200 text-sm font-bold hover:bg-emerald-500/40 transition-all border border-emerald-400/40 flex items-center gap-2 shadow-lg"
+              >
+                <span>Log First Smoke</span>
+                <motion.span 
+                  className="text-xl"
+                  animate={{ y: [0, -3, 0] }}
+                  transition={{ repeat: Infinity, duration: 0.8 }}
+                >
+                  🔥
+                </motion.span>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Monday Momentum Banner - Only show if there are already check-ins */}
+        {isMonday && checkinsThisWeek !== 0 && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
