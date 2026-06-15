@@ -2594,13 +2594,21 @@ export default function DashboardPage() {
                     <p className="text-xs text-gray-400">{msg.text}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setShowForm(true)}
-                  className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-xs font-medium hover:bg-white/20 transition-all flex items-center gap-1.5"
-                >
-                  <FiPlus size={12} />
-                  Log it
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/weekly-wrap"
+                    className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 text-xs font-medium hover:bg-white/10 transition-all flex items-center gap-1"
+                  >
+                    📊 Last week
+                  </Link>
+                  <button
+                    onClick={() => setShowForm(true)}
+                    className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-xs font-medium hover:bg-white/20 transition-all flex items-center gap-1.5"
+                  >
+                    <FiPlus size={12} />
+                    Log it
+                  </button>
+                </div>
               </div>
             </motion.div>
           );
