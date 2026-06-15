@@ -12,6 +12,7 @@ import QuickComments from "@/components/QuickComments";
 import MobileSidebar from "@/app/components/MobileSidebar";
 import { FLAVOR_TAGS } from "@/lib/flavors";
 import { CATEGORIES, getCategory } from "@/lib/categories";
+import { getTodaysTip } from "@/lib/daily-tips";
 
 interface CheckinWithLikes extends Checkin {
   like_count?: number;
@@ -1060,6 +1061,29 @@ export default function DiscoverPage() {
             </span>
           </div>
         )}
+
+        {/* Daily Tip */}
+        {!searchQuery && activeCategory === "all" && (() => {
+          const tip = getTodaysTip();
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 rounded-xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-500/20"
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-xl flex-shrink-0">{tip.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-blue-400 uppercase tracking-wide">💡 Tip of the Day</span>
+                    <span className="text-xs text-gray-500 capitalize">• {tip.category}</span>
+                  </div>
+                  <p className="text-sm text-gray-300">{tip.tip}</p>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })()}
 
         {/* Sunday Coffee Banner - Only on Sundays */}
         {isSunday && sundayDigest && !searchQuery && activeCategory === "all" && (
