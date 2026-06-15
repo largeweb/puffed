@@ -19,6 +19,14 @@ export const changelog: Update[] = [
   {
     date: '2026-06-15',
     type: 'feature',
+    title: 'Your Flavor Journey 🎨',
+    description: 'See your personal flavor profile at a glance! Track your top flavors, diversity score, recently tasted notes, and discover unexplored flavors waiting for you. A beautiful visual map of your smoking journey.',
+    status: 'live',
+    icon: '🎨'
+  },
+  {
+    date: '2026-06-15',
+    type: 'feature',
     title: 'Monday Wisdom Quotes 💬',
     description: 'Start your week with inspiration! The Monday banner now features a rotating weekly quote about cigar culture and mindful smoking. A new quote each week to set the tone.',
     status: 'live',
