@@ -7,6 +7,7 @@ import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart,
 import Link from "next/link";
 import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse, MostLovedCheckin, MostLovedResponse, NeedsLoveCheckin, NeedsLoveResponse, WeekendChallengeResponse, WeeklyProgressResponse } from "@/lib/types";
 import WeeklyProgress from "@/components/WeeklyProgress";
+import TimeOfDayBanner from "@/components/TimeOfDayBanner";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1085,6 +1086,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <WeeklyProgress data={weeklyProgress} loading={weeklyProgressLoading} />
+          </div>
+        )}
+
+        {/* Time of Day Banner */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <TimeOfDayBanner />
           </div>
         )}
 
