@@ -2554,6 +2554,58 @@ export default function DashboardPage() {
           );
         })()}
 
+        {/* Monday Motivation - Fresh start to the week */}
+        {(() => {
+          const now = new Date();
+          const isMonday = now.getDay() === 1;
+          if (!isMonday) return null;
+          
+          const hour = now.getHours();
+          const getMessage = () => {
+            if (hour < 6) return { emoji: "🌙", title: "Early Bird Monday", text: "Up before dawn? Start the week right!", color: "indigo" };
+            if (hour < 10) return { emoji: "☕", title: "Monday Morning Ritual", text: "Coffee & a smoke to kickstart the week", color: "amber" };
+            if (hour < 14) return { emoji: "💪", title: "Monday Momentum", text: "Building energy for the week ahead", color: "green" };
+            if (hour < 18) return { emoji: "⚡", title: "Powering Through Monday", text: "Midday smoke break earned!", color: "blue" };
+            if (hour < 21) return { emoji: "🎯", title: "Monday Wind-down", text: "You made it through Monday!", color: "purple" };
+            return { emoji: "🌟", title: "Monday Complete", text: "One down, four to go. Treat yourself!", color: "amber" };
+          };
+          const msg = getMessage();
+          const colorClasses = {
+            indigo: "border-indigo-500/30 from-indigo-500/10 to-purple-500/5 text-indigo-300",
+            amber: "border-amber-500/30 from-amber-500/10 to-orange-500/5 text-amber-300",
+            green: "border-green-500/30 from-green-500/10 to-emerald-500/5 text-green-300",
+            blue: "border-blue-500/30 from-blue-500/10 to-cyan-500/5 text-blue-300",
+            purple: "border-purple-500/30 from-purple-500/10 to-pink-500/5 text-purple-300"
+          };
+          const colors = colorClasses[msg.color as keyof typeof colorClasses];
+          
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.04 }}
+              className={`glass rounded-2xl p-4 mb-6 border bg-gradient-to-br ${colors}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{msg.emoji}</span>
+                  <div>
+                    <h3 className="text-sm font-medium">{msg.title}</h3>
+                    <p className="text-xs text-gray-400">{msg.text}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-xs font-medium hover:bg-white/20 transition-all flex items-center gap-1.5"
+                >
+                  <FiPlus size={12} />
+                  Log it
+                </button>
+              </div>
+            </motion.div>
+          );
+        })()}
+
         {/* Weekly Recap Section (shows on weekends) */}
         {weeklyRecap && weeklyRecap.isSunday && weeklyRecap.weekStats.checkins > 0 && (
           <motion.div
