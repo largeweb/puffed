@@ -18,6 +18,28 @@ import { BrandAutocomplete } from "@/components/BrandAutocomplete";
 import { InstallBanner } from "@/components/InstallBanner";
 import SmokeHeatmap from "@/components/SmokeHeatmap";
 
+// Monday motivation quotes - rotates weekly
+const MONDAY_QUOTES = [
+  { text: "A good cigar is like a good conversation—it should be savored, not rushed.", author: "Groucho Marx" },
+  { text: "Sometimes a cigar is just a cigar, but the best ones are an experience.", author: "Sigmund Freud" },
+  { text: "There is nothing more agreeable than having a place where one can go and throw oneself on the floor.", author: "Fyodor Dostoevsky" },
+  { text: "Start each week with purpose, and smoke with intention.", author: "Puffed Wisdom" },
+  { text: "The ritual of a good smoke teaches patience.", author: "Cuban Proverb" },
+  { text: "A cigar ought not to be smoked solely with the mouth, but with the hand, the eyes, and with the spirit.", author: "Zino Davidoff" },
+  { text: "Life is too short to smoke bad cigars.", author: "John Huston" },
+  { text: "Monday is a fresh canvas. What flavor will you paint it with?", author: "Puffed Wisdom" },
+  { text: "The best time to plant a tree was 20 years ago. The second best time is now. Same goes for your smoke break.", author: "Puffed Wisdom" },
+  { text: "A cigar is the perfect companion for reflection.", author: "Winston Churchill" },
+];
+
+// Get week number (deterministic quote selection)
+function getWeekNumber(date: Date): number {
+  const start = new Date(date.getFullYear(), 0, 1);
+  const diff = date.getTime() - start.getTime();
+  const oneWeek = 604800000;
+  return Math.floor(diff / oneWeek);
+}
+
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   return (
     <div>
@@ -2610,6 +2632,17 @@ export default function DashboardPage() {
                   </button>
                 </div>
               </div>
+              {/* Weekly Quote */}
+              {(() => {
+                const weekNum = getWeekNumber(now);
+                const quote = MONDAY_QUOTES[weekNum % MONDAY_QUOTES.length];
+                return (
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <p className="text-xs italic text-gray-300">&quot;{quote.text}&quot;</p>
+                    <p className="text-xs text-gray-500 mt-1">— {quote.author}</p>
+                  </div>
+                );
+              })()}
             </motion.div>
           );
         })()}
