@@ -18,6 +18,14 @@ export const changelog: Update[] = [
   // ===== June 2026 =====
   {
     date: '2026-06-15',
+    type: 'improvement',
+    title: 'Monday Weekly Recap Link 📊',
+    description: 'The Monday Motivation banner now includes a quick link to view your last week\'s stats! Reflect on your previous week before starting fresh.',
+    status: 'live',
+    icon: '📊'
+  },
+  {
+    date: '2026-06-15',
     type: 'feature',
     title: 'Tasty Tuesday 🎨',
     description: 'Tuesdays are for flavor exploration! Time-aware banners encourage you to try new flavors, explore pairings, and discover new favorites. Links directly to the Flavors page for easy discovery.',
