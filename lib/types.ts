@@ -1057,3 +1057,11 @@ export interface WeekendChallengeResponse {
   };
   timeRemaining: string;
 }
+
+export interface WeeklyProgressResponse {
+  checkinsThisWeek: number;
+  weeklyGoal: number;
+  progress: number;
+  streak: number;
+  weekStartDate: string;
+}
