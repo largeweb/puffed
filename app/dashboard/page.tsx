@@ -2640,6 +2640,17 @@ export default function DashboardPage() {
                 </Link>
               </div>
             )}
+
+            {/* Link to Full Weekly Wrap */}
+            <div className="pt-4 mt-4 border-t border-white/5 text-center">
+              <Link
+                href="/weekly-wrap"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white text-sm font-semibold hover:opacity-90 transition-all"
+              >
+                📊 View Full Weekly Wrap →
+              </Link>
+              <p className="text-xs text-gray-500 mt-2">Interactive slideshow of your week</p>
+            </div>
           </motion.div>
         )}
 

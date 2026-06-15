@@ -18,6 +18,14 @@ export const changelog: Update[] = [
   // ===== June 2026 =====
   {
     date: '2026-06-14',
+    type: 'improvement',
+    title: 'Weekly Wrap Access from Dashboard 📊',
+    description: 'On Sundays, your weekly recap section now includes a quick link to the full interactive Weekly Wrap slideshow! Explore your stats, rank, and highlights in a beautiful presentation format.',
+    status: 'live',
+    icon: '📊'
+  },
+  {
+    date: '2026-06-14',
     type: 'feature',
     title: 'Sunday Vibes Banner 🌙',
     description: 'Time-aware Sunday messages! Morning, afternoon, and evening-specific prompts to match your Sunday mood — from lazy morning slow burns to Sunday wind-down sessions.',
