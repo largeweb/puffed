@@ -402,6 +402,8 @@ export default function DiscoverPage() {
   const [sundayMessage, setSundayMessage] = useState("");
   const [isMonday, setIsMonday] = useState(false);
   const [mondayMessage, setMondayMessage] = useState("");
+  const [isWednesday, setIsWednesday] = useState(false);
+  const [wednesdayMessage, setWednesdayMessage] = useState("");
   const [weekendChallenge, setWeekendChallenge] = useState<WeekendChallengeResponse | null>(null);
 
   // Load user for sidebar
@@ -571,6 +573,34 @@ export default function DiscoverPage() {
       ];
       const messages = isMorning ? morningMessages : (isEvening ? eveningMessages : afternoonMessages);
       setMondayMessage(messages[Math.floor(Math.random() * messages.length)]);
+    }
+    
+    // Check if it's Wednesday (Hump Day!)
+    const isWednesdayNow = today.getDay() === 3;
+    setIsWednesday(isWednesdayNow);
+    if (isWednesdayNow) {
+      const isWedMorning = hour < 12;
+      const isWedEvening = hour >= 17;
+      const morningMessages = [
+        "Happy Hump Day! 🐫 Halfway there!",
+        "Wednesday morning — the week's peak is here ⛰️",
+        "Midweek momentum — keep it rolling ☕",
+        "Wednesday vibes: downhill from here! 🎢"
+      ];
+      const afternoonMessages = [
+        "Hump Day afternoon — you've got this! 💪",
+        "Wednesday halfway mark — treat yourself 🔥",
+        "Peak of the week — enjoy the view 🌄",
+        "Midweek smoke break? Earned it 🍃"
+      ];
+      const eveningMessages = [
+        "Wednesday evening — downhill from here! 🌙",
+        "Hump Day conquered — celebrate! 🎉",
+        "Midweek wind-down — almost weekend 🌆",
+        "Wednesday night smoke — you made it 🏆"
+      ];
+      const messages = isWedMorning ? morningMessages : (isWedEvening ? eveningMessages : afternoonMessages);
+      setWednesdayMessage(messages[Math.floor(Math.random() * messages.length)]);
     }
   }, []);
   
@@ -1318,6 +1348,36 @@ export default function DiscoverPage() {
               >
                 <span>Start Week</span>
                 <span className="text-lg">💪</span>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Hump Day Wednesday Banner */}
+        {isWednesday && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-green-500/10 to-teal-500/15 border border-emerald-500/30"
+          >
+            <div className="flex items-center gap-3">
+              <motion.span 
+                className="text-3xl"
+                animate={{ y: [0, -5, 0], scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              >
+                🐫
+              </motion.span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-emerald-200">Hump Day!</h3>
+                <p className="text-xs text-emerald-400/80">{wednesdayMessage}</p>
+              </div>
+              <Link
+                href="/checkin"
+                className="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-300 text-sm font-medium hover:bg-emerald-500/30 transition-all border border-emerald-500/30 flex items-center gap-2"
+              >
+                <span>Log It</span>
+                <span className="text-lg">⛰️</span>
               </Link>
             </div>
           </motion.div>
