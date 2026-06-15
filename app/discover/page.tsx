@@ -9,6 +9,7 @@ import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, Trendin
 import WeeklyProgress from "@/components/WeeklyProgress";
 import TimeOfDayBanner from "@/components/TimeOfDayBanner";
 import CommunityPulse from "@/components/CommunityPulse";
+import RandomDiscovery from "@/components/RandomDiscovery";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1149,6 +1150,13 @@ export default function DiscoverPage() {
             </motion.div>
           );
         })()}
+
+        {/* Random Discovery */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <RandomDiscovery />
+          </div>
+        )}
 
         {/* Sunday Coffee Banner - Only on Sundays */}
         {isSunday && sundayDigest && !searchQuery && activeCategory === "all" && (
