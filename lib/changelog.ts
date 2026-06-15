@@ -19,6 +19,14 @@ export const changelog: Update[] = [
   {
     date: '2026-06-14',
     type: 'feature',
+    title: 'Sunday Vibes Banner 🌙',
+    description: 'Time-aware Sunday messages! Morning, afternoon, and evening-specific prompts to match your Sunday mood — from lazy morning slow burns to Sunday wind-down sessions.',
+    status: 'live',
+    icon: '🌙'
+  },
+  {
+    date: '2026-06-14',
+    type: 'feature',
     title: 'Monday Momentum 🚀',
     description: 'Start your week right! A motivational banner appears every Monday with time-of-day messages to encourage logging your first smoke of the week.',
     status: 'live',

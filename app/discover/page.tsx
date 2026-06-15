@@ -399,6 +399,7 @@ export default function DiscoverPage() {
   const [fridayMessage, setFridayMessage] = useState("");
   const [isSaturday, setIsSaturday] = useState(false);
   const [saturdayMessage, setSaturdayMessage] = useState("");
+  const [sundayMessage, setSundayMessage] = useState("");
   const [isMonday, setIsMonday] = useState(false);
   const [mondayMessage, setMondayMessage] = useState("");
   const [weekendChallenge, setWeekendChallenge] = useState<WeekendChallengeResponse | null>(null);
@@ -446,6 +447,30 @@ export default function DiscoverPage() {
     setIsSunday(isSundayNow);
     if (isSundayNow) {
       loadSundayDigest();
+      const hour = today.getHours();
+      const isMorning = hour < 12;
+      const isEvening = hour >= 17;
+      const morningMessages = [
+        "Sunday morning slow burn — savor the quiet ☕",
+        "Lazy Sunday vibes — take your time 🌅",
+        "Sunday Funday! What's lighting up? ✨",
+        "Perfect morning for a reflective smoke 🍃"
+      ];
+      const afternoonMessages = [
+        "Sunday afternoon session — relax and enjoy 🌤️",
+        "Weekend's almost over — make it count 💨",
+        "Sunday chill: good smoke, good vibes 🎶",
+        "Afternoon wind-down — log your smoke 🌿"
+      ];
+      const eveningMessages = [
+        "Sunday wind-down — one last smoke before the week 🌙",
+        "End the weekend right with something special ✨",
+        "Sunday evening reflections — what a week! 💭",
+        "Peaceful Sunday night — perfect smoke weather 🌠",
+        "Ease into Monday with a Sunday night smoke 😌"
+      ];
+      const sundayMsgs = isMorning ? morningMessages : (isEvening ? eveningMessages : afternoonMessages);
+      setSundayMessage(sundayMsgs[Math.floor(Math.random() * sundayMsgs.length)]);
     }
     
     // Check if it's the first week of April
@@ -1203,6 +1228,36 @@ export default function DiscoverPage() {
               >
                 <span>Celebrate</span>
                 <span className="text-lg">🎉</span>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Sunday Wind-Down Banner */}
+        {isSunday && sundayMessage && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-purple-500/15 via-indigo-500/10 to-blue-500/15 border border-purple-500/30"
+          >
+            <div className="flex items-center gap-3">
+              <motion.span 
+                className="text-3xl"
+                animate={{ scale: [1, 1.05, 1], opacity: [1, 0.8, 1] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              >
+                🌙
+              </motion.span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-purple-200">Sunday Vibes</h3>
+                <p className="text-xs text-purple-400/80">{sundayMessage}</p>
+              </div>
+              <Link
+                href="/checkin"
+                className="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-300 text-sm font-medium hover:bg-purple-500/30 transition-all border border-purple-500/30 flex items-center gap-2"
+              >
+                <span>Log It</span>
+                <span className="text-lg">💭</span>
               </Link>
             </div>
           </motion.div>
