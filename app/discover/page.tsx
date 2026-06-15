@@ -12,6 +12,7 @@ import CommunityPulse from "@/components/CommunityPulse";
 import RandomDiscovery from "@/components/RandomDiscovery";
 import SmokeStreak from "@/components/SmokeStreak";
 import SmokeBuddies from "@/components/SmokeBuddies";
+import BrandExplorer from "@/components/BrandExplorer";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1122,6 +1123,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <SmokeBuddies />
+          </div>
+        )}
+
+        {/* Brand Explorer - Discover brands based on your flavor preferences */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <BrandExplorer />
           </div>
         )}
 
