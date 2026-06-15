@@ -404,6 +404,8 @@ export default function DiscoverPage() {
   const [mondayMessage, setMondayMessage] = useState("");
   const [isWednesday, setIsWednesday] = useState(false);
   const [wednesdayMessage, setWednesdayMessage] = useState("");
+  const [isTuesday, setIsTuesday] = useState(false);
+  const [tuesdayMessage, setTuesdayMessage] = useState("");
   const [weekendChallenge, setWeekendChallenge] = useState<WeekendChallengeResponse | null>(null);
 
   // Load user for sidebar
@@ -601,6 +603,34 @@ export default function DiscoverPage() {
       ];
       const messages = isWedMorning ? morningMessages : (isWedEvening ? eveningMessages : afternoonMessages);
       setWednesdayMessage(messages[Math.floor(Math.random() * messages.length)]);
+    }
+    
+    // Check if it's Tuesday (Tasty Tuesday - explore flavors!)
+    const isTuesdayNow = today.getDay() === 2;
+    setIsTuesday(isTuesdayNow);
+    if (isTuesdayNow) {
+      const isTuesMorning = hour < 12;
+      const isTuesEvening = hour >= 17;
+      const morningMessages = [
+        "Tasty Tuesday! 🍫 What flavors are you craving?",
+        "Tuesday morning — explore a new flavor profile ☕",
+        "Try something different today 🌿",
+        "Flavor adventure awaits — what's your pick? 🎨"
+      ];
+      const afternoonMessages = [
+        "Tasty Tuesday afternoon — time to taste-test 🔥",
+        "Midday flavor break? Perfect timing 💨",
+        "Tuesday vibes: chase those tasting notes 📝",
+        "Explore the flavor wheel today 🎯"
+      ];
+      const eveningMessages = [
+        "Tuesday evening — savor something special 🌙",
+        "Tasty Tuesday wind-down — what's your go-to? 🍃",
+        "Evening flavor session — notes & relaxation 🎶",
+        "Tuesday night treat yourself 🏆"
+      ];
+      const tuesdayMessages = isTuesMorning ? morningMessages : (isTuesEvening ? eveningMessages : afternoonMessages);
+      setTuesdayMessage(tuesdayMessages[Math.floor(Math.random() * tuesdayMessages.length)]);
     }
   }, []);
   
@@ -1348,6 +1378,36 @@ export default function DiscoverPage() {
               >
                 <span>Start Week</span>
                 <span className="text-lg">💪</span>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Tasty Tuesday Banner */}
+        {isTuesday && !searchQuery && activeCategory === "all" && !isAprilFirstWeek && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-yellow-500/15 border border-amber-500/30"
+          >
+            <div className="flex items-center gap-3">
+              <motion.span 
+                className="text-3xl"
+                animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+              >
+                🍫
+              </motion.span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-amber-200">Tasty Tuesday!</h3>
+                <p className="text-xs text-amber-400/80">{tuesdayMessage}</p>
+              </div>
+              <Link
+                href="/flavor-dna"
+                className="px-4 py-2 rounded-lg bg-amber-500/20 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-all border border-amber-500/30 flex items-center gap-2"
+              >
+                <span>My Flavor DNA</span>
+                <span className="text-lg">🧬</span>
               </Link>
             </div>
           </motion.div>
