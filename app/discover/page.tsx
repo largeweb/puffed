@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck, FiCamera, FiMenu } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse, MostLovedCheckin, MostLovedResponse, NeedsLoveCheckin, NeedsLoveResponse, WeekendChallengeResponse } from "@/lib/types";
+import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse, MostLovedCheckin, MostLovedResponse, NeedsLoveCheckin, NeedsLoveResponse, WeekendChallengeResponse, WeeklyProgressResponse } from "@/lib/types";
+import WeeklyProgress from "@/components/WeeklyProgress";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -412,6 +413,8 @@ export default function DiscoverPage() {
   const [weekendChallenge, setWeekendChallenge] = useState<WeekendChallengeResponse | null>(null);
   const [checkinsThisWeek, setCheckinsThisWeek] = useState<number | null>(null);
   const [lastCheckinAt, setLastCheckinAt] = useState<number | null>(null);
+  const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgressResponse | null>(null);
+  const [weeklyProgressLoading, setWeeklyProgressLoading] = useState(true);
 
   // Load user for sidebar
   useEffect(() => {
@@ -450,6 +453,7 @@ export default function DiscoverPage() {
     loadWeekendChallenge();
     loadWeeklyActivity();
     loadTodayStats();
+    loadWeeklyProgress();
     
     // Check if it's Sunday and load special content
     const today = new Date();
@@ -840,6 +844,21 @@ export default function DiscoverPage() {
     }
   }
 
+  async function loadWeeklyProgress() {
+    setWeeklyProgressLoading(true);
+    try {
+      const res = await fetch("/api/my-weekly-progress");
+      if (res.ok) {
+        const data: WeeklyProgressResponse = await res.json();
+        setWeeklyProgress(data);
+      }
+    } catch (error) {
+      console.error("Weekly progress error:", error);
+    } finally {
+      setWeeklyProgressLoading(false);
+    }
+  }
+
   async function handleFollow(username: string) {
     try {
       const res = await fetch("/api/follow", {
@@ -1059,6 +1078,13 @@ export default function DiscoverPage() {
                 return `${Math.floor(seconds / 86400)}d ago`;
               })()}
             </span>
+          </div>
+        )}
+
+        {/* Weekly Progress Card */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <WeeklyProgress data={weeklyProgress} loading={weeklyProgressLoading} />
           </div>
         )}
 
