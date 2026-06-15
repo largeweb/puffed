@@ -10,6 +10,7 @@ import WeeklyProgress from "@/components/WeeklyProgress";
 import TimeOfDayBanner from "@/components/TimeOfDayBanner";
 import CommunityPulse from "@/components/CommunityPulse";
 import RandomDiscovery from "@/components/RandomDiscovery";
+import SmokeStreak from "@/components/SmokeStreak";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1106,6 +1107,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <WeeklyProgress data={weeklyProgress} loading={weeklyProgressLoading} />
+          </div>
+        )}
+
+        {/* Smoke Streak */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <SmokeStreak />
           </div>
         )}
 
