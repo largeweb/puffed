@@ -5,9 +5,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiSearch, FiStar, FiClock, FiWind, FiDroplet, FiSmile, FiHome, FiHeart, FiTrendingUp, FiMessageCircle, FiSend, FiAward, FiUsers, FiUserPlus, FiUserCheck, FiCamera, FiMenu } from "react-icons/fi";
 import Link from "next/link";
-import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse, MostLovedCheckin, MostLovedResponse, NeedsLoveCheckin, NeedsLoveResponse, WeekendChallengeResponse, WeeklyProgressResponse } from "@/lib/types";
+import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse, MostLovedCheckin, MostLovedResponse, NeedsLoveCheckin, NeedsLoveResponse, WeekendChallengeResponse, WeeklyProgressResponse, CommunityPulseResponse } from "@/lib/types";
 import WeeklyProgress from "@/components/WeeklyProgress";
 import TimeOfDayBanner from "@/components/TimeOfDayBanner";
+import CommunityPulse from "@/components/CommunityPulse";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -416,6 +417,8 @@ export default function DiscoverPage() {
   const [lastCheckinAt, setLastCheckinAt] = useState<number | null>(null);
   const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgressResponse | null>(null);
   const [weeklyProgressLoading, setWeeklyProgressLoading] = useState(true);
+  const [communityPulse, setCommunityPulse] = useState<CommunityPulseResponse | null>(null);
+  const [communityPulseLoading, setCommunityPulseLoading] = useState(true);
 
   // Load user for sidebar
   useEffect(() => {
@@ -455,6 +458,7 @@ export default function DiscoverPage() {
     loadWeeklyActivity();
     loadTodayStats();
     loadWeeklyProgress();
+    loadCommunityPulse();
     
     // Check if it's Sunday and load special content
     const today = new Date();
@@ -860,6 +864,21 @@ export default function DiscoverPage() {
     }
   }
 
+  async function loadCommunityPulse() {
+    setCommunityPulseLoading(true);
+    try {
+      const res = await fetch("/api/community-pulse");
+      if (res.ok) {
+        const data: CommunityPulseResponse = await res.json();
+        setCommunityPulse(data);
+      }
+    } catch (error) {
+      console.error("Community pulse error:", error);
+    } finally {
+      setCommunityPulseLoading(false);
+    }
+  }
+
   async function handleFollow(username: string) {
     try {
       const res = await fetch("/api/follow", {
@@ -1086,6 +1105,18 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <WeeklyProgress data={weeklyProgress} loading={weeklyProgressLoading} />
+          </div>
+        )}
+
+        {/* Community Pulse */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <CommunityPulse 
+              checkinsThisWeek={communityPulse?.checkinsThisWeek || 0}
+              activeUsers={communityPulse?.activeUsers || 0}
+              recentUsernames={communityPulse?.recentUsernames || []}
+              loading={communityPulseLoading}
+            />
           </div>
         )}
 

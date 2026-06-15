@@ -1065,3 +1065,9 @@ export interface WeeklyProgressResponse {
   streak: number;
   weekStartDate: string;
 }
+
+export interface CommunityPulseResponse {
+  checkinsThisWeek: number;
+  activeUsers: number;
+  recentUsernames: string[];
+}
