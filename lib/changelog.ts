@@ -18,6 +18,14 @@ export const changelog: Update[] = [
   // ===== June 2026 =====
   {
     date: '2026-06-15',
+    type: 'feature',
+    title: 'Monday Wisdom Quotes 💬',
+    description: 'Start your week with inspiration! The Monday banner now features a rotating weekly quote about cigar culture and mindful smoking. A new quote each week to set the tone.',
+    status: 'live',
+    icon: '💬'
+  },
+  {
+    date: '2026-06-15',
     type: 'improvement',
     title: 'Monday Weekly Recap Link 📊',
     description: 'The Monday Motivation banner now includes a quick link to view your last week\'s stats! Reflect on your previous week before starting fresh.',
