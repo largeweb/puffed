@@ -4,7 +4,7 @@
   "compatibility_date": "2025-01-01",
   "compatibility_flags": ["nodejs_compat"],
   "pages_build_output_dir": ".vercel/output/static",
-  "vars": { "ENVIRONMENT": "DEVELOPMENT", "BUILD_VERSION": "v1.0.48" },
+  "vars": { "ENVIRONMENT": "DEVELOPMENT", "BUILD_VERSION": "v1.0.49" },
   
   "d1_databases": [
     {
@@ -23,7 +23,7 @@
 
   "env": {
     "preview": {
-      "vars": { "ENVIRONMENT": "PREVIEW", "BUILD_VERSION": "v1.0.48" },
+      "vars": { "ENVIRONMENT": "PREVIEW", "BUILD_VERSION": "v1.0.49" },
       "d1_databases": [
         {
           "binding": "DB",
@@ -39,7 +39,7 @@
       ]
     },
     "production": {
-      "vars": { "ENVIRONMENT": "PRODUCTION", "BUILD_VERSION": "v1.0.48" },
+      "vars": { "ENVIRONMENT": "PRODUCTION", "BUILD_VERSION": "v1.0.49" },
       "d1_databases": [
         {
           "binding": "DB",
