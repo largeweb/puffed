@@ -17,6 +17,14 @@ export interface Update {
 export const changelog: Update[] = [
   // ===== June 2026 =====
   {
+    date: '2026-06-15',
+    type: 'feature',
+    title: 'Tasty Tuesday 🎨',
+    description: 'Tuesdays are for flavor exploration! Time-aware banners encourage you to try new flavors, explore pairings, and discover new favorites. Links directly to the Flavors page for easy discovery.',
+    status: 'live',
+    icon: '🎨'
+  },
+  {
     date: '2026-06-14',
     type: 'feature',
     title: 'Last Call Sunday 🌙',
