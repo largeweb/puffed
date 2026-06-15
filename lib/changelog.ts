@@ -18,6 +18,14 @@ export const changelog: Update[] = [
   // ===== June 2026 =====
   {
     date: '2026-06-14',
+    type: 'feature',
+    title: 'Last Call Sunday 🌙',
+    description: 'Sunday evening wind-down banner! From 6 PM onwards, get a gentle reminder to log your final weekend smoke. Time-aware messages change from "Sunday Wind-down" to "Last Call Sunday" to "Sunday Night Cap" as the evening progresses.',
+    status: 'live',
+    icon: '🌙'
+  },
+  {
+    date: '2026-06-14',
     type: 'improvement',
     title: 'Weekly Wrap Access from Dashboard 📊',
     description: 'On Sundays, your weekly recap section now includes a quick link to the full interactive Weekly Wrap slideshow! Explore your stats, rank, and highlights in a beautiful presentation format.',
