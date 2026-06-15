@@ -2657,6 +2657,56 @@ export default function DashboardPage() {
           );
         })()}
 
+        {/* Throwback Thursday - Share memories and classics */}
+        {(() => {
+          const now = new Date();
+          const isThursday = now.getDay() === 4;
+          if (!isThursday) return null;
+          
+          const hour = now.getHours();
+          const getMessage = () => {
+            if (hour < 6) return { emoji: "🌙", title: "Late Night Classics", text: "Remembering favorite smokes past midnight", color: "slate" };
+            if (hour < 10) return { emoji: "☕", title: "Throwback Thursday Morning", text: "What classic got you into cigars?", color: "amber" };
+            if (hour < 14) return { emoji: "📸", title: "Memory Lane", text: "Share a smoke that holds special meaning", color: "emerald" };
+            if (hour < 18) return { emoji: "🏆", title: "All-Time Favorites", text: "What's your most memorable cigar?", color: "amber" };
+            if (hour < 21) return { emoji: "📖", title: "Throwback Stories", text: "Every cigar has a story. What's yours?", color: "violet" };
+            return { emoji: "🌟", title: "Thursday Night Classics", text: "End the night with a trusted favorite", color: "slate" };
+          };
+          const msg = getMessage();
+          const colorClasses = {
+            slate: "border-slate-500/30 from-slate-500/10 to-gray-500/5 text-slate-300",
+            amber: "border-amber-500/30 from-amber-500/10 to-orange-500/5 text-amber-300",
+            emerald: "border-emerald-500/30 from-emerald-500/10 to-green-500/5 text-emerald-300",
+            violet: "border-violet-500/30 from-violet-500/10 to-purple-500/5 text-violet-300"
+          };
+          const colors = colorClasses[msg.color as keyof typeof colorClasses];
+          
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.04 }}
+              className={`glass rounded-2xl p-4 mb-6 border bg-gradient-to-br ${colors}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{msg.emoji}</span>
+                  <div>
+                    <h3 className="text-sm font-medium">{msg.title}</h3>
+                    <p className="text-xs text-gray-400">{msg.text}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-xs font-medium hover:bg-white/20 transition-all flex items-center gap-1.5"
+                >
+                  📸 Share Memory
+                </button>
+              </div>
+            </motion.div>
+          );
+        })()}
+
         {/* Weekly Recap Section (shows on weekends) */}
         {weeklyRecap && weeklyRecap.isSunday && weeklyRecap.weekStats.checkins > 0 && (
           <motion.div
