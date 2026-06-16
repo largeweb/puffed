@@ -8,6 +8,7 @@ import Link from "next/link";
 import type { Checkin, DiscoverResponse, LikeResponse, TrendingResponse, TrendingBrand, Comment, CommentsResponse, CommentResponse, SuggestedUser, SuggestedUsersResponse, FollowResponse, CheckinCategory, FeaturedCheckin, FeaturedResponse, TrendingWeekBrand, TrendingWeekResponse, MostLovedCheckin, MostLovedResponse, NeedsLoveCheckin, NeedsLoveResponse, WeekendChallengeResponse, WeeklyProgressResponse, CommunityPulseResponse } from "@/lib/types";
 import WeeklyProgress from "@/components/WeeklyProgress";
 import TimeOfDayBanner from "@/components/TimeOfDayBanner";
+import ComebackWelcome from "@/components/ComebackWelcome";
 import CommunityPulse from "@/components/CommunityPulse";
 import RandomDiscovery from "@/components/RandomDiscovery";
 import SmokeStreak from "@/components/SmokeStreak";
@@ -1225,6 +1226,11 @@ export default function DiscoverPage() {
             <TimeOfDayBanner />
           </div>
         )}
+
+        {/* Comeback Welcome - shows for returning inactive users */}
+        <div className="mb-4">
+          <ComebackWelcome />
+        </div>
 
         {/* Tasty Tuesday - Weekly Flavor Exploration */}
         {!searchQuery && activeCategory === "all" && (
