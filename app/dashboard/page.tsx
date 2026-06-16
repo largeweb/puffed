@@ -19,6 +19,7 @@ import { InstallBanner } from "@/components/InstallBanner";
 import ComebackWelcome from "@/components/ComebackWelcome";
 import QuickRelog from "@/components/QuickRelog";
 import SmokeHeatmap from "@/components/SmokeHeatmap";
+import TasteTwins from "@/components/TasteTwins";
 
 // Monday motivation quotes - rotates weekly
 const MONDAY_QUOTES = [
@@ -2969,6 +2970,11 @@ export default function DashboardPage() {
         {/* Smoke Calendar Heatmap */}
         <div className="mb-6">
           <SmokeHeatmap />
+        </div>
+
+        {/* Taste Twins - Users with similar flavor preferences */}
+        <div className="mb-6">
+          <TasteTwins />
         </div>
 
         {/* Smoking Now Section - Who's active */}
