@@ -16,6 +16,7 @@ import { SMOKE_SPOTS, getSmokeSpot } from "@/lib/smoke-spots";
 import type { SmokeMood, SmokeSpot } from "@/lib/types";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
 import { InstallBanner } from "@/components/InstallBanner";
+import ComebackWelcome from "@/components/ComebackWelcome";
 import SmokeHeatmap from "@/components/SmokeHeatmap";
 
 // Monday motivation quotes - rotates weekly
@@ -1956,6 +1957,11 @@ export default function DashboardPage() {
             })()}
           </motion.div>
         )}
+
+        {/* Comeback Welcome - shows for returning inactive users */}
+        <div className="mb-6">
+          <ComebackWelcome />
+        </div>
 
         {/* Getting Started Checklist - Shows for new users */}
         {showOnboarding && onboardingTasks.length > 0 && (
