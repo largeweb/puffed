@@ -19,6 +19,7 @@ import NextAchievement from "@/components/NextAchievement";
 import CommunityMilestone from "@/components/CommunityMilestone";
 import CommunityMood from "@/components/CommunityMood";
 import WindDownRitual from "@/components/WindDownRitual";
+import TastyTuesday from "@/components/TastyTuesday";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1197,6 +1198,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <TimeOfDayBanner />
+          </div>
+        )}
+
+        {/* Tasty Tuesday - Weekly Flavor Exploration */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <TastyTuesday />
           </div>
         )}
 
