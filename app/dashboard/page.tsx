@@ -20,6 +20,7 @@ import ComebackWelcome from "@/components/ComebackWelcome";
 import QuickRelog from "@/components/QuickRelog";
 import SmokeHeatmap from "@/components/SmokeHeatmap";
 import TasteTwins from "@/components/TasteTwins";
+import WeeklyChallenge from "@/components/WeeklyChallenge";
 
 // Monday motivation quotes - rotates weekly
 const MONDAY_QUOTES = [
@@ -2975,6 +2976,11 @@ export default function DashboardPage() {
         {/* Taste Twins - Users with similar flavor preferences */}
         <div className="mb-6">
           <TasteTwins />
+        </div>
+
+        {/* Weekly Challenge - Gamification */}
+        <div className="mb-6">
+          <WeeklyChallenge />
         </div>
 
         {/* Smoking Now Section - Who's active */}
