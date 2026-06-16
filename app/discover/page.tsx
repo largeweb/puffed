@@ -17,6 +17,7 @@ import FlavorJourney from "@/components/FlavorJourney";
 import TonightsPick from "@/components/TonightsPick";
 import NextAchievement from "@/components/NextAchievement";
 import CommunityMilestone from "@/components/CommunityMilestone";
+import CommunityMood from "@/components/CommunityMood";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1174,6 +1175,13 @@ export default function DiscoverPage() {
               recentUsernames={communityPulse?.recentUsernames || []}
               loading={communityPulseLoading}
             />
+          </div>
+        )}
+
+        {/* Community Mood Ring - Shows collective mood */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <CommunityMood />
           </div>
         )}
 
