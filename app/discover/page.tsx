@@ -14,6 +14,7 @@ import SmokeStreak from "@/components/SmokeStreak";
 import SmokeBuddies from "@/components/SmokeBuddies";
 import BrandExplorer from "@/components/BrandExplorer";
 import FlavorJourney from "@/components/FlavorJourney";
+import FlavorMatches from "@/components/FlavorMatches";
 import TonightsPick from "@/components/TonightsPick";
 import NextAchievement from "@/components/NextAchievement";
 import CommunityMilestone from "@/components/CommunityMilestone";
@@ -1133,6 +1134,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <SmokeBuddies />
+          </div>
+        )}
+
+        {/* Flavor Matches - Find users with similar flavor preferences */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <FlavorMatches />
           </div>
         )}
 
