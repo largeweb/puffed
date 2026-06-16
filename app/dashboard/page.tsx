@@ -22,6 +22,7 @@ import SmokeHeatmap from "@/components/SmokeHeatmap";
 import TasteTwins from "@/components/TasteTwins";
 import WeeklyChallenge from "@/components/WeeklyChallenge";
 import SmokeStreak from "@/components/SmokeStreak";
+import InviteFriends from "@/components/InviteFriends";
 
 // Monday motivation quotes - rotates weekly
 const MONDAY_QUOTES = [
@@ -2988,6 +2989,13 @@ export default function DashboardPage() {
         <div className="mb-6">
           <WeeklyChallenge />
         </div>
+
+        {/* Invite Friends - Viral Growth */}
+        {user && (
+          <div className="mb-6">
+            <InviteFriends username={user.username} />
+          </div>
+        )}
 
         {/* Smoking Now Section - Who's active */}
         {activeSmokers.length > 0 && (
