@@ -25,6 +25,7 @@ import CigarWisdom from "@/components/CigarWisdom";
 import TastyTuesday from "@/components/TastyTuesday";
 import EarlyBirdBonus from "@/components/EarlyBirdBonus";
 import PersonalBests from "@/components/PersonalBests";
+import BrandBattle from "@/components/BrandBattle";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1149,6 +1150,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <BrandExplorer />
+          </div>
+        )}
+
+        {/* Brand Battle - Weekly head-to-head voting */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <BrandBattle />
           </div>
         )}
 

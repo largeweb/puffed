@@ -158,3 +158,17 @@ CREATE TABLE IF NOT EXISTS time_capsules (
 
 CREATE INDEX IF NOT EXISTS idx_time_capsules_user_id ON time_capsules(user_id);
 CREATE INDEX IF NOT EXISTS idx_time_capsules_unlocks_at ON time_capsules(unlocks_at);
+
+-- Brand Battle Votes table (weekly head-to-head voting)
+CREATE TABLE IF NOT EXISTS brand_battle_votes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  week_number INTEGER NOT NULL,
+  brand TEXT NOT NULL,
+  voted_at INTEGER DEFAULT (unixepoch()),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(user_id, week_number)
+);
+
+CREATE INDEX IF NOT EXISTS idx_brand_battle_votes_week ON brand_battle_votes(week_number);
+CREATE INDEX IF NOT EXISTS idx_brand_battle_votes_user ON brand_battle_votes(user_id);
