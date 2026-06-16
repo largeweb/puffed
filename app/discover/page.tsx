@@ -19,6 +19,7 @@ import NextAchievement from "@/components/NextAchievement";
 import CommunityMilestone from "@/components/CommunityMilestone";
 import CommunityMood from "@/components/CommunityMood";
 import WindDownRitual from "@/components/WindDownRitual";
+import CigarWisdom from "@/components/CigarWisdom";
 import TastyTuesday from "@/components/TastyTuesday";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
@@ -1191,6 +1192,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <WindDownRitual />
+          </div>
+        )}
+
+        {/* Cigar Wisdom - Late night/early morning quotes (11pm-7am) */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <CigarWisdom />
           </div>
         )}
 
