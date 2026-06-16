@@ -21,6 +21,7 @@ import CommunityMood from "@/components/CommunityMood";
 import WindDownRitual from "@/components/WindDownRitual";
 import CigarWisdom from "@/components/CigarWisdom";
 import TastyTuesday from "@/components/TastyTuesday";
+import EarlyBirdBonus from "@/components/EarlyBirdBonus";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1213,6 +1214,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <TastyTuesday />
+          </div>
+        )}
+
+        {/* Early Bird Bonus - Morning smoke celebration (5-8 AM) */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <EarlyBirdBonus />
           </div>
         )}
 
