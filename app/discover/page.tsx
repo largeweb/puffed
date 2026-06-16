@@ -22,6 +22,7 @@ import WindDownRitual from "@/components/WindDownRitual";
 import CigarWisdom from "@/components/CigarWisdom";
 import TastyTuesday from "@/components/TastyTuesday";
 import EarlyBirdBonus from "@/components/EarlyBirdBonus";
+import PersonalBests from "@/components/PersonalBests";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1160,6 +1161,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <NextAchievement />
+          </div>
+        )}
+
+        {/* Personal Bests - Your smoking journey stats */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <PersonalBests />
           </div>
         )}
 
