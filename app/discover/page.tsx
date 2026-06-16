@@ -26,6 +26,7 @@ import TastyTuesday from "@/components/TastyTuesday";
 import EarlyBirdBonus from "@/components/EarlyBirdBonus";
 import PersonalBests from "@/components/PersonalBests";
 import BrandBattle from "@/components/BrandBattle";
+import CigarRoulette from "@/components/CigarRoulette";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1157,6 +1158,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <BrandBattle />
+          </div>
+        )}
+
+        {/* Cigar Roulette - Random discovery spinner */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <CigarRoulette />
           </div>
         )}
 
