@@ -17,6 +17,7 @@ import type { SmokeMood, SmokeSpot } from "@/lib/types";
 import { BrandAutocomplete } from "@/components/BrandAutocomplete";
 import { InstallBanner } from "@/components/InstallBanner";
 import ComebackWelcome from "@/components/ComebackWelcome";
+import QuickRelog from "@/components/QuickRelog";
 import SmokeHeatmap from "@/components/SmokeHeatmap";
 
 // Monday motivation quotes - rotates weekly
@@ -1961,6 +1962,11 @@ export default function DashboardPage() {
         {/* Comeback Welcome - shows for returning inactive users */}
         <div className="mb-6">
           <ComebackWelcome />
+        </div>
+
+        {/* Quick Re-log - one tap to log same smoke again */}
+        <div className="mb-6">
+          <QuickRelog />
         </div>
 
         {/* Getting Started Checklist - Shows for new users */}
