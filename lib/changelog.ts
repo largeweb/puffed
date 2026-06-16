@@ -17,6 +17,14 @@ export interface Update {
 export const changelog: Update[] = [
   // ===== June 2026 =====
   {
+    date: '2026-06-16',
+    type: 'feature',
+    title: 'Brand Detail Pages 🏷️',
+    description: 'Tap any brand name to see its dedicated page! View total check-ins, average rating, who else smokes it, top flavors, and recent reviews. Discover new cigars through community taste profiles.',
+    status: 'live',
+    icon: '🏷️'
+  },
+  {
     date: '2026-06-15',
     type: 'feature',
     title: 'Your Flavor Journey 🎨',
