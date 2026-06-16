@@ -14,6 +14,7 @@ import SmokeStreak from "@/components/SmokeStreak";
 import SmokeBuddies from "@/components/SmokeBuddies";
 import BrandExplorer from "@/components/BrandExplorer";
 import FlavorJourney from "@/components/FlavorJourney";
+import TonightsPick from "@/components/TonightsPick";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1138,6 +1139,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <FlavorJourney />
+          </div>
+        )}
+
+        {/* Tonight's Pick - Personalized suggestion */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <TonightsPick />
           </div>
         )}
 
