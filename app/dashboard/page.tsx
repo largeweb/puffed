@@ -21,6 +21,7 @@ import QuickRelog from "@/components/QuickRelog";
 import SmokeHeatmap from "@/components/SmokeHeatmap";
 import TasteTwins from "@/components/TasteTwins";
 import WeeklyChallenge from "@/components/WeeklyChallenge";
+import SmokeStreak from "@/components/SmokeStreak";
 
 // Monday motivation quotes - rotates weekly
 const MONDAY_QUOTES = [
@@ -1969,6 +1970,11 @@ export default function DashboardPage() {
         {/* Quick Re-log - one tap to log same smoke again */}
         <div className="mb-6">
           <QuickRelog />
+        </div>
+
+        {/* Smoke Streak - gamified streak tracking */}
+        <div className="mb-6">
+          <SmokeStreak />
         </div>
 
         {/* Getting Started Checklist - Shows for new users */}
