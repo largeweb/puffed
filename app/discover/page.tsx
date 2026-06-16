@@ -18,6 +18,7 @@ import TonightsPick from "@/components/TonightsPick";
 import NextAchievement from "@/components/NextAchievement";
 import CommunityMilestone from "@/components/CommunityMilestone";
 import CommunityMood from "@/components/CommunityMood";
+import WindDownRitual from "@/components/WindDownRitual";
 import ShareMenu from "@/components/ShareMenu";
 import QuickReactions from "@/components/QuickReactions";
 import QuickComments from "@/components/QuickComments";
@@ -1182,6 +1183,13 @@ export default function DiscoverPage() {
         {!searchQuery && activeCategory === "all" && (
           <div className="mb-4">
             <CommunityMood />
+          </div>
+        )}
+
+        {/* Wind Down Ritual - Late night reflection (10pm-2am) */}
+        {!searchQuery && activeCategory === "all" && (
+          <div className="mb-4">
+            <WindDownRitual />
           </div>
         )}
 
