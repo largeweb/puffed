@@ -1,349 +1,220 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getRequestContext } from "@cloudflare/next-on-pages";
+import { cookies } from "next/headers";
 
 export const runtime = "edge";
 
-interface TonightsPick {
+interface BrandData {
   brand: string;
-  product?: string;
-  reason: string;
-  reasonEmoji: string;
-  confidence: "perfect" | "strong" | "good";
-  lastSmoked?: number; // unix timestamp
-  avgRating?: number;
-  communityAvgRating?: number;
-  timesSmoked: number;
-  flavorProfile: string[];
-  suggestion: string;
-  alternatives: {
-    brand: string;
-    reason: string;
-  }[];
+  brandSlug: string;
+  cigar: string | null;
+  avgRating: number;
+  checkinCount: number;
+  flavors: string[];
 }
 
-const PICK_REASONS = {
-  favorite: { emoji: "❤️", text: "Your go-to favorite" },
-  highRated: { emoji: "⭐", text: "You rated this highly" },
-  missedIt: { emoji: "🔄", text: "Been a while since this one" },
-  trending: { emoji: "🔥", text: "Trending in the community" },
-  flavorMatch: { emoji: "🎯", text: "Matches your flavor profile" },
-  newExplore: { emoji: "🆕", text: "Time to explore something new" },
-  communityFav: { emoji: "👥", text: "Community favorite" },
-  perfectTiming: { emoji: "🌙", text: "Perfect for tonight" },
-};
+interface PickResponse {
+  suggestion: {
+    brand: string;
+    brandSlug: string;
+    cigar?: string;
+    avgRating: number;
+    checkinCount: number;
+    topFlavors: string[];
+    reason: string;
+  } | null;
+  timeContext: string;
+  greeting: string;
+  icon: string;
+}
 
-const EVENING_SUGGESTIONS = [
-  "Perfect for winding down after a long day.",
-  "Light this up and let the stress melt away.",
-  "A classic choice for an evening unwind.",
-  "Pair it with your favorite drink and enjoy.",
-  "The kind of smoke that makes the night feel right.",
-  "Sit back, relax, and savor every puff.",
-  "Your evening ritual awaits.",
-  "Tonight's the night for something special.",
-];
+function getTimeContext(): { greeting: string; context: string; icon: string; reasons: string[] } {
+  const now = new Date();
+  const hour = now.getHours();
+  
+  if (hour >= 5 && hour < 12) {
+    return {
+      greeting: "Morning Pick",
+      context: "Start your day right",
+      icon: "☀️",
+      reasons: [
+        "Perfect for a morning moment",
+        "Great with your morning coffee",
+        "A smooth start to the day"
+      ]
+    };
+  } else if (hour >= 12 && hour < 17) {
+    return {
+      greeting: "Afternoon Suggestion",
+      context: "Midday break worthy",
+      icon: "🌤️",
+      reasons: [
+        "Ideal for an afternoon pause",
+        "Perfect midday smoke",
+        "A refined afternoon choice"
+      ]
+    };
+  } else if (hour >= 17 && hour < 21) {
+    return {
+      greeting: "Tonight's Pick",
+      context: "Evening relaxation awaits",
+      icon: "🌙",
+      reasons: [
+        "Perfect for unwinding",
+        "Great evening companion",
+        "Ideal for after-dinner enjoyment"
+      ]
+    };
+  } else {
+    return {
+      greeting: "Night Cap",
+      context: "End the day in style",
+      icon: "🌃",
+      reasons: [
+        "The perfect nightcap",
+        "A satisfying end to your day",
+        "Late-night luxury"
+      ]
+    };
+  }
+}
 
-export async function GET() {
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+export async function GET(): Promise<NextResponse<PickResponse | { error: string }>> {
   try {
-    const { env } = getRequestContext();
-    const DB = env.DB;
-
     const cookieStore = await cookies();
-    const sessionId = cookieStore.get("session")?.value;
+    const session = cookieStore.get("session")?.value;
     
-    if (!sessionId) {
+    if (!session) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Get user ID from session
-    const sessionRow = await DB.prepare(
+    const ctx = getRequestContext();
+    const db = ctx.env.DB;
+
+    // Get user from session
+    const sessionRow = await db.prepare(
       "SELECT user_id FROM sessions WHERE id = ?"
-    ).bind(sessionId).first<{ user_id: string }>();
+    ).bind(session).first<{ user_id: string }>();
 
     if (!sessionRow) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
 
     const userId = sessionRow.user_id;
+    const timeInfo = getTimeContext();
 
-    // Get user's smoking history with ratings and flavors
-    const userHistory = await DB.prepare(`
-      SELECT 
-        brand,
-        product,
-        rating,
-        flavor_notes,
-        created_at,
-        COUNT(*) OVER (PARTITION BY brand) as brand_count
+    // Get user's check-ins with brands, ratings, and flavors
+    const checkinsResult = await db.prepare(`
+      SELECT brand, cigar, rating, flavor_notes
       FROM checkins
-      WHERE user_id = ?
-      ORDER BY created_at DESC
-    `).bind(userId).all<{
-      brand: string;
-      product: string | null;
-      rating: number | null;
+      WHERE user_id = ? AND rating IS NOT NULL
+      ORDER BY rating DESC, created_at DESC
+    `).bind(userId).all<{ 
+      brand: string; 
+      cigar: string | null; 
+      rating: number;
       flavor_notes: string | null;
-      created_at: number;
-      brand_count: number;
     }>();
 
-    const checkins = userHistory.results || [];
-    
-    // If user has no history, suggest trending
+    const checkins = checkinsResult.results || [];
+
     if (checkins.length === 0) {
-      const trending = await DB.prepare(`
-        SELECT brand, COUNT(*) as count, AVG(rating) as avg_rating
-        FROM checkins
-        WHERE created_at > ?
-        GROUP BY brand
-        ORDER BY count DESC
-        LIMIT 1
-      `).bind(Date.now() - 7 * 24 * 60 * 60 * 1000).first<{
-        brand: string;
-        count: number;
-        avg_rating: number;
-      }>();
-
-      if (trending) {
-        return NextResponse.json({
-          brand: trending.brand,
-          reason: PICK_REASONS.trending.text,
-          reasonEmoji: PICK_REASONS.trending.emoji,
-          confidence: "good",
-          communityAvgRating: trending.avg_rating,
-          timesSmoked: 0,
-          flavorProfile: [],
-          suggestion: "Start your journey with what the community loves!",
-          alternatives: [],
-        });
-      }
-
+      // No check-ins yet - return null suggestion
       return NextResponse.json({
-        brand: "Your First Pick",
-        reason: "Log a smoke to get personalized picks!",
-        reasonEmoji: "🎯",
-        confidence: "good",
-        timesSmoked: 0,
-        flavorProfile: [],
-        suggestion: "Check in your first smoke and we'll learn your taste.",
-        alternatives: [],
+        suggestion: null,
+        timeContext: timeInfo.context,
+        greeting: timeInfo.greeting,
+        icon: timeInfo.icon
       });
     }
 
-    // Build user profile
-    const brandStats = new Map<string, {
-      count: number;
-      totalRating: number;
-      ratingCount: number;
-      lastSmoked: number;
-      flavors: Set<string>;
-      products: Set<string>;
-    }>();
-
-    const allFlavors = new Map<string, number>();
-    const now = Date.now();
-    const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
-    const twoWeeksAgo = now - 14 * 24 * 60 * 60 * 1000;
-
-    for (const c of checkins) {
-      const brand = c.brand;
-      if (!brandStats.has(brand)) {
-        brandStats.set(brand, {
-          count: 0,
-          totalRating: 0,
-          ratingCount: 0,
-          lastSmoked: 0,
-          flavors: new Set(),
-          products: new Set(),
-        });
-      }
+    // Aggregate by brand
+    const brandMap = new Map<string, BrandData>();
+    
+    for (const checkin of checkins) {
+      const existing = brandMap.get(checkin.brand);
+      const flavors: string[] = [];
       
-      const stats = brandStats.get(brand)!;
-      stats.count++;
-      if (c.rating) {
-        stats.totalRating += c.rating;
-        stats.ratingCount++;
-      }
-      if (c.created_at > stats.lastSmoked) {
-        stats.lastSmoked = c.created_at;
-      }
-      if (c.product) {
-        stats.products.add(c.product);
-      }
-      
-      // Parse flavors
-      if (c.flavor_notes) {
+      if (checkin.flavor_notes) {
         try {
-          const flavors = JSON.parse(c.flavor_notes) as string[];
-          flavors.forEach(f => {
-            stats.flavors.add(f);
-            allFlavors.set(f, (allFlavors.get(f) || 0) + 1);
-          });
-        } catch {}
-      }
-    }
-
-    // Get top flavors for user
-    const topFlavors = [...allFlavors.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([f]) => f);
-
-    // Get community trending brands
-    const trendingBrands = await DB.prepare(`
-      SELECT brand, COUNT(*) as count, AVG(rating) as avg_rating
-      FROM checkins
-      WHERE created_at > ?
-      GROUP BY brand
-      ORDER BY count DESC
-      LIMIT 10
-    `).bind(oneWeekAgo).all<{ brand: string; count: number; avg_rating: number }>();
-
-    const trendingSet = new Set((trendingBrands.results || []).map(b => b.brand.toLowerCase()));
-    const trendingMap = new Map((trendingBrands.results || []).map(b => [b.brand.toLowerCase(), b]));
-
-    // Score each brand for tonight
-    type PickCandidate = {
-      brand: string;
-      product?: string;
-      score: number;
-      reason: keyof typeof PICK_REASONS;
-      avgRating?: number;
-      communityAvgRating?: number;
-      lastSmoked: number;
-      timesSmoked: number;
-      flavorProfile: string[];
-    };
-
-    const candidates: PickCandidate[] = [];
-
-    for (const [brand, stats] of brandStats) {
-      const avgRating = stats.ratingCount > 0 ? stats.totalRating / stats.ratingCount : undefined;
-      const daysSinceSmoked = (now - stats.lastSmoked) / (24 * 60 * 60 * 1000);
-      const isTrending = trendingSet.has(brand.toLowerCase());
-      const trendingData = trendingMap.get(brand.toLowerCase());
-      
-      let score = 0;
-      let reason: keyof typeof PICK_REASONS = "favorite";
-
-      // High rating boost (max +30)
-      if (avgRating && avgRating >= 4.5) {
-        score += 30;
-        reason = "highRated";
-      } else if (avgRating && avgRating >= 4) {
-        score += 20;
-        reason = "highRated";
-      } else if (avgRating && avgRating >= 3.5) {
-        score += 10;
-      }
-
-      // Frequency boost - favorites get points (max +20)
-      if (stats.count >= 5) {
-        score += 20;
-        reason = "favorite";
-      } else if (stats.count >= 3) {
-        score += 15;
-      } else if (stats.count >= 2) {
-        score += 10;
-      }
-
-      // "Miss it" boost - haven't had it in a while (max +25)
-      if (stats.count >= 2 && daysSinceSmoked >= 14) {
-        score += 25;
-        reason = "missedIt";
-      } else if (stats.count >= 2 && daysSinceSmoked >= 7) {
-        score += 15;
-        reason = "missedIt";
-      }
-
-      // Trending boost (max +15)
-      if (isTrending) {
-        score += 15;
-        if (reason === "favorite" || reason === "highRated") {
-          // Keep original reason for user favorites
-        } else {
-          reason = "trending";
+          const parsed = JSON.parse(checkin.flavor_notes);
+          if (Array.isArray(parsed)) {
+            flavors.push(...parsed);
+          }
+        } catch {
+          // Invalid JSON, skip
         }
       }
 
-      // Slight randomness for variety (+0-10)
-      score += Math.floor(Math.random() * 10);
-
-      // Evening vibe - slightly prefer brands smoked in evening before
-      // (We don't have hour data easily, so skip this for now)
-
-      // Penalty for smoked very recently (within 24h)
-      if (daysSinceSmoked < 1) {
-        score -= 20;
-      } else if (daysSinceSmoked < 3) {
-        score -= 10;
+      if (existing) {
+        existing.avgRating = ((existing.avgRating * existing.checkinCount) + checkin.rating) / (existing.checkinCount + 1);
+        existing.checkinCount++;
+        // Merge flavors
+        for (const f of flavors) {
+          if (!existing.flavors.includes(f)) {
+            existing.flavors.push(f);
+          }
+        }
+      } else {
+        brandMap.set(checkin.brand, {
+          brand: checkin.brand,
+          brandSlug: slugify(checkin.brand),
+          cigar: checkin.cigar,
+          avgRating: checkin.rating,
+          checkinCount: 1,
+          flavors
+        });
       }
-
-      candidates.push({
-        brand,
-        product: stats.products.size === 1 ? [...stats.products][0] : undefined,
-        score,
-        reason,
-        avgRating,
-        communityAvgRating: trendingData?.avg_rating,
-        lastSmoked: stats.lastSmoked,
-        timesSmoked: stats.count,
-        flavorProfile: [...stats.flavors],
-      });
     }
 
-    // Sort by score
-    candidates.sort((a, b) => b.score - a.score);
+    // Score brands: prioritize high rating + multiple check-ins
+    const brands = Array.from(brandMap.values())
+      .map(b => ({
+        ...b,
+        score: b.avgRating * 0.7 + Math.min(b.checkinCount, 5) * 0.3
+      }))
+      .sort((a, b) => b.score - a.score);
 
-    // Pick the top one
-    const pick = candidates[0];
+    // Pick a suggestion (use day of year for variety while being deterministic per day)
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (24 * 60 * 60 * 1000));
+    const pickIndex = dayOfYear % Math.min(brands.length, 3); // Rotate among top 3
+    const pick = brands[pickIndex] || brands[0];
 
-    if (!pick) {
-      return NextResponse.json({
-        brand: "Your First Pick",
-        reason: "Log a smoke to get personalized picks!",
-        reasonEmoji: "🎯",
-        confidence: "good",
-        timesSmoked: 0,
-        flavorProfile: [],
-        suggestion: "Check in your first smoke and we'll learn your taste.",
-        alternatives: [],
-      });
+    // Select a reason
+    const reasonIndex = dayOfYear % timeInfo.reasons.length;
+    const baseReason = timeInfo.reasons[reasonIndex];
+    
+    // Personalize reason based on data
+    let reason = baseReason;
+    if (pick.checkinCount >= 3) {
+      reason = `One of your favorites — ${baseReason.toLowerCase()}`;
+    } else if (pick.avgRating >= 4.5) {
+      reason = `Top-rated choice — ${baseReason.toLowerCase()}`;
     }
 
-    // Get 2 alternatives
-    const alternatives = candidates.slice(1, 3).map(c => ({
-      brand: c.brand,
-      reason: PICK_REASONS[c.reason].text,
-    }));
-
-    // Determine confidence
-    let confidence: "perfect" | "strong" | "good" = "good";
-    if (pick.score >= 50) confidence = "perfect";
-    else if (pick.score >= 30) confidence = "strong";
-
-    // Random evening suggestion
-    const suggestion = EVENING_SUGGESTIONS[Math.floor(Math.random() * EVENING_SUGGESTIONS.length)];
-
-    const response: TonightsPick = {
-      brand: pick.brand,
-      product: pick.product,
-      reason: PICK_REASONS[pick.reason].text,
-      reasonEmoji: PICK_REASONS[pick.reason].emoji,
-      confidence,
-      lastSmoked: pick.lastSmoked,
-      avgRating: pick.avgRating,
-      communityAvgRating: pick.communityAvgRating,
-      timesSmoked: pick.timesSmoked,
-      flavorProfile: pick.flavorProfile,
-      suggestion,
-      alternatives,
-    };
-
-    return NextResponse.json(response);
+    return NextResponse.json({
+      suggestion: {
+        brand: pick.brand,
+        brandSlug: pick.brandSlug,
+        cigar: pick.cigar || undefined,
+        avgRating: pick.avgRating,
+        checkinCount: pick.checkinCount,
+        topFlavors: pick.flavors.slice(0, 4),
+        reason
+      },
+      timeContext: timeInfo.context,
+      greeting: timeInfo.greeting,
+      icon: timeInfo.icon
+    });
   } catch (error) {
     console.error("Tonight's pick error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
